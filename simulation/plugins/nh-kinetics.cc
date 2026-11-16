@@ -50,23 +50,19 @@ namespace aspect
       const unsigned int n_reactions = reaction_chain.n_reactions();
       const unsigned int n_phases    = n_reactions + 1;
 
-      const unsigned int projected_density_idx = this->introspection().compositional_name_exists("density_field")
-                                                 ? this->introspection().compositional_index_for_name("density_field")
-                                                 : numbers::invalid_unsigned_int;
-      // The relaxed-pressure field carries its own reaction rate and must
-      // not be treated as a chain progress variable.
-      const unsigned int relaxed_pressure_idx = this->introspection().compositional_name_exists("relaxed_pressure")
-                                                ? this->introspection().compositional_index_for_name("relaxed_pressure")
-                                                : numbers::invalid_unsigned_int;
-
       reaction_field_indices.clear();
       for (unsigned int c = 0; c < this->introspection().n_compositional_fields; ++c)
-        if (c != projected_density_idx && c != relaxed_pressure_idx)
-          reaction_field_indices.push_back(c);
+        {
+          // Chain progress variables are exactly the xi_* fields; auxiliary
+          // fields (density_field, relaxed_pressure, block, ...) are excluded.
+          const std::string field_name = this->introspection().name_for_compositional_index(c);
+          if (field_name.rfind("xi_", 0) == 0)
+            reaction_field_indices.push_back(c);
+        }
 
       AssertThrow(reaction_field_indices.size() == n_reactions,
-                  ExcMessage("The number of compositional fields available for reactions (excluding density_field "
-                             "and relaxed_pressure) does not match the number of reactions in the chain."));
+                  ExcMessage("The number of xi_* cumulative reaction progress fields does not match "
+                             "the number of reactions in the chain."));
 
       // Size property index arrays
       rho_idx.assign(n_phases, numbers::invalid_unsigned_int);
@@ -275,6 +271,11 @@ namespace aspect
           const double density_factor                 = (1.0 - temperature_correction_density) * (1.0 + pressure_correction_density);
           out.densities[q]                            = rho_avg * density_factor;
 
+          // Sinking-block scaffolding: prescribed density excess carried by
+          // the compositional 'block' field. Zero when the field is absent.
+          if (this->introspection().compositional_name_exists("block"))
+            out.densities[q] += block_density_excess * in.composition[q][this->introspection().compositional_index_for_name("block")];
+
           // Compute viscosity temperature dependence: exp(-A * (T - T_ref) / T_ref)
           double visc_temperature_dependence = std::max(std::min(std::exp(-thermal_viscosity_exponent * (T - T_ref) / T_ref), 1e3), 1e-3);
           if (std::isnan(visc_temperature_dependence))
@@ -467,6 +468,11 @@ namespace aspect
                             Patterns::Double(0.),
                             "Magnitude cap on (P_drive - P_ref) applied to density and Gibbs energy (capped-pressure variant). "
                             "Units: Pa. Zero or negative disables capping.");
+          prm.declare_entry("Block density excess",
+                            "0.0",
+                            Patterns::Double(),
+                            "Density excess added wherever the compositional 'block' field is 1 "
+                            "(sinking-block benchmark scaffolding). Units: kg/m^3. Zero disables it.");
         }
         prm.leave_subsection();
       }
@@ -519,6 +525,7 @@ namespace aspect
           relaxation_time_dynamic_pressure            = prm.get_double("Relaxation time for dynamic pressure");
           bulk_viscosity_explicit                     = prm.get_double("Explicit bulk viscosity");
           max_dynamic_pressure_correction             = prm.get_double("Maximum dynamic pressure correction");
+          block_density_excess                        = prm.get_double("Block density excess");
         }
         prm.leave_subsection();
       }

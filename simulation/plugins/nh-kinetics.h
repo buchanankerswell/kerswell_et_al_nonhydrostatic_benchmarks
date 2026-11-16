@@ -182,6 +182,13 @@ namespace aspect
          * Units: Pa. Zero or negative disables capping.
          */
         double max_dynamic_pressure_correction;
+
+        /**
+         * Prescribed density excess carried by the compositional 'block'
+         * field (sinking-block benchmark scaffolding: a dense anomaly that
+         * sinks through the phase horizon). Units: kg/m^3. Zero disables it.
+         */
+        double block_density_excess;
     };
 
 
