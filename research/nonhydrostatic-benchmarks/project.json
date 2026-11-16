@@ -1,1 +1,41 @@
-{"decisions": [{"date": "2026-11-16", "decision": "Scoped Step-1 evidence gathering as a focused (non-systematic) review: OpenAlex scoping searches + ASPECT source canvas + two seed papers read in full; full claim-verification gate deferred to manuscript stage.", "why": "Prototyping study needs strategies fast; systematic-review machinery would be disproportionate before benchmark design exists."}, {"date": "2026-11-16", "decision": "Recommend S2 (relaxed pressure, plugin-only) first and S1b (explicit RHS bulk force) in parallel; full implicit S1 deferred to upstream ASPECT contribution (needs source access + rebuild).", "why": "Canvas proved no bulk-viscosity slot or LHS term exists outside melt transport; plugin-only routes work with the installed 3.2.0-pre build."}, {"date": "2026-11-16", "decision": "Test ALL strategies S1-S4 across 1-3 box benchmarks; paper frames compromises between oscillation-free solutions, physical accuracy, and computational practicality. S1 implemented in user ASPECT fork (workspace/aspect, synced upstream main) on agent branches + PRs; benchmarks link against fork build.", "why": "User direction: full comparison is the paper."}, {"date": "2026-11-16", "decision": "Step-2 increments: S1-minimal (constant zeta: BulkViscosityOutputs + StokesBulkViscosityTerm + enable flag, preconditioner/dt-limiter deferred); ONE 1-reaction box benchmark first; build fork on this Mac (-j8, /opt/dealii).", "why": "User answers: minimal S1 cut, 1 benchmark, local build."}], "methodology": "Focused literature scoping + code canvas to formulate implementable benchmark strategies", "next_action": "PAUSED: S0+sweep results need user steer - bottom pile-up artifact dominates; propose consistent density init + lower-zeta/cap/tau sweeps before drawing strategy conclusions", "phase": "analysis", "question": "How can dynamic (non-hydrostatic) pressure govern phase transformations in compressible mantle-convection models without generating spurious pressure oscillations, and what role can a bulk-viscosity term (viscous-relaxation timescale) play, compatibly with ASPECT's projected density approximation (PDA)?", "workspaces": {"review": "review/nonhydrostatic-benchmarks/"}}
+{
+ "decisions": [
+  {
+   "date": "2026-11-16",
+   "decision": "Scoped Step-1 evidence gathering as a focused (non-systematic) review: OpenAlex scoping searches + ASPECT source canvas + two seed papers read in full; full claim-verification gate deferred to manuscript stage.",
+   "why": "Prototyping study needs strategies fast; systematic-review machinery would be disproportionate before benchmark design exists."
+  },
+  {
+   "date": "2026-11-16",
+   "decision": "Recommend S2 (relaxed pressure, plugin-only) first and S1b (explicit RHS bulk force) in parallel; full implicit S1 deferred to upstream ASPECT contribution (needs source access + rebuild).",
+   "why": "Canvas proved no bulk-viscosity slot or LHS term exists outside melt transport; plugin-only routes work with the installed 3.2.0-pre build."
+  },
+  {
+   "date": "2026-11-16",
+   "decision": "Test ALL strategies S1-S4 across 1-3 box benchmarks; paper frames compromises between oscillation-free solutions, physical accuracy, and computational practicality. S1 implemented in user ASPECT fork (workspace/aspect, synced upstream main) on agent branches + PRs; benchmarks link against fork build.",
+   "why": "User direction: full comparison is the paper."
+  },
+  {
+   "date": "2026-11-16",
+   "decision": "Step-2 increments: S1-minimal (constant zeta: BulkViscosityOutputs + StokesBulkViscosityTerm + enable flag, preconditioner/dt-limiter deferred); ONE 1-reaction box benchmark first; build fork on this Mac (-j8, /opt/dealii).",
+   "why": "User answers: minimal S1 cut, 1 benchmark, local build."
+  },
+  {
+   "date": "2026-11-16",
+   "decision": "Refactored nh-kinetics onto ReactionChain (Cahn Interface-controlled-growth, N=1) with clean SI prefactor Z=4.44e-04 used directly (no time_scale division; cookbook division flagged for separate upstream fix). Prms renamed to descriptive undamped/implicit_bulk/explicit_bulk/relaxed_pressure/capped_pressure with stepped 3200/3850 init. Combined fork branch agent/bulk-viscosity-chain (stack + S1) gives a single build for all five.",
+   "why": "Upstream review readiness; chain clamp is the maintained overshoot fix; descriptive names for the paper."
+  },
+  {
+   "date": "2026-11-16",
+   "decision": "With clamping active, all five refactored variants are quasi-static: xi bounded, no front dynamics; +72 MPa bottom high is a setup boundary feature (survived stepped init, not an init shock); front dynamic pressure ~5 MPa too small to drive kinetics. Old S1/S1b dipoles and S0 blowup traced to missing post-integration clamp. Next: redesign benchmark (slower through-flow/sharper gradients/slower kinetics) so damping strategies visibly separate.",
+   "why": "Refactored sweep evidence: undamped/explicit/capped ~identical (+72/-5 MPa); implicit adds only a -9 MPa transient at +20% Stokes cost; relaxed keeps -317 MPa corner low."
+  }
+ ],
+ "methodology": "Focused literature scoping + code canvas to formulate implementable benchmark strategies",
+ "next_action": "PAUSED: design higher-gradient 1-reaction benchmark (flow/kinetics competition) before zeta/tau/cap sweeps; S1 build validated on agent/bulk-viscosity-chain",
+ "phase": "analysis",
+ "question": "How can dynamic (non-hydrostatic) pressure govern phase transformations in compressible mantle-convection models without generating spurious pressure oscillations, and what role can a bulk-viscosity term (viscous-relaxation timescale) play, compatibly with ASPECT's projected density approximation (PDA)?",
+ "workspaces": {
+  "review": "review/nonhydrostatic-benchmarks/"
+ }
+}
