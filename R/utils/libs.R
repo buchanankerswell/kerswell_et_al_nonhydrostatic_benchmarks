@@ -1,0 +1,9 @@
+suppressPackageStartupMessages({
+  suppressWarnings({
+    library(tidyverse)
+    library(scales)
+    library(patchwork)
+    library(colorspace)
+    library(knitr)
+  })
+})

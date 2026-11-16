@@ -1,0 +1,14 @@
+name: kerswell-et-al-nonhydrostatic-benchmarks
+channels:
+  - conda-forge
+dependencies:
+  - tqdm
+  - scipy
+  - pip
+  - python=3.11
+  - pandas
+  - matplotlib
+  - pillow
+  - pyvista
+  - pip:
+      - burnman
