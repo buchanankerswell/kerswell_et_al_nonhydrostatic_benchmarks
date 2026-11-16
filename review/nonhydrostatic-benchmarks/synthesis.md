@@ -100,23 +100,55 @@ strategies in §4 are preliminary pending its report.
    (compaction literature calibrates against melt fraction, not reaction
    progress).
 
-## 6. Preliminary strategies (PENDING ASPECT canvas)
+## 6. Strategies (FINAL — grounded in ASPECT canvas, 2026-11-16)
 
-- **S1 — ζ in the Stokes assembly**: inject bulk viscosity through the
-  material-model interface the canvas identifies, keep PDA density at `ph`,
-  govern kinetics by full dynamic pressure, and cap `dt` by the lengthened
-  relaxation time `(4/3 eta + zeta)/(gamma P)`. Closest to maintainers'
-  suggestion; intrusiveness depends on whether ASPECT exposes ζ.
-- **S2 — relaxed pressure at kinetics level**: evolve a low-pass-filtered
-  pressure `dp̄/dt = (p - p̄)/τ_rel` per particle/cell and govern reactions by
-  `p̄`. τ_rel plays the ζ role without touching the Stokes assembly; PDA
-  untouched. Easier to implement; less faithful to the stress tensor.
-- **S3 — resolve tr directly**: small-box benchmark with full-density
-  continuity and `dt < tr` (Curbelo §4) as the undamped reference that S1/S2
-  must reproduce in the large-dt limit.
-- **S4 — capped Gibbs correction (fallback)**: keep adiabatic governance,
-  add dynamic pressure only into the Gibbs driving force with a magnitude cap.
-  Tests sensitivity without closing the feedback loop.
+Canvas results (background agent; ASPECT 3.2.0-pre `/opt/aspect/v3.2.0-pre`,
+upstream-main line numbers ±10, local source unreadable):
+- Bulk viscosity ξ exists **only** in the melt subsystem
+  (`MeltOutputs::compaction_viscosities`); the standard Stokes assembler is
+  shear-only plus the `-2η/3` deviatoric correction — **no ξ(∇·u) LHS term**.
+- `MaterialModelOutputs` has **no bulk-viscosity slot**; without melt
+  transport any ξ a plugin computes is silently ignored.
+- Plugin-reachable explicit path: `AdditionalMaterialOutputsStokesRHS`
+  (`rhs_u`, `rhs_p`) — RHS force only, no implicit LHS damping.
+- PDA continuity (`StokesProjectedDensityFieldTerm`) reads the projected
+  `density_field`, fed plugin-side by
+  `out.reaction_terms[density_idx] = out.densities - in.composition[density]`
+  (`mtz-kinetics.cc:521`, verified) — the feedback loop to damp.
+- No `use_dynamic_pressure` switch upstream; `latent_heat.cc` uses full
+  `in.pressure`, `steinberger.cc` uses adiabatic. The
+  `phase_transition_kinetics` cookbook is the dynamic-pressure prototype;
+  our `mtz-kinetics` already gates `(P - P_ref)` density/Gibbs corrections
+  behind flags (`mtz-kinetics.cc:338,415,447,479`, verified) currently OFF.
+- No upstream benchmark combines phase transitions with compressibility;
+  no ξ-based timestep limiter exists (CFL + max step only).
+
+Revised recommendation (implementability order):
+- **S2 (do first, plugin-only)**: relaxed pressure at kinetics level. Evolve
+  `dp̄/dt = (p - p̄)/τ_rel` and replace `(P - P_ref)` in the Gibbs/density
+  corrections with `(p̄ - P_ref)`. τ_rel is the ζ-knob via
+  `τ_rel ~ (4/3 η + ζ)/(γP)`. Zero solver changes; works with the installed
+  3.2.0-pre build. State variable can ride as an additional compositional
+  field or hidden plugin member updated under operator splitting.
+- **S1b (parallel prototype, plugin-only)**: explicit bulk force through
+  `AdditionalMaterialOutputsStokesRHS` from the previous iterate's `∇·u`.
+  Tests whether lagged damping suffices; expected to be timestep-limited,
+  which itself quantifies the need for implicit treatment.
+- **S1 (upstream contribution, needs ASPECT source access + rebuild)**:
+  new `BulkViscosityOutputs` + `StokesBulkViscosityTerm` assembler
+  (`+ξ·divφᵢ·divφⱼ`) + preconditioner awareness + ξ-based dt limiter.
+  Blocked on `/Users/bck/Working/aspect` readability; propose to ASPECT
+  maintainers as the follow-up PR.
+- **S3 (reference)**: small-box runs with `dt < tr` characterizing the raw
+  oscillation (Curbelo §4), the target S2/S1b must reproduce at large dt.
+- **S4 (fallback, nearly free)**: switch the existing Gibbs flag on with a
+  magnitude cap on `(P - P_ref)·ΔV`; sensitivity test without closing the
+  full density loop.
+
+Proposed Step-2 build: copy `mtz-kinetics` plugin into this repo as a
+benchmark material model (1–3 reactions, box geometry per
+`reaction-chain-box.prm`), implement S2 + S4 flags, add
+`simulation/configs` box benchmark prms.
 
 ## References (screened-in set)
 
