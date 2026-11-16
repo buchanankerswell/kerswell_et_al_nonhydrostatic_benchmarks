@@ -349,6 +349,31 @@ namespace aspect
                 }
             }
 
+          // Backfill property slots of disabled reactions from the nearest
+          // enabled slot. Disabled phases carry zero mass, but the averaging
+          // routines still touch every slot (0/0 -> NaN), so all slots must
+          // hold finite values. This enables 1- and 2-reaction configs.
+          const bool slot_valid[4] = {enable_ol_wd_transformation,
+                                      enable_ol_wd_transformation,
+                                      enable_wd_ri_transformation,
+                                      enable_ri_ps_transformation};
+          for (unsigned int i = 0; i < 4; ++i)
+            if (!slot_valid[i])
+              {
+                unsigned int j = i;
+                for (unsigned int d = 1; d < 4; ++d)
+                  {
+                    if (i >= d && slot_valid[i-d]) { j = i-d; break; }
+                    if (i+d < 4 && slot_valid[i+d]) { j = i+d; break; }
+                  }
+                densities[i] = densities[j];
+                alphas[i]    = alphas[j];
+                betas[i]     = betas[j];
+                cps[i]       = cps[j];
+                Vps[i]       = Vps[j];
+                Vss[i]       = Vss[j];
+              }
+
           // Compute volume fractions from mass fractions
           const std::vector<double> volume_fractions = MaterialUtilities::compute_volumes_from_masses(mass_fractions, densities, true);
 
