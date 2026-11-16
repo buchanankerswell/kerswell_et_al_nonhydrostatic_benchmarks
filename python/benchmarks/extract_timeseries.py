@@ -20,6 +20,7 @@ import numpy as np
 
 def parse_statistics(path):
   """Return {viz_base: time_years} for rows that wrote visualization output."""
+  import re
   mapping = {}
   with open(path) as f:
     for line in f:
@@ -28,7 +29,12 @@ def parse_statistics(path):
         continue
       parts = line.split()
       time = float(parts[1])
-      viz = parts[14].strip('"') if len(parts) > 14 else ""
+      viz = ""
+      for tok in parts:
+        tok = tok.strip('"')
+        if re.search(r"/solution/solution-\d+$", tok):
+          viz = tok
+          break
       if viz:
         mapping[os.path.basename(viz)] = time
   return mapping
@@ -68,7 +74,12 @@ def main():
     rows.append(row)
 
   out = args.output or os.path.join(args.run_dir, "timeseries.csv")
-  keys = sorted({k for r in rows for k in r if k != "output"})
+  seen, keys = set(), []
+  for r in rows:
+    for k in r:
+      if k not in ("output", "time_yr") and k not in seen:
+        seen.add(k)
+        keys.append(k)
   with open(out, "w", newline="") as f:
     w = csv.DictWriter(f, fieldnames=["output", "time_yr"] + keys)
     w.writeheader()
