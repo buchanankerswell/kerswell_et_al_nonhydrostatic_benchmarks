@@ -1,0 +1,139 @@
+{
+  "meta": {
+    "count": 2929,
+    "db_response_time_ms": 118,
+    "page": 1,
+    "per_page": 15,
+    "groups_count": null,
+    "x_query": {
+      "oql": "get articles with (dynamic pressure phase transition kinetics mantle) in the title, abstract, or full text",
+      "x_new_oql": "get articles with (dynamic pressure phase transition kinetics mantle) in the title, abstract, or full text",
+      "oqo": {
+        "get_rows": "works",
+        "filter_rows": [
+          {
+            "column_id": "fulltext.search",
+            "value": "dynamic pressure phase transition kinetics mantle",
+            "operator": "has"
+          },
+          {
+            "column_id": "type",
+            "value": "article"
+          }
+        ]
+      },
+      "url": "/works?filter=fulltext.search:dynamic pressure phase transition kinetics mantle,type:article&per_page=15&page=1",
+      "order": "best matches first",
+      "order_default": true
+    },
+    "cost_usd": 0.001
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W2770702027",
+      "doi": "https://doi.org/10.1016/j.gsf.2017.10.002",
+      "title": "High-pressure phase transitions of anorthosite crust in the Earth's deep mantle",
+      "publication_year": 2017,
+      "cited_by_count": 13
+    },
+    {
+      "id": "https://openalex.org/W2750833995",
+      "doi": "https://doi.org/10.1103/physrevmaterials.2.013605",
+      "title": "Postaragonite phases of CaCO3 at lower mantle pressures",
+      "publication_year": 2018,
+      "cited_by_count": 39
+    },
+    {
+      "id": "https://openalex.org/W2093924190",
+      "doi": "https://doi.org/10.1111/j.1365-246x.2009.04182.x",
+      "title": "Time-dependent interaction between subduction dynamics and phase transition kinetics",
+      "publication_year": 2009,
+      "cited_by_count": 40
+    },
+    {
+      "id": "https://openalex.org/W2288983390",
+      "doi": "https://doi.org/10.1002/2015jb012710",
+      "title": "\u201cDuctile to brittle\u201d transition in thermally stable antigorite gouge at mantle pressures",
+      "publication_year": 2016,
+      "cited_by_count": 47
+    },
+    {
+      "id": "https://openalex.org/W1591316222",
+      "doi": "https://doi.org/10.1029/2010gl043491",
+      "title": "Effect of pressure on grain\u2010growth kinetics of ferropericlase to lower mantle conditions",
+      "publication_year": 2010,
+      "cited_by_count": 5
+    },
+    {
+      "id": "https://openalex.org/W1971265755",
+      "doi": "https://doi.org/10.1186/bf03352678",
+      "title": "Dynamical modeling of trench retreat driven by the slab interaction with the mantle transition zone",
+      "publication_year": 2007,
+      "cited_by_count": 46
+    },
+    {
+      "id": "https://openalex.org/W2020184359",
+      "doi": "https://doi.org/10.1111/j.1365-246x.1982.tb04911.x",
+      "title": "Phase boundaries in finite amplitude mantle convection",
+      "publication_year": 1982,
+      "cited_by_count": 62
+    },
+    {
+      "id": "https://openalex.org/W2002492755",
+      "doi": "https://doi.org/10.1007/s11434-011-4884-2",
+      "title": "An experimental study of phase transformations in olivine under pressure and temperature conditions corresponding to the mantle transition zone",
+      "publication_year": 2011,
+      "cited_by_count": 10
+    },
+    {
+      "id": "https://openalex.org/W2072062381",
+      "doi": "https://doi.org/10.1016/j.pepi.2014.12.001",
+      "title": "Impact of phase change kinetics on the Mariana slab within the framework of 2-D mantle convection",
+      "publication_year": 2014,
+      "cited_by_count": 16
+    },
+    {
+      "id": "https://openalex.org/W2255407013",
+      "doi": "https://doi.org/10.1038/ncomms8700",
+      "title": "Continental flood basalts derived from the hydrous mantle transition zone",
+      "publication_year": 2015,
+      "cited_by_count": 214
+    },
+    {
+      "id": "https://openalex.org/W4402748065",
+      "doi": "https://doi.org/10.1038/s41467-024-52505-0",
+      "title": "Phase transition kinetics of superionic H2O ice phases revealed by Megahertz X-ray free-electron laser-heating experiments",
+      "publication_year": 2024,
+      "cited_by_count": 19
+    },
+    {
+      "id": "https://openalex.org/W1999172905",
+      "doi": "https://doi.org/10.1046/j.1365-246x.2003.01967.x",
+      "title": "Simultaneous inversion for mantle shear velocity and topography of transition zone discontinuities",
+      "publication_year": 2003,
+      "cited_by_count": 119
+    },
+    {
+      "id": "https://openalex.org/W4413773441",
+      "doi": "https://doi.org/10.1029/2025gl116408",
+      "title": "GRACE Detection of Transient Mass Redistributions During a Mineral Phase Transition in the Deep Mantle",
+      "publication_year": 2025,
+      "cited_by_count": 8
+    },
+    {
+      "id": "https://openalex.org/W2052085397",
+      "doi": "https://doi.org/10.2478/s11532-012-0090-6",
+      "title": "Pressure induced structural phase transitions\u2014A review",
+      "publication_year": 2012,
+      "cited_by_count": 28
+    },
+    {
+      "id": "https://openalex.org/W2001214682",
+      "doi": "https://doi.org/10.1093/petrology/egt035",
+      "title": "New Thermodynamic Models and Calculated Phase Equilibria in NCFMAS for Basic and Ultrabasic Compositions through the Transition Zone into the Uppermost Lower Mantle",
+      "publication_year": 2013,
+      "cited_by_count": 84
+    }
+  ],
+  "group_by": []
+}

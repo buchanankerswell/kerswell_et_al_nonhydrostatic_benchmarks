@@ -1,0 +1,3713 @@
+{
+  "meta": {
+    "count": 10,
+    "db_response_time_ms": 13,
+    "page": 1,
+    "per_page": 12,
+    "groups_count": null,
+    "x_query": {
+      "oql": "get works where openalex id is (W2046423877 or W2080636262 or W2082622193 or W2564541807 or W2924712211 or W3135106370 or W4296033362 or W4410621472 or W7152073979 or W7154629498)",
+      "x_new_oql": "get works where openalex id is (W2046423877 or W2080636262 or W2082622193 or W2564541807 or W2924712211 or W3135106370 or W4296033362 or W4410621472 or W7152073979 or W7154629498)",
+      "oqo": {
+        "get_rows": "works",
+        "filter_rows": [
+          {
+            "join": "or",
+            "filters": [
+              {
+                "column_id": "ids.openalex",
+                "value": "W2046423877"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W2080636262"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W2082622193"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W2564541807"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W2924712211"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W3135106370"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W4296033362"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W4410621472"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W7152073979"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W7154629498"
+              }
+            ]
+          }
+        ]
+      },
+      "url": "/works?filter=ids.openalex:W2046423877|W2080636262|W2082622193|W2564541807|W2924712211|W3135106370|W4296033362|W4410621472|W7152073979|W7154629498&per_page=12&page=1",
+      "order": "most cited (age-adjusted) first",
+      "order_default": true
+    },
+    "cost_usd": 0.0001
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W2046423877",
+      "doi": "https://doi.org/10.1038/338753a0",
+      "title": "Stress dependence of the mechanism of the olivine\u2013spinel transformation",
+      "publication_year": 1989,
+      "cited_by_count": 143,
+      "abstract_inverted_index": null
+    },
+    {
+      "id": "https://openalex.org/W2564541807",
+      "doi": "https://doi.org/10.1002/2016jb013084",
+      "title": "Stresses and pressures at the quartz\u2010to\u2010coesite phase transformation in shear deformation experiments",
+      "publication_year": 2016,
+      "cited_by_count": 60,
+      "abstract_inverted_index": {
+        "Abstract": [
+          0
+        ],
+        "Coesite": [
+          1
+        ],
+        "was": [
+          2,
+          53
+        ],
+        "found": [
+          3
+        ],
+        "in": [
+          4,
+          26,
+          105
+        ],
+        "quartz": [
+          5,
+          107,
+          168
+        ],
+        "aggregates,": [
+          6
+        ],
+        "experimentally": [
+          7
+        ],
+        "deformed": [
+          8
+        ],
+        "at": [
+          9,
+          194
+        ],
+        "confining": [
+          10,
+          22
+        ],
+        "pressures": [
+          11
+        ],
+        "of": [
+          12,
+          33,
+          39,
+          58,
+          160,
+          164,
+          185,
+          225
+        ],
+        "1.0\u20131.5": [
+          13
+        ],
+        "GPa": [
+          14
+        ],
+        "and": [
+          15,
+          19,
+          190,
+          196,
+          198
+        ],
+        "temperatures": [
+          16
+        ],
+        "between": [
+          17
+        ],
+        "600\u00b0C": [
+          18
+        ],
+        "900\u00b0C.": [
+          20
+        ],
+        "The": [
+          21,
+          180,
+          205
+        ],
+        "pressure": [
+          23,
+          186
+        ],
+        "(Pc)": [
+          24
+        ],
+        "and,": [
+          25,
+          97
+        ],
+        "most": [
+          27
+        ],
+        "cases,": [
+          28,
+          116
+        ],
+        "the": [
+          29,
+          34,
+          40,
+          48,
+          55,
+          59,
+          66,
+          93,
+          106,
+          119,
+          125,
+          132,
+          136,
+          145,
+          150,
+          158,
+          202,
+          222
+        ],
+        "mean": [
+          30
+        ],
+        "stress": [
+          31,
+          51
+        ],
+        "(\u03c3m)": [
+          32
+        ],
+        "experiments": [
+          35,
+          181
+        ],
+        "were": [
+          36,
+          70
+        ],
+        "below": [
+          37
+        ],
+        "those": [
+          38
+        ],
+        "quartz\u2010to\u2010coesite": [
+          41,
+          94,
+          120,
+          137
+        ],
+        "phase": [
+          42,
+          95,
+          214,
+          227
+        ],
+        "transformation.": [
+          43
+        ],
+        "Yet": [
+          44
+        ],
+        "coesite": [
+          45,
+          60,
+          68,
+          74,
+          146
+        ],
+        "formed": [
+          46
+        ],
+        "when": [
+          47
+        ],
+        "maximum": [
+          49
+        ],
+        "principal": [
+          50
+        ],
+        "(\u03c31)": [
+          52
+        ],
+        "within": [
+          54
+        ],
+        "P\u2010T": [
+          56
+        ],
+        "range": [
+          57
+        ],
+        "stability": [
+          61,
+          108
+        ],
+        "field.": [
+          62
+        ],
+        "In": [
+          63,
+          114,
+          162
+        ],
+        "one": [
+          64
+        ],
+        "sample,": [
+          65
+        ],
+        "euhedral": [
+          67
+        ],
+        "grains": [
+          69,
+          169
+        ],
+        "corroded": [
+          71
+        ],
+        "indicating": [
+          72
+        ],
+        "that": [
+          73,
+          84,
+          129,
+          207
+        ],
+        "started": [
+          75,
+          87
+        ],
+        "to": [
+          76,
+          79,
+          88,
+          103,
+          111,
+          177
+        ],
+        "transform": [
+          77
+        ],
+        "back": [
+          78,
+          165
+        ],
+        "quartz.": [
+          80
+        ],
+        "It": [
+          81
+        ],
+        "is": [
+          82,
+          131,
+          209
+        ],
+        "inferred": [
+          83
+        ],
+        "this": [
+          85
+        ],
+        "sample": [
+          86
+        ],
+        "deform": [
+          89
+        ],
+        "with": [
+          90,
+          98,
+          157,
+          175
+        ],
+        "\u03c31": [
+          91,
+          101,
+          117,
+          130,
+          208
+        ],
+        "above": [
+          92
+        ],
+        "transformation": [
+          96,
+          215
+        ],
+        "ongoing": [
+          99
+        ],
+        "deformation,": [
+          100,
+          144
+        ],
+        "decreased": [
+          102
+        ],
+        "values": [
+          104
+        ],
+        "field": [
+          109
+        ],
+        "due": [
+          110
+        ],
+        "strain": [
+          112
+        ],
+        "weakening.": [
+          113
+        ],
+        "all": [
+          115
+        ],
+        "triggered": [
+          118
+        ],
+        "reaction": [
+          121,
+          203
+        ],
+        "as": [
+          122,
+          124,
+          153
+        ],
+        "well": [
+          123
+        ],
+        "reverse": [
+          126
+        ],
+        "reaction,": [
+          127,
+          166
+        ],
+        "suggesting": [
+          128
+        ],
+        "critical": [
+          133,
+          210
+        ],
+        "parameter": [
+          134
+        ],
+        "for": [
+          135,
+          211,
+          217,
+          221
+        ],
+        "transformation\u2014not": [
+          138
+        ],
+        "Pc": [
+          139
+        ],
+        "or": [
+          140
+        ],
+        "\u03c3m.": [
+          141
+        ],
+        "With": [
+          142
+        ],
+        "progressive": [
+          143
+        ],
+        "laths": [
+          147
+        ],
+        "rotated": [
+          148
+        ],
+        "toward": [
+          149
+        ],
+        "shear": [
+          151
+        ],
+        "plane": [
+          152
+        ],
+        "more": [
+          154
+        ],
+        "rigid": [
+          155
+        ],
+        "particles": [
+          156
+        ],
+        "sense": [
+          159
+        ],
+        "shear.": [
+          161
+        ],
+        "case": [
+          163
+        ],
+        "new": [
+          167
+        ],
+        "exhibit": [
+          170
+        ],
+        "no": [
+          171
+        ],
+        "systematic": [
+          172
+        ],
+        "crystallographic": [
+          173
+        ],
+        "relationship": [
+          174
+        ],
+        "respect": [
+          176
+        ],
+        "old": [
+          178
+        ],
+        "coesite.": [
+          179
+        ],
+        "cover": [
+          182
+        ],
+        "different": [
+          183,
+          188,
+          191
+        ],
+        "degrees": [
+          184
+        ],
+        "\u201coverstepping,\u201d": [
+          187
+        ],
+        "temperatures,": [
+          189
+        ],
+        "experimental": [
+          192
+        ],
+        "durations": [
+          193
+        ],
+        "P": [
+          195
+        ],
+        "T,": [
+          197
+        ],
+        "deformation": [
+          199
+        ],
+        "always": [
+          200
+        ],
+        "enhances": [
+          201
+        ],
+        "kinetics.": [
+          204
+        ],
+        "observation": [
+          206
+        ],
+        "a": [
+          212
+        ],
+        "pressure\u2010dependent": [
+          213
+        ],
+        "(also": [
+          216
+        ],
+        "reversals)": [
+          218
+        ],
+        "poses": [
+          219
+        ],
+        "questions": [
+          220
+        ],
+        "thermodynamic": [
+          223
+        ],
+        "treatment": [
+          224
+        ],
+        "such": [
+          226
+        ],
+        "transformations.": [
+          228
+        ]
+      }
+    },
+    {
+      "id": "https://openalex.org/W4296033362",
+      "doi": "https://doi.org/10.1038/s41467-022-32923-8",
+      "title": "In situ X-ray and acoustic observations of deep seismic faulting upon phase transitions in olivine",
+      "publication_year": 2022,
+      "cited_by_count": 21,
+      "abstract_inverted_index": {
+        "Abstract": [
+          0
+        ],
+        "The": [
+          1
+        ],
+        "activity": [
+          2
+        ],
+        "of": [
+          3,
+          40,
+          47,
+          85,
+          104,
+          124,
+          135,
+          153,
+          173
+        ],
+        "deep-focus": [
+          4,
+          182
+        ],
+        "earthquakes,": [
+          5,
+          49
+        ],
+        "which": [
+          6,
+          148
+        ],
+        "increases": [
+          7
+        ],
+        "with": [
+          8,
+          157
+        ],
+        "depth": [
+          9,
+          188
+        ],
+        "from": [
+          10
+        ],
+        "~400": [
+          11
+        ],
+        "km": [
+          12
+        ],
+        "to": [
+          13,
+          27,
+          72,
+          101,
+          181
+        ],
+        "a": [
+          14,
+          145
+        ],
+        "peak": [
+          15
+        ],
+        "at": [
+          16,
+          29,
+          94,
+          120,
+          132
+        ],
+        "~600": [
+          17
+        ],
+        "km,": [
+          18
+        ],
+        "is": [
+          19,
+          25,
+          149
+        ],
+        "enigmatic,": [
+          20
+        ],
+        "because": [
+          21
+        ],
+        "conventional": [
+          22
+        ],
+        "brittle": [
+          23
+        ],
+        "failure": [
+          24
+        ],
+        "unlikely": [
+          26
+        ],
+        "occur": [
+          28
+        ],
+        "elevated": [
+          30
+        ],
+        "pressures.": [
+          31
+        ],
+        "It": [
+          32
+        ],
+        "becomes": [
+          33
+        ],
+        "increasingly": [
+          34
+        ],
+        "clear": [
+          35
+        ],
+        "that": [
+          36,
+          115,
+          165
+        ],
+        "pressure-induced": [
+          37
+        ],
+        "phase": [
+          38
+        ],
+        "transitions": [
+          39
+        ],
+        "olivine": [
+          41,
+          69,
+          93,
+          159,
+          176
+        ],
+        "are": [
+          42,
+          70
+        ],
+        "responsible": [
+          43
+        ],
+        "for": [
+          44
+        ],
+        "the": [
+          45,
+          48,
+          74,
+          83,
+          102,
+          105,
+          109,
+          133,
+          170,
+          174
+        ],
+        "occurrence": [
+          46
+        ],
+        "based": [
+          50
+        ],
+        "on": [
+          51,
+          67,
+          88,
+          169
+        ],
+        "deformation": [
+          52,
+          86
+        ],
+        "experiments": [
+          53,
+          59,
+          87
+        ],
+        "under": [
+          54
+        ],
+        "pressure.": [
+          55
+        ],
+        "However,": [
+          56
+        ],
+        "many": [
+          57
+        ],
+        "such": [
+          58
+        ],
+        "were": [
+          60
+        ],
+        "made": [
+          61
+        ],
+        "using": [
+          62
+        ],
+        "analogue": [
+          63
+        ],
+        "materials": [
+          64
+        ],
+        "and": [
+          65,
+          97,
+          160,
+          187
+        ],
+        "those": [
+          66
+        ],
+        "mantle": [
+          68,
+          110
+        ],
+        "required": [
+          71
+        ],
+        "verify": [
+          73
+        ],
+        "hypotheses": [
+          75
+        ],
+        "developed": [
+          76
+        ],
+        "by": [
+          77,
+          128,
+          140
+        ],
+        "these": [
+          78
+        ],
+        "studies.": [
+          79
+        ],
+        "Here": [
+          80
+        ],
+        "we": [
+          81
+        ],
+        "report": [
+          82
+        ],
+        "results": [
+          84
+        ],
+        "(Mg,Fe)": [
+          89
+        ],
+        "2": [
+          90
+        ],
+        "SiO": [
+          91
+        ],
+        "4": [
+          92
+        ],
+        "11\u221217": [
+          95
+        ],
+        "GPa": [
+          96
+        ],
+        "860\u22121350": [
+          98
+        ],
+        "K,": [
+          99,
+          126
+        ],
+        "equivalent": [
+          100
+        ],
+        "conditions": [
+          103
+        ],
+        "slabs": [
+          106
+        ],
+        "subducted": [
+          107
+        ],
+        "into": [
+          108
+        ],
+        "transition": [
+          111
+        ],
+        "zone.": [
+          112
+        ],
+        "We": [
+          113
+        ],
+        "find": [
+          114
+        ],
+        "throughgoing": [
+          116
+        ],
+        "faulting": [
+          117,
+          167
+        ],
+        "occurs": [
+          118,
+          143,
+          168
+        ],
+        "only": [
+          119
+        ],
+        "very": [
+          121
+        ],
+        "limited": [
+          122,
+          185
+        ],
+        "temperatures": [
+          123
+        ],
+        "1100\u22121160": [
+          125
+        ],
+        "accompanied": [
+          127
+        ],
+        "intense": [
+          129
+        ],
+        "acoustic": [
+          130
+        ],
+        "emissions": [
+          131
+        ],
+        "onset": [
+          134
+        ],
+        "rupture.": [
+          136
+        ],
+        "Fault": [
+          137
+        ],
+        "sliding": [
+          138
+        ],
+        "aided": [
+          139
+        ],
+        "shear": [
+          141
+        ],
+        "heating": [
+          142
+        ],
+        "along": [
+          144
+        ],
+        "weak": [
+          146
+        ],
+        "layer,": [
+          147
+        ],
+        "formed": [
+          150
+        ],
+        "via": [
+          151
+        ],
+        "linking-up": [
+          152
+        ],
+        "lenticular": [
+          154
+        ],
+        "packets": [
+          155
+        ],
+        "filled": [
+          156
+        ],
+        "nanocrystalline": [
+          158
+        ],
+        "wadsleyite.": [
+          161
+        ],
+        "Our": [
+          162
+        ],
+        "study": [
+          163
+        ],
+        "suggests": [
+          164
+        ],
+        "transformational": [
+          166
+        ],
+        "isothermal": [
+          171
+        ],
+        "surface": [
+          172
+        ],
+        "metastable": [
+          175
+        ],
+        "wedge": [
+          177
+        ],
+        "in": [
+          178,
+          184
+        ],
+        "slabs,": [
+          179
+        ],
+        "leading": [
+          180
+        ],
+        "earthquakes": [
+          183
+        ],
+        "regions": [
+          186
+        ],
+        "range.": [
+          189
+        ]
+      }
+    },
+    {
+      "id": "https://openalex.org/W2082622193",
+      "doi": "https://doi.org/10.1046/j.1365-246x.1998.00539.x",
+      "title": "A model of transformational superplasticity in the upper mantle",
+      "publication_year": 1998,
+      "cited_by_count": 46,
+      "abstract_inverted_index": {
+        "We": [
+          0
+        ],
+        "develop": [
+          1
+        ],
+        "a": [
+          2,
+          13,
+          27,
+          81,
+          147,
+          208,
+          213,
+          217,
+          252,
+          284,
+          357
+        ],
+        "model": [
+          3,
+          256
+        ],
+        "of": [
+          4,
+          7,
+          20,
+          23,
+          31,
+          34,
+          46,
+          60,
+          69,
+          84,
+          94,
+          121,
+          126,
+          128,
+          137,
+          164,
+          171,
+          181,
+          219,
+          243,
+          261,
+          264,
+          267,
+          270,
+          275,
+          283,
+          320,
+          328,
+          365,
+          381
+        ],
+        "transformational": [
+          5,
+          233
+        ],
+        "superplasticity": [
+          6
+        ],
+        "the": [
+          8,
+          21,
+          39,
+          44,
+          47,
+          52,
+          56,
+          61,
+          65,
+          70,
+          74,
+          85,
+          90,
+          95,
+          102,
+          106,
+          108,
+          114,
+          124,
+          129,
+          135,
+          138,
+          167,
+          172,
+          184,
+          189,
+          227,
+          231,
+          240,
+          244,
+          247,
+          265,
+          276,
+          281,
+          294,
+          300,
+          307,
+          314,
+          329,
+          334,
+          345,
+          348,
+          363,
+          366,
+          370,
+          373
+        ],
+        "mantle": [
+          9,
+          130,
+          154,
+          215,
+          254,
+          288
+        ],
+        "as": [
+          10,
+          290
+        ],
+        "it": [
+          11
+        ],
+        "undergoes": [
+          12
+        ],
+        "solid-solid": [
+          14
+        ],
+        "phase": [
+          15,
+          96,
+          139,
+          285
+        ],
+        "change.By": [
+          16
+        ],
+        "considering": [
+          17
+        ],
+        "various": [
+          18
+        ],
+        "scenarios": [
+          19
+        ],
+        "evolution": [
+          22
+        ],
+        "grain": [
+          24,
+          103,
+          204,
+          220
+        ],
+        "geometry": [
+          25,
+          104
+        ],
+        "in": [
+          26,
+          198,
+          306,
+          347,
+          362,
+          372
+        ],
+        "polycrystalline": [
+          28
+        ],
+        "material": [
+          29
+        ],
+        "composed": [
+          30
+        ],
+        "two": [
+          32,
+          162,
+          177
+        ],
+        "phases": [
+          33
+        ],
+        "different": [
+          35
+        ],
+        "densities,": [
+          36
+        ],
+        "we": [
+          37,
+          206
+        ],
+        "estimate": [
+          38,
+          98
+        ],
+        "strain": [
+          40,
+          58,
+          110,
+          116,
+          199,
+          225
+        ],
+        "rate": [
+          41,
+          59,
+          68,
+          200
+        ],
+        "associated": [
+          42
+        ],
+        "with": [
+          43,
+          150
+        ],
+        "reshaping": [
+          45,
+          62
+        ],
+        "grains": [
+          48,
+          63
+        ],
+        "required": [
+          49
+        ],
+        "to": [
+          50,
+          64,
+          159,
+          161,
+          178,
+          353,
+          378,
+          387
+        ],
+        "accommodate": [
+          51
+        ],
+        "volume": [
+          53
+        ],
+        "change.We": [
+          54
+        ],
+        "relate": [
+          55
+        ],
+        "deviatoric": [
+          57,
+          109
+        ],
+        "macroscopic": [
+          66
+        ],
+        "dilatation": [
+          67
+        ],
+        "entire": [
+          71
+        ],
+        "composite,": [
+          72
+        ],
+        "where": [
+          73
+        ],
+        "latter": [
+          75
+        ],
+        "is": [
+          76,
+          343,
+          351,
+          376
+        ],
+        "evaluated": [
+          77
+        ],
+        "both": [
+          78
+        ],
+        "by": [
+          79,
+          88,
+          118,
+          157,
+          176,
+          356
+        ],
+        "applying": [
+          80
+        ],
+        "kinetic": [
+          82
+        ],
+        "theory": [
+          83
+        ],
+        "transformation": [
+          86,
+          286
+        ],
+        "and": [
+          87,
+          105,
+          143,
+          175,
+          203,
+          216,
+          224,
+          257,
+          296,
+          317,
+          369
+        ],
+        "implementing": [
+          89
+        ],
+        "seismically": [
+          91
+        ],
+        "observed": [
+          92
+        ],
+        "sharpness": [
+          93
+        ],
+        "transformation.We": [
+          97
+        ],
+        "that,": [
+          99,
+          340
+        ],
+        "depending": [
+          100
+        ],
+        "on": [
+          101,
+          239,
+          287,
+          293
+        ],
+        "kinetics,": [
+          107
+        ],
+        "rates": [
+          111,
+          117
+        ],
+        "can": [
+          112
+        ],
+        "exceed": [
+          113
+        ],
+        "dilatational": [
+          115
+        ],
+        "an": [
+          119,
+          236,
+          379,
+          382
+        ],
+        "order": [
+          120,
+          266,
+          269
+        ],
+        "magnitude.We": [
+          122
+        ],
+        "calculate": [
+          123,
+          246
+        ],
+        "degree": [
+          125
+        ],
+        "softening": [
+          127
+        ],
+        "that": [
+          131,
+          259,
+          354
+        ],
+        "would": [
+          132,
+          310
+        ],
+        "occur": [
+          133,
+          272
+        ],
+        "at": [
+          134,
+          141,
+          191,
+          273
+        ],
+        "beginning": [
+          136
+        ],
+        "transformations": [
+          140
+        ],
+        "400": [
+          142
+        ],
+        "670": [
+          144,
+          192
+        ],
+        "km": [
+          145,
+          170,
+          187,
+          193,
+          389
+        ],
+        "depths.For": [
+          146
+        ],
+        "power-law": [
+          148
+        ],
+        "rheology": [
+          149
+        ],
+        "stress": [
+          151
+        ],
+        "exponent": [
+          152
+        ],
+        "n=3,": [
+          153
+        ],
+        "viscosity": [
+          155,
+          242,
+          263,
+          364
+        ],
+        "decreases": [
+          156
+        ],
+        "up": [
+          158
+        ],
+        "one": [
+          160,
+          268
+        ],
+        "orders": [
+          163,
+          180
+        ],
+        "magnitude": [
+          165,
+          182,
+          271
+        ],
+        "within": [
+          166,
+          183,
+          333
+        ],
+        "first": [
+          168,
+          185
+        ],
+        "1.5": [
+          169
+        ],
+        "upper": [
+          173,
+          237
+        ],
+        "transition,": [
+          174
+        ],
+        "three": [
+          179
+        ],
+        "1": [
+          186
+        ],
+        "for": [
+          188,
+          196,
+          212,
+          251
+        ],
+        "transition": [
+          190
+        ],
+        "depth.To": [
+          194
+        ],
+        "account": [
+          195
+        ],
+        "uncertainties": [
+          197
+        ],
+        "(or": [
+          201
+        ],
+        "stress)": [
+          202
+        ],
+        "size,": [
+          205
+        ],
+        "construct": [
+          207
+        ],
+        "deformation": [
+          209
+        ],
+        "mechanism": [
+          210
+        ],
+        "map": [
+          211
+        ],
+        "three-component": [
+          214
+        ],
+        "variety": [
+          218
+        ],
+        "sizes,": [
+          221
+        ],
+        "tectonic": [
+          222
+        ],
+        "stresses": [
+          223,
+          234
+        ],
+        "rates.In": [
+          226
+        ],
+        "dislocation": [
+          228
+        ],
+        "creep": [
+          229
+        ],
+        "regime,": [
+          230
+        ],
+        "high": [
+          232
+        ],
+        "place": [
+          235
+        ],
+        "bound": [
+          238
+        ],
+        "effective": [
+          241,
+          262
+        ],
+        "composite.We": [
+          245
+        ],
+        "transformational-superplasticity": [
+          248
+        ],
+        "(TS)": [
+          249
+        ],
+        "field": [
+          250
+        ],
+        "particular": [
+          253
+        ],
+        "flow": [
+          255,
+          278,
+          330
+        ],
+        "show": [
+          258,
+          339
+        ],
+        "variations": [
+          260
+        ],
+        "half": [
+          274
+        ],
+        "dominant": [
+          277
+        ],
+        "wavelength.We": [
+          279
+        ],
+        "describe": [
+          280
+        ],
+        "effects": [
+          282
+        ],
+        "dynamics": [
+          289
+        ],
+        "jump": [
+          291
+        ],
+        "conditions": [
+          292
+        ],
+        "vertical": [
+          295
+        ],
+        "lateral": [
+          297
+        ],
+        "velocities": [
+          298,
+          331
+        ],
+        "across": [
+          299,
+          313
+        ],
+        "thin": [
+          301
+        ],
+        "two-phase": [
+          302
+        ],
+        "layer.An": [
+          303
+        ],
+        "abrupt": [
+          304
+        ],
+        "change": [
+          305,
+          346,
+          371
+        ],
+        "azimuthal": [
+          308
+        ],
+        "velocity": [
+          309
+        ],
+        "facilitate": [
+          311
+        ],
+        "mixing": [
+          312
+        ],
+        "phase-change": [
+          315
+        ],
+        "region": [
+          316
+        ],
+        "cause": [
+          318
+        ],
+        "refraction": [
+          319
+        ],
+        "currents": [
+          321
+        ],
+        "passing": [
+          322
+        ],
+        "through": [
+          323
+        ],
+        "this": [
+          324
+        ],
+        "depth.The": [
+          325
+        ],
+        "largest": [
+          326
+        ],
+        "deviation": [
+          327
+        ],
+        "occurs": [
+          332
+        ],
+        "major": [
+          335
+        ],
+        "up-and": [
+          336
+        ],
+        "downwellings.We": [
+          337
+        ],
+        "also": [
+          338
+        ],
+        "when": [
+          341
+        ],
+        "TS": [
+          342
+        ],
+        "included,": [
+          344
+        ],
+        "long-wavelength": [
+          349
+        ],
+        "geoid": [
+          350,
+          375
+        ],
+        "comparable": [
+          352
+        ],
+        "caused": [
+          355
+        ],
+        "50": [
+          358
+        ],
+        "per": [
+          359
+        ],
+        "cent": [
+          360
+        ],
+        "increase": [
+          361
+        ],
+        "lower": [
+          367
+        ],
+        "mantle,": [
+          368
+        ],
+        "short-wavelength": [
+          374
+        ],
+        "similar": [
+          377
+        ],
+        "extension": [
+          380
+        ],
+        "upper-mantle": [
+          383
+        ],
+        "low-viscosity": [
+          384
+        ],
+        "zone": [
+          385
+        ],
+        "down": [
+          386
+        ],
+        "450": [
+          388
+        ],
+        "depth.": [
+          390
+        ]
+      }
+    },
+    {
+      "id": "https://openalex.org/W2080636262",
+      "doi": "https://doi.org/10.1029/93jb01614",
+      "title": "Shear\u2010promoted phase transitions in Fe2SiO4 and Mg2SiO4 and the mechanism of deep earthquakes",
+      "publication_year": 1993,
+      "cited_by_count": 52,
+      "abstract_inverted_index": {
+        "Phase": [
+          0
+        ],
+        "transformations": [
+          1,
+          202,
+          210
+        ],
+        "in": [
+          2,
+          8,
+          63,
+          79,
+          139,
+          141,
+          193,
+          227,
+          251
+        ],
+        "end\u2010member": [
+          3
+        ],
+        "olivines": [
+          4
+        ],
+        "have": [
+          5
+        ],
+        "been": [
+          6
+        ],
+        "investigated": [
+          7
+        ],
+        "the": [
+          9,
+          14,
+          22,
+          26,
+          64,
+          76,
+          80,
+          84,
+          95,
+          101,
+          118,
+          126,
+          129,
+          145,
+          160,
+          176,
+          188,
+          201,
+          209,
+          252,
+          256,
+          262
+        ],
+        "temperature": [
+          10,
+          163
+        ],
+        "range": [
+          11
+        ],
+        "comparable": [
+          12
+        ],
+        "to": [
+          13,
+          35,
+          52,
+          58,
+          93,
+          133,
+          220
+        ],
+        "interior": [
+          15,
+          254
+        ],
+        "of": [
+          16,
+          28,
+          30,
+          72,
+          83,
+          117,
+          148,
+          178,
+          223,
+          248,
+          255,
+          264
+        ],
+        "subducting": [
+          17,
+          229
+        ],
+        "slabs.": [
+          18
+        ],
+        "This": [
+          19
+        ],
+        "work": [
+          20
+        ],
+        "constitutes": [
+          21
+        ],
+        "experimental": [
+          23
+        ],
+        "evidence": [
+          24
+        ],
+        "that": [
+          25,
+          159,
+          245
+        ],
+        "kinetics": [
+          27
+        ],
+        "transformation": [
+          29,
+          162,
+          250
+        ],
+        "silicate": [
+          31
+        ],
+        "olivine": [
+          32,
+          218
+        ],
+        "(\u03b1": [
+          33
+        ],
+        "phase)": [
+          34
+        ],
+        "modified": [
+          36
+        ],
+        "spinel": [
+          37,
+          40
+        ],
+        "(\u03b2)": [
+          38
+        ],
+        "and": [
+          39,
+          87,
+          153,
+          190
+        ],
+        "(\u03b3)": [
+          41
+        ],
+        "phases": [
+          42
+        ],
+        "is": [
+          43,
+          259
+        ],
+        "enhanced": [
+          44
+        ],
+        "by": [
+          45,
+          172,
+          214
+        ],
+        "shear": [
+          46,
+          88,
+          173,
+          215,
+          238
+        ],
+        "deformation.": [
+          47,
+          174,
+          216
+        ],
+        "Natural": [
+          48
+        ],
+        "fayalite": [
+          49
+        ],
+        "(\u03b1\u2010Fe2SiO4)": [
+          50
+        ],
+        "subjected": [
+          51
+        ],
+        "a": [
+          53,
+          70,
+          183,
+          221,
+          228
+        ],
+        "pressure": [
+          54,
+          77,
+          143
+        ],
+        "gradient": [
+          55
+        ],
+        "from": [
+          56,
+          131
+        ],
+        "0": [
+          57
+        ],
+        "25": [
+          59
+        ],
+        "GPa": [
+          60
+        ],
+        "at": [
+          61,
+          105,
+          137
+        ],
+        "380\u00b0C": [
+          62
+        ],
+        "diamond": [
+          65
+        ],
+        "anvil": [
+          66
+        ],
+        "cell": [
+          67
+        ],
+        "(DAC)": [
+          68
+        ],
+        "developed": [
+          69
+        ],
+        "ring": [
+          71
+        ],
+        "\u03b3": [
+          73,
+          85,
+          151
+        ],
+        "phase": [
+          74,
+          86,
+          152,
+          236
+        ],
+        "where": [
+          75
+        ],
+        "was": [
+          78,
+          90,
+          135
+        ],
+        "stability": [
+          81,
+          146
+        ],
+        "field": [
+          82
+        ],
+        "stress": [
+          89
+        ],
+        "large": [
+          91
+        ],
+        "enough": [
+          92
+        ],
+        "promote": [
+          94
+        ],
+        "\u03b1\u2192\u03b3": [
+          96,
+          191
+        ],
+        "transition.": [
+          97
+        ],
+        "The": [
+          98,
+          113
+        ],
+        "sample": [
+          99,
+          119
+        ],
+        "inside": [
+          100
+        ],
+        "ring,": [
+          102
+        ],
+        "despite": [
+          103
+        ],
+        "being": [
+          104
+        ],
+        "higher": [
+          106
+        ],
+        "pressure,": [
+          107
+        ],
+        "remained": [
+          108,
+          121
+        ],
+        "dominantly": [
+          109
+        ],
+        "as": [
+          110,
+          122,
+          168,
+          170,
+          233
+        ],
+        "\u03b1": [
+          111,
+          123,
+          132,
+          235
+        ],
+        "phase.": [
+          112,
+          124
+        ],
+        "outermost,": [
+          114
+        ],
+        "lower\u2010pressure": [
+          115
+        ],
+        "region": [
+          116,
+          247
+        ],
+        "also": [
+          120
+        ],
+        "In": [
+          125
+        ],
+        "Mg2SiO4": [
+          127
+        ],
+        "system,": [
+          128
+        ],
+        "transition": [
+          130
+        ],
+        "\u03b2": [
+          134,
+          149
+        ],
+        "observed": [
+          136
+        ],
+        "575\u00b0C": [
+          138
+        ],
+        "runs": [
+          140
+        ],
+        "which": [
+          142
+        ],
+        "covered": [
+          144
+        ],
+        "fields": [
+          147
+        ],
+        "phase,": [
+          150
+        ],
+        "mixed": [
+          154
+        ],
+        "oxides.": [
+          155
+        ],
+        "These": [
+          156
+        ],
+        "results": [
+          157
+        ],
+        "show": [
+          158
+        ],
+        "characteristic": [
+          161
+        ],
+        "TCh": [
+          164
+        ],
+        "can": [
+          165,
+          211,
+          231
+        ],
+        "be": [
+          166,
+          212
+        ],
+        "lowered": [
+          167
+        ],
+        "much": [
+          169
+        ],
+        "\u223c200\u00b0C": [
+          171
+        ],
+        "On": [
+          175
+        ],
+        "basis": [
+          177
+        ],
+        "these": [
+          179
+        ],
+        "observations,": [
+          180
+        ],
+        "we": [
+          181
+        ],
+        "propose": [
+          182
+        ],
+        "nonhydrostatic": [
+          184
+        ],
+        "kinetic": [
+          185
+        ],
+        "boundary": [
+          186
+        ],
+        "for": [
+          187,
+          261
+        ],
+        "\u03b1\u2192\u03b2": [
+          189
+        ],
+        "transitions": [
+          192
+        ],
+        "mantle": [
+          194
+        ],
+        "olivine.": [
+          195
+        ],
+        "For": [
+          196
+        ],
+        "temperatures": [
+          197
+        ],
+        "below": [
+          198
+        ],
+        "this": [
+          199,
+          246
+        ],
+        "boundary,": [
+          200
+        ],
+        "are": [
+          203
+        ],
+        "kinetically": [
+          204
+        ],
+        "inhibited,": [
+          205
+        ],
+        "while": [
+          206
+        ],
+        "above": [
+          207
+        ],
+        "it,": [
+          208
+        ],
+        "promoted": [
+          213
+        ],
+        "Therefore,": [
+          217
+        ],
+        "carried": [
+          219
+        ],
+        "depth": [
+          222
+        ],
+        "several": [
+          224
+        ],
+        "hundred": [
+          225
+        ],
+        "kilometers": [
+          226
+        ],
+        "slab": [
+          230
+        ],
+        "remain": [
+          232
+        ],
+        "metastable": [
+          234
+        ],
+        "until": [
+          237
+        ],
+        "deformation": [
+          239
+        ],
+        "causes": [
+          240
+        ],
+        "its": [
+          241
+        ],
+        "transformation.": [
+          242
+        ],
+        "We": [
+          243
+        ],
+        "suggest": [
+          244
+        ],
+        "shear\u2010promoted": [
+          249
+        ],
+        "cold": [
+          253
+        ],
+        "subduction": [
+          257
+        ],
+        "zone": [
+          258
+        ],
+        "responsible": [
+          260
+        ],
+        "generation": [
+          263
+        ],
+        "deep": [
+          265
+        ],
+        "earthquakes.": [
+          266
+        ]
+      }
+    },
+    {
+      "id": "https://openalex.org/W4410621472",
+      "doi": "https://doi.org/10.1038/s41561-025-01703-6",
+      "title": "Direct observations of transient weakening during phase transformations in quartz and olivine",
+      "publication_year": 2025,
+      "cited_by_count": 5,
+      "abstract_inverted_index": {
+        "Phase": [
+          0
+        ],
+        "transformations": [
+          1
+        ],
+        "are": [
+          2,
+          121
+        ],
+        "widely": [
+          3
+        ],
+        "invoked": [
+          4
+        ],
+        "as": [
+          5,
+          81
+        ],
+        "a": [
+          6,
+          27,
+          49,
+          157,
+          184
+        ],
+        "source": [
+          7
+        ],
+        "of": [
+          8,
+          29,
+          35,
+          56,
+          61,
+          105,
+          131,
+          148,
+          188
+        ],
+        "rheological": [
+          9
+        ],
+        "weakening": [
+          10,
+          37,
+          55,
+          106,
+          151,
+          168
+        ],
+        "during": [
+          11,
+          63,
+          113,
+          169
+        ],
+        "subduction,": [
+          12
+        ],
+        "continental": [
+          13
+        ],
+        "collision,": [
+          14
+        ],
+        "mantle": [
+          15,
+          136,
+          179
+        ],
+        "convection": [
+          16
+        ],
+        "and": [
+          17,
+          33,
+          70,
+          101,
+          155,
+          191
+        ],
+        "various": [
+          18
+        ],
+        "other": [
+          19
+        ],
+        "geodynamic": [
+          20,
+          153
+        ],
+        "phenomena.": [
+          21
+        ],
+        "However,": [
+          22
+        ],
+        "despite": [
+          23
+        ],
+        "more": [
+          24
+        ],
+        "than": [
+          25
+        ],
+        "half": [
+          26
+        ],
+        "century": [
+          28
+        ],
+        "research,": [
+          30
+        ],
+        "the": [
+          31,
+          64,
+          82,
+          103,
+          109,
+          135,
+          140,
+          146,
+          178,
+          189
+        ],
+        "likelihood": [
+          32,
+          104
+        ],
+        "magnitude": [
+          34,
+          62
+        ],
+        "such": [
+          36
+        ],
+        "in": [
+          38,
+          134,
+          177
+        ],
+        "nature": [
+          39
+        ],
+        "remain": [
+          40
+        ],
+        "poorly": [
+          41
+        ],
+        "constrained.": [
+          42
+        ],
+        "Here": [
+          43
+        ],
+        "we": [
+          44
+        ],
+        "use": [
+          45
+        ],
+        "experiments": [
+          46
+        ],
+        "performed": [
+          47
+        ],
+        "on": [
+          48
+        ],
+        "synchrotron": [
+          50,
+          185
+        ],
+        "beamline": [
+          51,
+          186
+        ],
+        "to": [
+          52,
+          58,
+          67,
+          72,
+          108,
+          124,
+          183
+        ],
+        "reveal": [
+          53
+        ],
+        "transient": [
+          54,
+          167
+        ],
+        "up": [
+          57
+        ],
+        "three": [
+          59
+        ],
+        "orders": [
+          60
+        ],
+        "polymorphic": [
+          65
+        ],
+        "quartz": [
+          66
+        ],
+        "coesite": [
+          68
+        ],
+        "(SiO2)": [
+          69
+        ],
+        "olivine": [
+          71
+        ],
+        "ringwoodite": [
+          73
+        ],
+        "(Fe2SiO4)": [
+          74
+        ],
+        "phase": [
+          75,
+          99,
+          171,
+          193
+        ],
+        "transitions.": [
+          76,
+          194
+        ],
+        "Weakening": [
+          77
+        ],
+        "becomes": [
+          78
+        ],
+        "increasingly": [
+          79
+        ],
+        "prominent": [
+          80
+        ],
+        "transformation": [
+          83,
+          112
+        ],
+        "outpaces": [
+          84
+        ],
+        "deformation.": [
+          85
+        ],
+        "We": [
+          86
+        ],
+        "suggest": [
+          87
+        ],
+        "that": [
+          88,
+          117
+        ],
+        "this": [
+          89
+        ],
+        "behaviour": [
+          90
+        ],
+        "is": [
+          91
+        ],
+        "broadly": [
+          92
+        ],
+        "applicable": [
+          93
+        ],
+        "among": [
+          94
+        ],
+        "silicate": [
+          95
+        ],
+        "minerals": [
+          96
+        ],
+        "undergoing": [
+          97
+        ],
+        "first-order": [
+          98
+        ],
+        "transitions": [
+          100
+        ],
+        "examine": [
+          102
+        ],
+        "due": [
+          107
+        ],
+        "olivine-spinel,": [
+          110
+        ],
+        "(Mg,Fe)2SiO4,": [
+          111
+        ],
+        "subduction.": [
+          114
+        ],
+        "Modelling": [
+          115
+        ],
+        "suggests": [
+          116
+        ],
+        "cold,": [
+          118
+        ],
+        "wet": [
+          119
+        ],
+        "slabs": [
+          120,
+          164
+        ],
+        "most": [
+          122
+        ],
+        "susceptible": [
+          123
+        ],
+        "transformational": [
+          125,
+          150
+        ],
+        "weakening,": [
+          126
+        ],
+        "consistent": [
+          127,
+          173
+        ],
+        "with": [
+          128,
+          174
+        ],
+        "geophysical": [
+          129
+        ],
+        "observations": [
+          130
+        ],
+        "slab": [
+          132,
+          175
+        ],
+        "stagnation": [
+          133,
+          176
+        ],
+        "transition": [
+          137,
+          180
+        ],
+        "zone": [
+          138
+        ],
+        "beneath": [
+          139
+        ],
+        "western": [
+          141
+        ],
+        "Pacific.": [
+          142
+        ],
+        "Our": [
+          143
+        ],
+        "study": [
+          144,
+          187
+        ],
+        "highlights": [
+          145
+        ],
+        "importance": [
+          147
+        ],
+        "incorporating": [
+          149
+        ],
+        "into": [
+          152
+        ],
+        "simulations": [
+          154
+        ],
+        "provides": [
+          156
+        ],
+        "quantitative": [
+          158
+        ],
+        "basis": [
+          159
+        ],
+        "for": [
+          160
+        ],
+        "doing": [
+          161
+        ],
+        "so.": [
+          162
+        ],
+        "Subducted": [
+          163
+        ],
+        "may": [
+          165
+        ],
+        "experience": [
+          166
+        ],
+        "mineral": [
+          170
+        ],
+        "transitions,": [
+          172
+        ],
+        "zone,": [
+          181
+        ],
+        "according": [
+          182
+        ],
+        "quartz-to-coesite": [
+          190
+        ],
+        "olivine-to-ringwoodite": [
+          192
+        ]
+      }
+    },
+    {
+      "id": "https://openalex.org/W3135106370",
+      "doi": "https://doi.org/10.1016/j.jsg.2020.104275",
+      "title": "A kinetic model of oriented nucleation under nonhydrostatic stress: Implications for the preferred orientation of columnar and platy minerals in metamorphic rocks",
+      "publication_year": 2021,
+      "cited_by_count": 4,
+      "abstract_inverted_index": null
+    },
+    {
+      "id": "https://openalex.org/W7152073979",
+      "doi": "https://doi.org/10.1126/sciadv.adu5181",
+      "title": "Faulting triggered by a quasi-diffusionless shear transition of olivine in deep subducted slabs",
+      "publication_year": 2026,
+      "cited_by_count": 1,
+      "abstract_inverted_index": {
+        "To": [
+          0
+        ],
+        "clarify": [
+          1
+        ],
+        "the": [
+          2,
+          8,
+          61,
+          101,
+          110,
+          114,
+          122,
+          144
+        ],
+        "process": [
+          3
+        ],
+        "of": [
+          4,
+          24,
+          31,
+          42,
+          52,
+          57,
+          70,
+          78,
+          93,
+          97,
+          109,
+          116,
+          124,
+          130,
+          146,
+          152,
+          158
+        ],
+        "faulting": [
+          5,
+          37
+        ],
+        "triggered": [
+          6
+        ],
+        "by": [
+          7
+        ],
+        "olivine-ringwoodite": [
+          9
+        ],
+        "transition": [
+          10,
+          69,
+          103,
+          129
+        ],
+        "in": [
+          11,
+          66,
+          121,
+          149
+        ],
+        "deep": [
+          12
+        ],
+        "subducted": [
+          13,
+          154
+        ],
+        "slabs,": [
+          14
+        ],
+        "we": [
+          15
+        ],
+        "conducted": [
+          16
+        ],
+        "deformation": [
+          17
+        ],
+        "experiments": [
+          18
+        ],
+        "on": [
+          19,
+          60
+        ],
+        "mantle": [
+          20
+        ],
+        "olivine": [
+          21,
+          54,
+          58,
+          71,
+          131
+        ],
+        "at": [
+          22,
+          138
+        ],
+        "pressures": [
+          23
+        ],
+        "15": [
+          25
+        ],
+        "to": [
+          26,
+          33,
+          45,
+          72,
+          132
+        ],
+        "20": [
+          27
+        ],
+        "gigapascals": [
+          28
+        ],
+        "and": [
+          29,
+          84
+        ],
+        "temperatures": [
+          30
+        ],
+        "870": [
+          32
+        ],
+        "1320": [
+          34
+        ],
+        "kelvins.": [
+          35
+        ],
+        "Throughgoing": [
+          36
+        ],
+        "occurred": [
+          38
+        ],
+        "as": [
+          39
+        ],
+        "a": [
+          40,
+          67,
+          94,
+          106
+        ],
+        "result": [
+          41
+        ],
+        "shear": [
+          43
+        ],
+        "localization": [
+          44
+        ],
+        "\u201csoft\u201d": [
+          46
+        ],
+        "gouge": [
+          47
+        ],
+        "layers,": [
+          48
+        ],
+        "which": [
+          49,
+          134
+        ],
+        "mainly": [
+          50
+        ],
+        "consist": [
+          51,
+          157
+        ],
+        "kinked": [
+          53
+        ],
+        "grains.": [
+          55
+        ],
+        "Kinking": [
+          56
+        ],
+        "grains": [
+          59
+        ],
+        "[010](100)": [
+          62
+        ],
+        "slip": [
+          63
+        ],
+        "system": [
+          64
+        ],
+        "resulted": [
+          65
+        ],
+        "pseudo-martensitic": [
+          68,
+          128
+        ],
+        "ringwoodite": [
+          73
+        ],
+        "via": [
+          74,
+          100
+        ],
+        "poirierite": [
+          75
+        ],
+        "having": [
+          76
+        ],
+        "relationships": [
+          77
+        ],
+        "[010]": [
+          79,
+          82
+        ],
+        "Ol": [
+          80,
+          86
+        ],
+        "//": [
+          81,
+          87
+        ],
+        "Poi": [
+          83,
+          89
+        ],
+        "[100]": [
+          85
+        ],
+        "[101]": [
+          88
+        ],
+        ".": [
+          90
+        ],
+        "The": [
+          91,
+          126
+        ],
+        "release": [
+          92
+        ],
+        "high": [
+          95,
+          147
+        ],
+        "amount": [
+          96
+        ],
+        "latent": [
+          98
+        ],
+        "heat": [
+          99
+        ],
+        "poirierite-ringwoodite": [
+          102
+        ],
+        "can": [
+          104,
+          135
+        ],
+        "induce": [
+          105
+        ],
+        "significant": [
+          107
+        ],
+        "weakening": [
+          108
+        ],
+        "fault": [
+          111
+        ],
+        "gouge,": [
+          112
+        ],
+        "without": [
+          113
+        ],
+        "aid": [
+          115
+        ],
+        "grain": [
+          117
+        ],
+        "size\u2013sensitive": [
+          118
+        ],
+        "creep,": [
+          119
+        ],
+        "resulting": [
+          120
+        ],
+        "occurrence": [
+          123
+        ],
+        "faulting.": [
+          125
+        ],
+        "observed": [
+          127
+        ],
+        "ringwoodite,": [
+          133
+        ],
+        "proceed": [
+          136
+        ],
+        "even": [
+          137
+        ],
+        "room": [
+          139
+        ],
+        "temperature": [
+          140
+        ],
+        "under": [
+          141
+        ],
+        "stress,": [
+          142
+        ],
+        "explains": [
+          143
+        ],
+        "cause": [
+          145
+        ],
+        "seismicity": [
+          148
+        ],
+        "bending": [
+          150
+        ],
+        "regions": [
+          151
+        ],
+        "cold": [
+          153
+        ],
+        "slabs": [
+          155
+        ],
+        "that": [
+          156
+        ],
+        "metastable": [
+          159
+        ],
+        "olivine.": [
+          160
+        ]
+      }
+    },
+    {
+      "id": "https://openalex.org/W7154629498",
+      "doi": "https://doi.org/10.1038/s41467-026-71661-z",
+      "title": "The olivine-ringwoodite transformation triggers deep slab seismicity and rheological weakening",
+      "publication_year": 2026,
+      "cited_by_count": 1,
+      "abstract_inverted_index": {
+        "Abstract": [
+          0
+        ],
+        "The": [
+          1
+        ],
+        "subducting": [
+          2
+        ],
+        "cold": [
+          3,
+          36
+        ],
+        "oceanic": [
+          4
+        ],
+        "plates": [
+          5
+        ],
+        "(slabs)": [
+          6
+        ],
+        "exhibit": [
+          7
+        ],
+        "two": [
+          8
+        ],
+        "paradoxical": [
+          9
+        ],
+        "deformation": [
+          10,
+          113
+        ],
+        "behaviors:": [
+          11
+        ],
+        "deep": [
+          12,
+          142
+        ],
+        "seismicity": [
+          13,
+          143
+        ],
+        "and": [
+          14,
+          127,
+          147
+        ],
+        "rheological": [
+          15,
+          148
+        ],
+        "weakening": [
+          16,
+          149
+        ],
+        "within": [
+          17
+        ],
+        "the": [
+          18,
+          27,
+          57,
+          67,
+          112,
+          116,
+          123,
+          145,
+          151
+        ],
+        "mantle": [
+          19
+        ],
+        "transition": [
+          20
+        ],
+        "zone": [
+          21
+        ],
+        "(MTZ,": [
+          22
+        ],
+        "~400\u2013700": [
+          23
+        ],
+        "km": [
+          24
+        ],
+        "depths).": [
+          25
+        ],
+        "Although": [
+          26
+        ],
+        "transformation": [
+          28,
+          117
+        ],
+        "of": [
+          29,
+          106,
+          125
+        ],
+        "metastable": [
+          30
+        ],
+        "olivine": [
+          31
+        ],
+        "wedge": [
+          32
+        ],
+        "(MOW)": [
+          33
+        ],
+        "1,2": [
+          34
+        ],
+        "in": [
+          35,
+          135
+        ],
+        "slabs": [
+          37
+        ],
+        "has": [
+          38
+        ],
+        "been": [
+          39
+        ],
+        "proposed": [
+          40
+        ],
+        "as": [
+          41,
+          78
+        ],
+        "a": [
+          42
+        ],
+        "possible": [
+          43
+        ],
+        "trigger": [
+          44,
+          87
+        ],
+        "for": [
+          45
+        ],
+        "both": [
+          46,
+          141
+        ],
+        "behaviors": [
+          47
+        ],
+        "3\u201310": [
+          48
+        ],
+        ",": [
+          49
+        ],
+        "direct": [
+          50
+        ],
+        "experimental": [
+          51,
+          64
+        ],
+        "evidence": [
+          52
+        ],
+        "remains": [
+          53
+        ],
+        "limited": [
+          54
+        ],
+        "to": [
+          55
+        ],
+        "understand": [
+          56
+        ],
+        "processes": [
+          58
+        ],
+        "linking": [
+          59
+        ],
+        "them.": [
+          60
+        ],
+        "Here": [
+          61
+        ],
+        "we": [
+          62
+        ],
+        "report": [
+          63
+        ],
+        "results": [
+          65
+        ],
+        "on": [
+          66
+        ],
+        "transformation-deformation": [
+          68,
+          137
+        ],
+        "coupling": [
+          69
+        ],
+        "at": [
+          70,
+          102,
+          108
+        ],
+        "MTZ": [
+          71
+        ],
+        "pressures": [
+          72
+        ],
+        "(~20": [
+          73
+        ],
+        "GPa).": [
+          74
+        ],
+        "Ringwoodite": [
+          75
+        ],
+        "is": [
+          76
+        ],
+        "produced": [
+          77
+        ],
+        "nano-polycrystalline": [
+          79
+        ],
+        "lamellae": [
+          80
+        ],
+        "(NPL)": [
+          81
+        ],
+        "under": [
+          82
+        ],
+        "uniaxial": [
+          83
+        ],
+        "stress.": [
+          84
+        ],
+        "Thin": [
+          85
+        ],
+        "NPL": [
+          86,
+          107,
+          126
+        ],
+        "unstable": [
+          88
+        ],
+        "slips": [
+          89
+        ],
+        "with": [
+          90,
+          99,
+          114
+        ],
+        "coseismic": [
+          91
+        ],
+        "stress": [
+          92
+        ],
+        "drops": [
+          93
+        ],
+        "by": [
+          94
+        ],
+        "grain-size": [
+          95,
+          129
+        ],
+        "sensitive": [
+          96,
+          130
+        ],
+        "creep": [
+          97,
+          131
+        ],
+        "coupled": [
+          98
+        ],
+        "thermal": [
+          100
+        ],
+        "instability": [
+          101
+        ],
+        "~760\u2013860": [
+          103
+        ],
+        "\u00b0C.": [
+          104
+        ],
+        "Thickening": [
+          105
+        ],
+        "~950\u20131,330": [
+          109
+        ],
+        "\u00b0C": [
+          110
+        ],
+        "stabilizes": [
+          111
+        ],
+        "enhancing": [
+          115
+        ],
+        "utilizing": [
+          118
+        ],
+        "their": [
+          119,
+          128
+        ],
+        "incoherent": [
+          120
+        ],
+        "nature.": [
+          121
+        ],
+        "Thus,": [
+          122
+        ],
+        "formation": [
+          124
+        ],
+        "play": [
+          132
+        ],
+        "key": [
+          133
+        ],
+        "roles": [
+          134
+        ],
+        "temperature-dependent": [
+          136
+        ],
+        "coupling,": [
+          138
+        ],
+        "which": [
+          139
+        ],
+        "explains": [
+          140
+        ],
+        "near": [
+          144
+        ],
+        "MOW": [
+          146
+        ],
+        "outside": [
+          150
+        ],
+        "MOW.": [
+          152
+        ]
+      }
+    },
+    {
+      "id": "https://openalex.org/W2924712211",
+      "doi": "https://doi.org/10.1016/j.pepi.2019.03.001",
+      "title": "A new continuum model of the incoherent interface compared with growth of a spinel rim on an olivine grain",
+      "publication_year": 2019,
+      "cited_by_count": 0,
+      "abstract_inverted_index": null
+    }
+  ],
+  "group_by": []
+}

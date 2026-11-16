@@ -1,0 +1,1331 @@
+[
+ {
+  "key": "10.1086/629582",
+  "ids": {
+   "openalex": "https://openalex.org/W4254462085",
+   "doi": "10.1086/629582"
+  },
+  "title": "Mantle Convection",
+  "authors": [],
+  "year": 1992,
+  "cited_by": 394,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/2008gl033854",
+  "ids": {
+   "openalex": "https://openalex.org/W2044858287",
+   "doi": "10.1029/2008gl033854"
+  },
+  "title": "Three\u2010dimensional mantle convection simulations with a low\u2010viscosity asthenosphere and the relationship between heat flow and the horizontal length scale of convection",
+  "authors": [],
+  "year": 2008,
+  "cited_by": 73,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1088/0266-5611/14/3/006",
+  "ids": {
+   "openalex": "https://openalex.org/W2162495764",
+   "doi": "10.1088/0266-5611/14/3/006"
+  },
+  "title": "The inverse problem for mantle viscosity",
+  "authors": [],
+  "year": 1998,
+  "cited_by": 41,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1016/j.lithos.2016.11.007",
+  "ids": {
+   "openalex": "https://openalex.org/W2551504696",
+   "doi": "10.1016/j.lithos.2016.11.007"
+  },
+  "title": "The role of solid\u2013solid phase transitions in mantle convection",
+  "authors": [],
+  "year": 2016,
+  "cited_by": 119,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1134/s1069351311060012",
+  "ids": {
+   "openalex": "https://openalex.org/W2011723806",
+   "doi": "10.1134/s1069351311060012"
+  },
+  "title": "The structure of 2D mantle convection and stress fields: Effects of viscosity distribution",
+  "authors": [],
+  "year": 2011,
+  "cited_by": 3,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1111/j.1365-246x.1997.tb00948.x",
+  "ids": {
+   "openalex": "https://openalex.org/W2064321081",
+   "doi": "10.1111/j.1365-246x.1997.tb00948.x"
+  },
+  "title": "Numerical models of mantle convection with secular cooling",
+  "authors": [],
+  "year": 1997,
+  "cited_by": 14,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/jb087ib07p05631",
+  "ids": {
+   "openalex": "https://openalex.org/W1965308693",
+   "doi": "10.1029/jb087ib07p05631"
+  },
+  "title": "The role of iron partitioning in mantle composition, evolution, and scale of convection",
+  "authors": [],
+  "year": 1982,
+  "cited_by": 86,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1016/j.epsl.2005.02.041",
+  "ids": {
+   "openalex": "https://openalex.org/W2159734059",
+   "doi": "10.1016/j.epsl.2005.02.041"
+  },
+  "title": "The role of convective mixing in degassing the Earth's mantle",
+  "authors": [],
+  "year": 2005,
+  "cited_by": 18,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/2008jb005594",
+  "ids": {
+   "openalex": "https://openalex.org/W1963933484",
+   "doi": "10.1029/2008jb005594"
+  },
+  "title": "Simultaneous inversion of mantle properties and initial conditions using an adjoint of mantle convection",
+  "authors": [],
+  "year": 2008,
+  "cited_by": 104,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1111/j.1365-246x.2009.04404.x",
+  "ids": {
+   "openalex": "https://openalex.org/W2106389493",
+   "doi": "10.1111/j.1365-246x.2009.04404.x"
+  },
+  "title": "Long wavelength convection, Poiseuille\u2013Couette flow in the low-viscosity asthenosphere and the strength of plate margins",
+  "authors": [],
+  "year": 2009,
+  "cited_by": 99,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1016/j.fluiddyn.2007.09.001",
+  "ids": {
+   "openalex": "https://openalex.org/W2114777835",
+   "doi": "10.1016/j.fluiddyn.2007.09.001"
+  },
+  "title": "Mantle convection: A review",
+  "authors": [],
+  "year": 2007,
+  "cited_by": 40,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1038/35074000",
+  "ids": {
+   "openalex": "https://openalex.org/W1608015442",
+   "doi": "10.1038/35074000"
+  },
+  "title": "Deep-mantle high-viscosity flow and thermochemical structure inferred from seismic and geodynamic data",
+  "authors": [],
+  "year": 2001,
+  "cited_by": 359,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/2003gl016982",
+  "ids": {
+   "openalex": "https://openalex.org/W2039109757",
+   "doi": "10.1029/2003gl016982"
+  },
+  "title": "Energetics of mantle convection and the fate of fossil heat",
+  "authors": [],
+  "year": 2003,
+  "cited_by": 162,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/jb089ib07p06017",
+  "ids": {
+   "openalex": "https://openalex.org/W2062801073",
+   "doi": "10.1029/jb089ib07p06017"
+  },
+  "title": "Geophysical and isotopic constraints on mantle convection: An interim synthesis",
+  "authors": [],
+  "year": 1984,
+  "cited_by": 182,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/1999jb900377",
+  "ids": {
+   "openalex": "https://openalex.org/W2105825831",
+   "doi": "10.1029/1999jb900377"
+  },
+  "title": "On scaling relations in time\u2010dependent mantle convection and the heat transfer constraint on layering",
+  "authors": [],
+  "year": 2000,
+  "cited_by": 32,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1016/j.gsf.2017.10.002",
+  "ids": {
+   "openalex": "https://openalex.org/W2770702027",
+   "doi": "10.1016/j.gsf.2017.10.002"
+  },
+  "title": "High-pressure phase transitions of anorthosite crust in the Earth's deep mantle",
+  "authors": [],
+  "year": 2017,
+  "cited_by": 13,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1103/physrevmaterials.2.013605",
+  "ids": {
+   "openalex": "https://openalex.org/W2750833995",
+   "doi": "10.1103/physrevmaterials.2.013605"
+  },
+  "title": "Postaragonite phases of CaCO3 at lower mantle pressures",
+  "authors": [],
+  "year": 2018,
+  "cited_by": 39,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1111/j.1365-246x.2009.04182.x",
+  "ids": {
+   "openalex": "https://openalex.org/W2093924190",
+   "doi": "10.1111/j.1365-246x.2009.04182.x"
+  },
+  "title": "Time-dependent interaction between subduction dynamics and phase transition kinetics",
+  "authors": [],
+  "year": 2009,
+  "cited_by": 40,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1002/2015jb012710",
+  "ids": {
+   "openalex": "https://openalex.org/W2288983390",
+   "doi": "10.1002/2015jb012710"
+  },
+  "title": "\u201cDuctile to brittle\u201d transition in thermally stable antigorite gouge at mantle pressures",
+  "authors": [],
+  "year": 2016,
+  "cited_by": 47,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/2010gl043491",
+  "ids": {
+   "openalex": "https://openalex.org/W1591316222",
+   "doi": "10.1029/2010gl043491"
+  },
+  "title": "Effect of pressure on grain\u2010growth kinetics of ferropericlase to lower mantle conditions",
+  "authors": [],
+  "year": 2010,
+  "cited_by": 5,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1186/bf03352678",
+  "ids": {
+   "openalex": "https://openalex.org/W1971265755",
+   "doi": "10.1186/bf03352678"
+  },
+  "title": "Dynamical modeling of trench retreat driven by the slab interaction with the mantle transition zone",
+  "authors": [],
+  "year": 2007,
+  "cited_by": 46,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1111/j.1365-246x.1982.tb04911.x",
+  "ids": {
+   "openalex": "https://openalex.org/W2020184359",
+   "doi": "10.1111/j.1365-246x.1982.tb04911.x"
+  },
+  "title": "Phase boundaries in finite amplitude mantle convection",
+  "authors": [],
+  "year": 1982,
+  "cited_by": 62,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1007/s11434-011-4884-2",
+  "ids": {
+   "openalex": "https://openalex.org/W2002492755",
+   "doi": "10.1007/s11434-011-4884-2"
+  },
+  "title": "An experimental study of phase transformations in olivine under pressure and temperature conditions corresponding to the mantle transition zone",
+  "authors": [],
+  "year": 2011,
+  "cited_by": 10,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1016/j.pepi.2014.12.001",
+  "ids": {
+   "openalex": "https://openalex.org/W2072062381",
+   "doi": "10.1016/j.pepi.2014.12.001"
+  },
+  "title": "Impact of phase change kinetics on the Mariana slab within the framework of 2-D mantle convection",
+  "authors": [],
+  "year": 2014,
+  "cited_by": 16,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1038/ncomms8700",
+  "ids": {
+   "openalex": "https://openalex.org/W2255407013",
+   "doi": "10.1038/ncomms8700"
+  },
+  "title": "Continental flood basalts derived from the hydrous mantle transition zone",
+  "authors": [],
+  "year": 2015,
+  "cited_by": 214,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1038/s41467-024-52505-0",
+  "ids": {
+   "openalex": "https://openalex.org/W4402748065",
+   "doi": "10.1038/s41467-024-52505-0"
+  },
+  "title": "Phase transition kinetics of superionic H2O ice phases revealed by Megahertz X-ray free-electron laser-heating experiments",
+  "authors": [],
+  "year": 2024,
+  "cited_by": 19,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1046/j.1365-246x.2003.01967.x",
+  "ids": {
+   "openalex": "https://openalex.org/W1999172905",
+   "doi": "10.1046/j.1365-246x.2003.01967.x"
+  },
+  "title": "Simultaneous inversion for mantle shear velocity and topography of transition zone discontinuities",
+  "authors": [],
+  "year": 2003,
+  "cited_by": 119,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/2025gl116408",
+  "ids": {
+   "openalex": "https://openalex.org/W4413773441",
+   "doi": "10.1029/2025gl116408"
+  },
+  "title": "GRACE Detection of Transient Mass Redistributions During a Mineral Phase Transition in the Deep Mantle",
+  "authors": [],
+  "year": 2025,
+  "cited_by": 8,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.2478/s11532-012-0090-6",
+  "ids": {
+   "openalex": "https://openalex.org/W2052085397",
+   "doi": "10.2478/s11532-012-0090-6"
+  },
+  "title": "Pressure induced structural phase transitions\u2014A review",
+  "authors": [],
+  "year": 2012,
+  "cited_by": 28,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1093/petrology/egt035",
+  "ids": {
+   "openalex": "https://openalex.org/W2001214682",
+   "doi": "10.1093/petrology/egt035"
+  },
+  "title": "New Thermodynamic Models and Calculated Phase Equilibria in NCFMAS for Basic and Ultrabasic Compositions through the Transition Zone into the Uppermost Lower Mantle",
+  "authors": [],
+  "year": 2013,
+  "cited_by": 84,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1038/338753a0",
+  "ids": {
+   "openalex": "https://openalex.org/W2046423877",
+   "doi": "10.1038/338753a0"
+  },
+  "title": "Stress dependence of the mechanism of the olivine\u2013spinel transformation",
+  "authors": [],
+  "year": 1989,
+  "cited_by": 143,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1038/s41561-025-01703-6",
+  "ids": {
+   "openalex": "https://openalex.org/W4410621472",
+   "doi": "10.1038/s41561-025-01703-6"
+  },
+  "title": "Direct observations of transient weakening during phase transformations in quartz and olivine",
+  "authors": [],
+  "year": 2025,
+  "cited_by": 5,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/93jb01614",
+  "ids": {
+   "openalex": "https://openalex.org/W2080636262",
+   "doi": "10.1029/93jb01614"
+  },
+  "title": "Shear\u2010promoted phase transitions in Fe2SiO4 and Mg2SiO4 and the mechanism of deep earthquakes",
+  "authors": [],
+  "year": 1993,
+  "cited_by": 52,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1002/2016jb013084",
+  "ids": {
+   "openalex": "https://openalex.org/W2564541807",
+   "doi": "10.1002/2016jb013084"
+  },
+  "title": "Stresses and pressures at the quartz\u2010to\u2010coesite phase transformation in shear deformation experiments",
+  "authors": [],
+  "year": 2016,
+  "cited_by": 60,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1038/s41467-022-32923-8",
+  "ids": {
+   "openalex": "https://openalex.org/W4296033362",
+   "doi": "10.1038/s41467-022-32923-8"
+  },
+  "title": "In situ X-ray and acoustic observations of deep seismic faulting upon phase transitions in olivine",
+  "authors": [],
+  "year": 2022,
+  "cited_by": 21,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1038/s41467-026-71661-z",
+  "ids": {
+   "openalex": "https://openalex.org/W7154629498",
+   "doi": "10.1038/s41467-026-71661-z"
+  },
+  "title": "The olivine-ringwoodite transformation triggers deep slab seismicity and rheological weakening",
+  "authors": [],
+  "year": 2026,
+  "cited_by": 1,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1016/j.jsg.2020.104275",
+  "ids": {
+   "openalex": "https://openalex.org/W3135106370",
+   "doi": "10.1016/j.jsg.2020.104275"
+  },
+  "title": "A kinetic model of oriented nucleation under nonhydrostatic stress: Implications for the preferred orientation of columnar and platy minerals in metamorphic rocks",
+  "authors": [],
+  "year": 2021,
+  "cited_by": 4,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1088/2053-1591/aebea3",
+  "ids": {
+   "openalex": "https://openalex.org/W7223785941",
+   "doi": "10.1088/2053-1591/aebea3"
+  },
+  "title": "Kinetics, Mechanics, and Structural Disorder: Non-Equilibrium Phase Transformation in Lithium-Ion Battery Materials",
+  "authors": [],
+  "year": 2026,
+  "cited_by": 0,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1016/j.pepi.2019.03.001",
+  "ids": {
+   "openalex": "https://openalex.org/W2924712211",
+   "doi": "10.1016/j.pepi.2019.03.001"
+  },
+  "title": "A new continuum model of the incoherent interface compared with growth of a spinel rim on an olivine grain",
+  "authors": [],
+  "year": 2019,
+  "cited_by": 0,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.4131/jshpreview.7.34",
+  "ids": {
+   "openalex": "https://openalex.org/W2049371684",
+   "doi": "10.4131/jshpreview.7.34"
+  },
+  "title": "Phase Transformations and Lattice Instability of Earth Interiors under High Pressure and Stress Field.",
+  "authors": [],
+  "year": 1998,
+  "cited_by": 0,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1126/sciadv.adu5181",
+  "ids": {
+   "openalex": "https://openalex.org/W7152073979",
+   "doi": "10.1126/sciadv.adu5181"
+  },
+  "title": "Faulting triggered by a quasi-diffusionless shear transition of olivine in deep subducted slabs",
+  "authors": [],
+  "year": 2026,
+  "cited_by": 1,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/2026gl124806",
+  "ids": {
+   "openalex": "https://openalex.org/W7225430441",
+   "doi": "10.1029/2026gl124806"
+  },
+  "title": "Transformational Faulting: The Case of Quartz\u2010Coesite",
+  "authors": [],
+  "year": 2026,
+  "cited_by": 0,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1046/j.1365-246x.1998.00539.x",
+  "ids": {
+   "openalex": "https://openalex.org/W2082622193",
+   "doi": "10.1046/j.1365-246x.1998.00539.x"
+  },
+  "title": "A model of transformational superplasticity in the upper mantle",
+  "authors": [],
+  "year": 1998,
+  "cited_by": 46,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1111/j.1945-5100.2003.tb00278.x",
+  "ids": {
+   "openalex": "https://openalex.org/W2009593213",
+   "doi": "10.1111/j.1945-5100.2003.tb00278.x"
+  },
+  "title": "Morphological analysis of olivine grains annealed in an iron\u2010nickel matrix: Experimental constraints on the origin of pallasites and on the thermal history of their parent bodies",
+  "authors": [],
+  "year": 2003,
+  "cited_by": 23,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1038/srep24958",
+  "ids": {
+   "openalex": "https://openalex.org/W2377146467",
+   "doi": "10.1038/srep24958"
+  },
+  "title": "Phase transition induced strain in ZnO under high pressure",
+  "authors": [],
+  "year": 2016,
+  "cited_by": 28,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "anupwindbiasedpointimplicitrelaxationalgorithmforviscouscompressibleperfectgasflows",
+  "ids": {
+   "openalex": "https://openalex.org/W1670682604"
+  },
+  "title": "An upwind-biased, point-implicit relaxation algorithm for viscous, compressible perfect-gas flows",
+  "authors": [],
+  "year": 1990,
+  "cited_by": 238,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1086/339626",
+  "ids": {
+   "openalex": "https://openalex.org/W2054106489",
+   "doi": "10.1086/339626"
+  },
+  "title": "Penetration and Overshooting in Turbulent Compressible Convection",
+  "authors": [],
+  "year": 2002,
+  "cited_by": 194,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1093/gji/ggaa078",
+  "ids": {
+   "openalex": "https://openalex.org/W3006265813",
+   "doi": "10.1093/gji/ggaa078"
+  },
+  "title": "On formulations of compressible mantle convection",
+  "authors": [],
+  "year": 2020,
+  "cited_by": 49,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1086/178161",
+  "ids": {
+   "openalex": "https://openalex.org/W2007946621",
+   "doi": "10.1086/178161"
+  },
+  "title": "Turbulent Compressible Convection with Rotation. I. Flow Structure and Evolution",
+  "authors": [],
+  "year": 1996,
+  "cited_by": 101,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1086/319448",
+  "ids": {
+   "openalex": "https://openalex.org/W2052239839",
+   "doi": "10.1086/319448"
+  },
+  "title": "Transport and Storage of Magnetic Field by Overshooting Turbulent Compressible Convection",
+  "authors": [],
+  "year": 2001,
+  "cited_by": 222,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1086/305137",
+  "ids": {
+   "openalex": "https://openalex.org/W2153115547",
+   "doi": "10.1086/305137"
+  },
+  "title": "Turbulent Compressible Convection with Rotation. II. Mean Flows and Differential Rotation",
+  "authors": [],
+  "year": 1998,
+  "cited_by": 110,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1063/1.2918728",
+  "ids": {
+   "openalex": "https://openalex.org/W1981450945",
+   "doi": "10.1063/1.2918728"
+  },
+  "title": "Linear oscillations of a compressible hemispherical bubble on a solid substrate",
+  "authors": [],
+  "year": 2008,
+  "cited_by": 54,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1098/rsos.181595",
+  "ids": {
+   "openalex": "https://openalex.org/W2909120833",
+   "doi": "10.1098/rsos.181595"
+  },
+  "title": "Competing Lagrangians for incompressible and compressible viscous flow",
+  "authors": [],
+  "year": 2019,
+  "cited_by": 16,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.47752/sjsr.62.40.47",
+  "ids": {
+   "openalex": "https://openalex.org/W4385356664",
+   "doi": "10.47752/sjsr.62.40.47"
+  },
+  "title": "Convection in a Compressible Rotating Viscoelastic Fluid",
+  "authors": [],
+  "year": 2023,
+  "cited_by": 1,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1016/j.physa.2018.03.097",
+  "ids": {
+   "openalex": "https://openalex.org/W2962760386",
+   "doi": "10.1016/j.physa.2018.03.097"
+  },
+  "title": "A new Eulerian model for viscous and heat conducting compressible flows",
+  "authors": [],
+  "year": 2018,
+  "cited_by": 43,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1016/j.jfluidstructs.2016.09.001",
+  "ids": {
+   "openalex": "https://openalex.org/W2524070584",
+   "doi": "10.1016/j.jfluidstructs.2016.09.001"
+  },
+  "title": "Interaction between a simplified soft palate and compressible viscous flow",
+  "authors": [],
+  "year": 2016,
+  "cited_by": 14,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1063/1.2353400",
+  "ids": {
+   "openalex": "https://openalex.org/W2099161020",
+   "doi": "10.1063/1.2353400"
+  },
+  "title": "Oscillations of the large scale wind in turbulent thermal convection",
+  "authors": [],
+  "year": 2006,
+  "cited_by": 73,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.37899/journallamultiapp.v3i3.650",
+  "ids": {
+   "openalex": "https://openalex.org/W4283213668",
+   "doi": "10.37899/journallamultiapp.v3i3.650"
+  },
+  "title": "Magneto Thermosolutal Convection in a Compressible Viscoelastic Fluid",
+  "authors": [],
+  "year": 2022,
+  "cited_by": 0,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.24033/asens.2387",
+  "ids": {
+   "openalex": "https://openalex.org/W2271694949",
+   "doi": "10.24033/asens.2387"
+  },
+  "title": "A compressible multifluid system with new physical relaxation terms",
+  "authors": [],
+  "year": 2019,
+  "cited_by": 21,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1086/304175",
+  "ids": {
+   "openalex": "https://openalex.org/W4240056085",
+   "doi": "10.1086/304175"
+  },
+  "title": "Compressible Turbulence",
+  "authors": [],
+  "year": 1997,
+  "cited_by": 105,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/jb095ib05p06979",
+  "ids": {
+   "openalex": "https://openalex.org/W2006830774",
+   "doi": "10.1029/jb095ib05p06979"
+  },
+  "title": "Differential stress\u2010induced melt migration: An experimental approach",
+  "authors": [],
+  "year": 1990,
+  "cited_by": 66,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1111/j.1365-246x.2012.05596.x",
+  "ids": {
+   "openalex": "https://openalex.org/W2112741358",
+   "doi": "10.1111/j.1365-246x.2012.05596.x"
+  },
+  "title": "Effective shear and bulk viscosity of partially molten rock based on elastic moduli theory of a fluid filled poroelastic medium",
+  "authors": [],
+  "year": 2012,
+  "cited_by": 92,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/2018gc007715",
+  "ids": {
+   "openalex": "https://openalex.org/W2897603910",
+   "doi": "10.1029/2018gc007715"
+  },
+  "title": "Influence of Compaction Length on Radial Melt Segregation in Torsionally Deformed Partially Molten Rocks",
+  "authors": [],
+  "year": 2018,
+  "cited_by": 8,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1016/0165-2125(92)90054-6",
+  "ids": {
+   "openalex": "https://openalex.org/W1998107314",
+   "doi": "10.1016/0165-2125(92)90054-6"
+  },
+  "title": "Rarefactive solitary waves in two-phase fluid flow of compacting media",
+  "authors": [],
+  "year": 1992,
+  "cited_by": 19,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/2000jb900430",
+  "ids": {
+   "openalex": "https://openalex.org/W2055954432",
+   "doi": "10.1029/2000jb900430"
+  },
+  "title": "A two\u2010phase model for compaction and damage: 1. General Theory",
+  "authors": [],
+  "year": 2001,
+  "cited_by": 326,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/2018jb017097",
+  "ids": {
+   "openalex": "https://openalex.org/W2959324664",
+   "doi": "10.1029/2018jb017097"
+  },
+  "title": "Water Migration in the Subduction Mantle Wedge: A Two\u2010Phase Flow Approach",
+  "authors": [],
+  "year": 2019,
+  "cited_by": 40,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/97jb01278",
+  "ids": {
+   "openalex": "https://openalex.org/W2076399414",
+   "doi": "10.1029/97jb01278"
+  },
+  "title": "Three\u2010dimensional mantle upwelling, melt generation, and melt migration beneath segment slow spreading ridges",
+  "authors": [],
+  "year": 1997,
+  "cited_by": 119,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1021/acs.macromol.3c01046",
+  "ids": {
+   "openalex": "https://openalex.org/W4386511984",
+   "doi": "10.1021/acs.macromol.3c01046"
+  },
+  "title": "Viscosity of Flexible and Semiflexible Ring Melts: Molecular Origins and Flow-Induced Segregation",
+  "authors": [],
+  "year": 2023,
+  "cited_by": 12,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1029/2002jb002372",
+  "ids": {
+   "openalex": "https://openalex.org/W2086322909",
+   "doi": "10.1029/2002jb002372"
+  },
+  "title": "Melt segregation under compaction and shear channeling: Application to granitic magma segregation in a continental crust",
+  "authors": [],
+  "year": 2004,
+  "cited_by": 111,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ },
+ {
+  "key": "10.1111/j.1945-5100.2011.01201.x",
+  "ids": {
+   "openalex": "https://openalex.org/W2952770830",
+   "doi": "10.1111/j.1945-5100.2011.01201.x"
+  },
+  "title": "Differentiation of planetesimals and the thermal consequences of melt migration",
+  "authors": [],
+  "year": 2011,
+  "cited_by": 103,
+  "found_via": "openalex",
+  "screening": {
+   "status": null,
+   "stage": null,
+   "reason": null
+  },
+  "fulltext": null,
+  "role": null
+ }
+]

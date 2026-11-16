@@ -1,0 +1,1373 @@
+{
+  "meta": {
+    "count": 6,
+    "db_response_time_ms": 18,
+    "page": 1,
+    "per_page": 10,
+    "groups_count": null,
+    "x_query": {
+      "oql": "get works where openalex id is (W2020184359 or W2072062381 or W2093924190 or W2271694949 or W2551504696 or W2909120833)",
+      "x_new_oql": "get works where openalex id is (W2020184359 or W2072062381 or W2093924190 or W2271694949 or W2551504696 or W2909120833)",
+      "oqo": {
+        "get_rows": "works",
+        "filter_rows": [
+          {
+            "join": "or",
+            "filters": [
+              {
+                "column_id": "ids.openalex",
+                "value": "W2020184359"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W2072062381"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W2093924190"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W2271694949"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W2551504696"
+              },
+              {
+                "column_id": "ids.openalex",
+                "value": "W2909120833"
+              }
+            ]
+          }
+        ]
+      },
+      "url": "/works?filter=ids.openalex:W2020184359|W2072062381|W2093924190|W2271694949|W2551504696|W2909120833&per_page=10&page=1",
+      "order": "most cited (age-adjusted) first",
+      "order_default": true
+    },
+    "cost_usd": 0.0001
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W2551504696",
+      "doi": "https://doi.org/10.1016/j.lithos.2016.11.007",
+      "title": "The role of solid\u2013solid phase transitions in mantle convection",
+      "publication_year": 2016,
+      "cited_by_count": 119,
+      "abstract_inverted_index": null
+    },
+    {
+      "id": "https://openalex.org/W2020184359",
+      "doi": "https://doi.org/10.1111/j.1365-246x.1982.tb04911.x",
+      "title": "Phase boundaries in finite amplitude mantle convection",
+      "publication_year": 1982,
+      "cited_by_count": 62,
+      "abstract_inverted_index": {
+        "Phase": [
+          0
+        ],
+        "boundaries": [
+          1
+        ],
+        "are": [
+          2,
+          13,
+          96
+        ],
+        "included": [
+          3
+        ],
+        "in": [
+          4,
+          45,
+          72,
+          76,
+          129
+        ],
+        "dynamical": [
+          5
+        ],
+        "finite": [
+          6
+        ],
+        "element": [
+          7
+        ],
+        "models": [
+          8
+        ],
+        "of": [
+          9,
+          23,
+          34,
+          38,
+          63,
+          79,
+          108
+        ],
+        "mantle": [
+          10
+        ],
+        "convection.": [
+          11
+        ],
+        "They": [
+          12
+        ],
+        "represented": [
+          14
+        ],
+        "by": [
+          15,
+          58
+        ],
+        "point": [
+          16
+        ],
+        "chains": [
+          17
+        ],
+        "which": [
+          18
+        ],
+        "act": [
+          19
+        ],
+        "as": [
+          20,
+          29
+        ],
+        "additional": [
+          21,
+          30
+        ],
+        "sources": [
+          22
+        ],
+        "buoyancy": [
+          24
+        ],
+        "forces": [
+          25
+        ],
+        "when": [
+          26
+        ],
+        "distorted,": [
+          27
+        ],
+        "and": [
+          28,
+          48,
+          93
+        ],
+        "source": [
+          31
+        ],
+        "or": [
+          32,
+          114
+        ],
+        "sink": [
+          33
+        ],
+        "heat.": [
+          35
+        ],
+        "The": [
+          36,
+          52,
+          61,
+          121
+        ],
+        "influence": [
+          37
+        ],
+        "the": [
+          39,
+          59,
+          73,
+          77,
+          106,
+          124
+        ],
+        "exothermic": [
+          40
+        ],
+        "olivine-spinel": [
+          41
+        ],
+        "transition": [
+          42
+        ],
+        "is": [
+          43,
+          54,
+          70,
+          83,
+          119,
+          126
+        ],
+        "studied": [
+          44
+        ],
+        "both": [
+          46,
+          130
+        ],
+        "shallow": [
+          47,
+          80
+        ],
+        "deep": [
+          49,
+          74,
+          117
+        ],
+        "convection": [
+          50,
+          81,
+          118
+        ],
+        "models.": [
+          51
+        ],
+        "flow": [
+          53,
+          125
+        ],
+        "only": [
+          55
+        ],
+        "slightly": [
+          56
+        ],
+        "enhanced": [
+          57
+        ],
+        "transition.": [
+          60
+        ],
+        "increase": [
+          62
+        ],
+        "temperature": [
+          64
+        ],
+        "due": [
+          65
+        ],
+        "to": [
+          66
+        ],
+        "latent": [
+          67
+        ],
+        "heat": [
+          68
+        ],
+        "release": [
+          69
+        ],
+        "step-like": [
+          71
+        ],
+        "model,": [
+          75
+        ],
+        "case": [
+          78
+        ],
+        "it": [
+          82
+        ],
+        "more": [
+          84,
+          98
+        ],
+        "diffuse.": [
+          85
+        ],
+        "Other": [
+          86
+        ],
+        "quantities": [
+          87
+        ],
+        "like": [
+          88
+        ],
+        "ocean-floor": [
+          89
+        ],
+        "topography,": [
+          90
+        ],
+        "gravity": [
+          91
+        ],
+        "anomalies,": [
+          92
+        ],
+        "stress": [
+          94
+        ],
+        "distribution": [
+          95
+        ],
+        "no": [
+          97
+        ],
+        "than": [
+          99
+        ],
+        "moderately": [
+          100
+        ],
+        "affected.": [
+          101
+        ],
+        "In": [
+          102
+        ],
+        "a": [
+          103
+        ],
+        "further": [
+          104
+        ],
+        "investigation": [
+          105
+        ],
+        "effect": [
+          107,
+          122
+        ],
+        "spinel": [
+          109
+        ],
+        "post-spinel": [
+          110
+        ],
+        "transition,": [
+          111
+        ],
+        "whether": [
+          112
+        ],
+        "endothermic": [
+          113
+        ],
+        "exothermic,": [
+          115
+        ],
+        "on": [
+          116,
+          123
+        ],
+        "examined.": [
+          120
+        ],
+        "negligibly": [
+          127
+        ],
+        "small": [
+          128
+        ],
+        "cases.": [
+          131
+        ]
+      }
+    },
+    {
+      "id": "https://openalex.org/W2093924190",
+      "doi": "https://doi.org/10.1111/j.1365-246x.2009.04182.x",
+      "title": "Time-dependent interaction between subduction dynamics and phase transition kinetics",
+      "publication_year": 2009,
+      "cited_by_count": 40,
+      "abstract_inverted_index": {
+        "Numerical": [
+          0
+        ],
+        "subduction": [
+          1,
+          45,
+          114,
+          141,
+          171
+        ],
+        "models": [
+          2
+        ],
+        "are": [
+          3,
+          118,
+          145
+        ],
+        "presented": [
+          4
+        ],
+        "that": [
+          5
+        ],
+        "account": [
+          6
+        ],
+        "for": [
+          7
+        ],
+        "the": [
+          8,
+          11,
+          15,
+          36,
+          47,
+          54,
+          65,
+          69,
+          72,
+          76,
+          84,
+          87,
+          102,
+          113,
+          120,
+          132,
+          135,
+          160
+        ],
+        "kinetics": [
+          9,
+          70
+        ],
+        "of": [
+          10,
+          18,
+          71,
+          78,
+          86,
+          101,
+          104,
+          112,
+          119,
+          122,
+          131,
+          134,
+          151,
+          177,
+          181
+        ],
+        "olivine-spinel": [
+          12
+        ],
+        "transformation": [
+          13,
+          17
+        ],
+        "and": [
+          14,
+          22,
+          26,
+          35,
+          39,
+          50,
+          75,
+          95,
+          159
+        ],
+        "equilibrium": [
+          16
+        ],
+        "spinel": [
+          19
+        ],
+        "into": [
+          20,
+          46,
+          53
+        ],
+        "perovskite": [
+          21
+        ],
+        "magnesiowustite.": [
+          23
+        ],
+        "Temperature-,": [
+          24
+        ],
+        "depth-": [
+          25
+        ],
+        "stress-dependent": [
+          27
+        ],
+        "rheology": [
+          28
+        ],
+        "is": [
+          29,
+          62
+        ],
+        "used.": [
+          30
+        ],
+        "Buoyancy": [
+          31
+        ],
+        "due": [
+          32
+        ],
+        "to": [
+          33,
+          43,
+          97,
+          128
+        ],
+        "temperature": [
+          34
+        ],
+        "olivine,": [
+          37
+        ],
+        "spinel,": [
+          38
+        ],
+        "magnesiowustite/perovskite": [
+          40
+        ],
+        "phases": [
+          41
+        ],
+        "leads": [
+          42,
+          96
+        ],
+        "free": [
+          44
+        ],
+        "transition": [
+          48,
+          74
+        ],
+        "zone,": [
+          49
+        ],
+        "retarded": [
+          51
+        ],
+        "penetration": [
+          52
+        ],
+        "lower": [
+          55
+        ],
+        "mantle.": [
+          56
+        ],
+        "A": [
+          57
+        ],
+        "dynamic": [
+          58
+        ],
+        "feed": [
+          59
+        ],
+        "back": [
+          60
+        ],
+        "mechanism": [
+          61,
+          82,
+          126
+        ],
+        "found": [
+          63
+        ],
+        "between": [
+          64
+        ],
+        "different": [
+          66,
+          175
+        ],
+        "buoyancy": [
+          67
+        ],
+        "forces,": [
+          68
+        ],
+        "phase": [
+          73,
+          179
+        ],
+        "release": [
+          77
+        ],
+        "latent": [
+          79
+        ],
+        "heat.": [
+          80
+        ],
+        "This": [
+          81,
+          125
+        ],
+        "modulates": [
+          83
+        ],
+        "\u2018parachute\u2019-effect": [
+          85
+        ],
+        "metastable": [
+          88
+        ],
+        "olivine": [
+          89
+        ],
+        "(MO)": [
+          90
+        ],
+        "in": [
+          91,
+          138
+        ],
+        "a": [
+          92,
+          108
+        ],
+        "subducting": [
+          93
+        ],
+        "slab": [
+          94
+        ],
+        "characteristic": [
+          98
+        ],
+        "temporal": [
+          99
+        ],
+        "variations": [
+          100,
+          111,
+          130
+        ],
+        "depth": [
+          103,
+          150,
+          162
+        ],
+        "MO": [
+          105,
+          152
+        ],
+        "and,": [
+          106
+        ],
+        "with": [
+          107,
+          156
+        ],
+        "time": [
+          109
+        ],
+        "delay,": [
+          110
+        ],
+        "velocity.": [
+          115
+        ],
+        "Time": [
+          116
+        ],
+        "periods": [
+          117
+        ],
+        "order": [
+          121
+        ],
+        "3\u20134": [
+          123
+        ],
+        "Myr.": [
+          124
+        ],
+        "allows": [
+          127
+        ],
+        "explain": [
+          129
+        ],
+        "depths": [
+          133
+        ],
+        "deepest": [
+          136
+        ],
+        "earthquakes": [
+          137
+        ],
+        "otherwise": [
+          139
+        ],
+        "similar": [
+          140
+        ],
+        "zones.": [
+          142
+        ],
+        "Further": [
+          143
+        ],
+        "conclusions": [
+          144
+        ],
+        "as": [
+          146,
+          165,
+          167
+        ],
+        "follows.": [
+          147
+        ],
+        "The": [
+          148
+        ],
+        "maximum": [
+          149,
+          161
+        ],
+        "increases": [
+          153
+        ],
+        "roughly": [
+          154
+        ],
+        "linearly": [
+          155
+        ],
+        "lithospheric": [
+          157
+        ],
+        "thickness,": [
+          158
+        ],
+        "may": [
+          163,
+          173
+        ],
+        "reach": [
+          164
+        ],
+        "deep": [
+          166
+        ],
+        "720\u2013750": [
+          168
+        ],
+        "km.": [
+          169
+        ],
+        "Different": [
+          170
+        ],
+        "zones": [
+          172
+        ],
+        "represent": [
+          174
+        ],
+        "stages": [
+          176
+        ],
+        "\u2018velocity-depth": [
+          178
+        ],
+        "loops\u2019": [
+          180
+        ],
+        "MO.": [
+          182
+        ]
+      }
+    },
+    {
+      "id": "https://openalex.org/W2271694949",
+      "doi": "https://doi.org/10.24033/asens.2387",
+      "title": "A compressible multifluid system with new physical relaxation terms",
+      "publication_year": 2019,
+      "cited_by_count": 21,
+      "abstract_inverted_index": {
+        "In": [
+          0
+        ],
+        "this": [
+          1
+        ],
+        "paper,": [
+          2
+        ],
+        "we": [
+          3,
+          26,
+          71,
+          87
+        ],
+        "rigorously": [
+          4,
+          88
+        ],
+        "derive": [
+          5,
+          30
+        ],
+        "a": [
+          6,
+          31,
+          41,
+          74,
+          82,
+          95
+        ],
+        "new": [
+          7,
+          42,
+          53
+        ],
+        "compressible": [
+          8,
+          12
+        ],
+        "multifluid": [
+          9,
+          91
+        ],
+        "system": [
+          10,
+          93
+        ],
+        "from": [
+          11
+        ],
+        "Navier-Stokes": [
+          13
+        ],
+        "equations": [
+          14
+        ],
+        "with": [
+          15,
+          40
+        ],
+        "density-dependent": [
+          16
+        ],
+        "viscosity": [
+          17,
+          60
+        ],
+        "in": [
+          18,
+          21,
+          45,
+          77
+        ],
+        "the": [
+          19,
+          34,
+          46,
+          49,
+          57,
+          64,
+          68,
+          78,
+          90
+        ],
+        "one-dimensional": [
+          20
+        ],
+        "space": [
+          22
+        ],
+        "setting.": [
+          23
+        ],
+        "More": [
+          24
+        ],
+        "precisely,": [
+          25
+        ],
+        "propose": [
+          27
+        ],
+        "and": [
+          28,
+          61,
+          85
+        ],
+        "mathematically": [
+          29
+        ],
+        "generalization": [
+          32
+        ],
+        "of": [
+          33,
+          59
+        ],
+        "usual": [
+          35
+        ],
+        "one": [
+          36
+        ],
+        "velocity": [
+          37
+        ],
+        "Baer-Nunziato": [
+          38
+        ],
+        "model": [
+          39
+        ],
+        "relaxation": [
+          43,
+          54
+        ],
+        "term": [
+          44,
+          55
+        ],
+        "PDE": [
+          47
+        ],
+        "governing": [
+          48
+        ],
+        "volume": [
+          50
+        ],
+        "fractions.": [
+          51
+        ],
+        "This": [
+          52
+        ],
+        "encodes": [
+          56
+        ],
+        "change": [
+          58
+        ],
+        "pressure": [
+          62
+        ],
+        "between": [
+          63
+        ],
+        "different": [
+          65
+        ],
+        "fluids.": [
+          66
+        ],
+        "For": [
+          67
+        ],
+        "reader's": [
+          69
+        ],
+        "convenience,": [
+          70
+        ],
+        "first": [
+          72
+        ],
+        "establish": [
+          73
+        ],
+        "formal": [
+          75
+        ],
+        "derivation": [
+          76
+        ],
+        "bifluid": [
+          79
+        ],
+        "setting": [
+          80
+        ],
+        "using": [
+          81,
+          94
+        ],
+        "WKB": [
+          83
+        ],
+        "decomposition": [
+          84
+        ],
+        "then": [
+          86
+        ],
+        "justify": [
+          89
+        ],
+        "homogenized": [
+          92
+        ],
+        "kinetic": [
+          96
+        ],
+        "formulation": [
+          97
+        ],
+        "via": [
+          98
+        ],
+        "Young": [
+          99
+        ],
+        "measures": [
+          100
+        ],
+        "characterization.": [
+          101
+        ]
+      }
+    },
+    {
+      "id": "https://openalex.org/W2909120833",
+      "doi": "https://doi.org/10.1098/rsos.181595",
+      "title": "Competing Lagrangians for incompressible and compressible viscous flow",
+      "publication_year": 2019,
+      "cited_by_count": 16,
+      "abstract_inverted_index": {
+        "A": [
+          0,
+          74,
+          117
+        ],
+        "recently": [
+          1
+        ],
+        "proposed": [
+          2
+        ],
+        "variational": [
+          3,
+          19,
+          81
+        ],
+        "principle": [
+          4
+        ],
+        "with": [
+          5,
+          78
+        ],
+        "a": [
+          6,
+          29,
+          90
+        ],
+        "discontinuous": [
+          7,
+          54,
+          102
+        ],
+        "Lagrangian": [
+          8,
+          55,
+          103
+        ],
+        "for": [
+          9,
+          68,
+          105,
+          119,
+          128
+        ],
+        "viscous": [
+          10
+        ],
+        "flow": [
+          11,
+          121
+        ],
+        "is": [
+          12,
+          33,
+          76,
+          96,
+          110,
+          122
+        ],
+        "reinterpreted": [
+          13
+        ],
+        "against": [
+          14
+        ],
+        "the": [
+          15,
+          40,
+          45,
+          53,
+          61,
+          101,
+          113
+        ],
+        "background": [
+          16
+        ],
+        "of": [
+          17,
+          21,
+          63,
+          71,
+          93,
+          100
+        ],
+        "stochastic": [
+          18,
+          72,
+          80
+        ],
+        "descriptions": [
+          20,
+          82
+        ],
+        "dissipative": [
+          22
+        ],
+        "systems,": [
+          23
+        ],
+        "underpinning": [
+          24
+        ],
+        "its": [
+          25,
+          125
+        ],
+        "physical": [
+          26
+        ],
+        "basis": [
+          27
+        ],
+        "from": [
+          28,
+          60
+        ],
+        "different": [
+          30,
+          106
+        ],
+        "viewpoint.": [
+          31
+        ],
+        "It": [
+          32
+        ],
+        "shown": [
+          34
+        ],
+        "that": [
+          35
+        ],
+        "additional": [
+          36
+        ],
+        "non-classical": [
+          37
+        ],
+        "contributions": [
+          38
+        ],
+        "to": [
+          39
+        ],
+        "friction": [
+          41
+        ],
+        "force": [
+          42
+        ],
+        "occurring": [
+          43
+        ],
+        "in": [
+          44
+        ],
+        "momentum": [
+          46
+        ],
+        "balance": [
+          47
+        ],
+        "vanish": [
+          48
+        ],
+        "by": [
+          49
+        ],
+        "time": [
+          50,
+          115
+        ],
+        "averaging.": [
+          51
+        ],
+        "Accordingly,": [
+          52
+        ],
+        "can": [
+          56
+        ],
+        "alternatively": [
+          57
+        ],
+        "be": [
+          58
+        ],
+        "understood": [
+          59
+        ],
+        "standpoint": [
+          62
+        ],
+        "an": [
+          64,
+          84
+        ],
+        "analogous": [
+          65
+        ],
+        "deterministic": [
+          66,
+          86
+        ],
+        "model": [
+          67
+        ],
+        "irreversible": [
+          69
+        ],
+        "processes": [
+          70
+        ],
+        "character.": [
+          73
+        ],
+        "comparison": [
+          75
+        ],
+        "made": [
+          77
+        ],
+        "established": [
+          79
+        ],
+        "and": [
+          83,
+          124
+        ],
+        "alternative": [
+          85
+        ],
+        "approach": [
+          87,
+          104
+        ],
+        "based": [
+          88
+        ],
+        "on": [
+          89
+        ],
+        "first": [
+          91
+        ],
+        "integral": [
+          92
+        ],
+        "Navier-Stokes": [
+          94
+        ],
+        "equations": [
+          95
+        ],
+        "undertaken.": [
+          97
+        ],
+        "The": [
+          98
+        ],
+        "applicability": [
+          99
+        ],
+        "Reynolds": [
+          107
+        ],
+        "number": [
+          108
+        ],
+        "regimes": [
+          109
+        ],
+        "discussed": [
+          111
+        ],
+        "considering": [
+          112
+        ],
+        "Kolmogorov": [
+          114
+        ],
+        "scale.": [
+          116
+        ],
+        "generalization": [
+          118
+        ],
+        "compressible": [
+          120
+        ],
+        "elaborated": [
+          123
+        ],
+        "use": [
+          126
+        ],
+        "demonstrated": [
+          127
+        ],
+        "damped": [
+          129
+        ],
+        "sound": [
+          130
+        ],
+        "waves.": [
+          131
+        ]
+      }
+    },
+    {
+      "id": "https://openalex.org/W2072062381",
+      "doi": "https://doi.org/10.1016/j.pepi.2014.12.001",
+      "title": "Impact of phase change kinetics on the Mariana slab within the framework of 2-D mantle convection",
+      "publication_year": 2014,
+      "cited_by_count": 16,
+      "abstract_inverted_index": null
+    }
+  ],
+  "group_by": []
+}
