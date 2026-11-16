@@ -35,6 +35,8 @@ def main():
   os.makedirs(DST_DIR, exist_ok=True)
   made = []
   for src in sorted(glob.glob(os.path.join(SRC_DIR, "nh_sink_block_*.prm"))):
+    if src.endswith("_test.prm"):
+      continue  # laptop smoke config is already cheap; not part of the suite
     with open(src) as f:
       text = f.read()
     for old, new in REPLACEMENTS:
