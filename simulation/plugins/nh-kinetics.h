@@ -26,11 +26,12 @@
 
 #include <aspect/adiabatic_conditions/interface.h>
 #include <aspect/geometry_model/interface.h>
-#include <aspect/material_model/equation_of_state/interface.h>
+#include <aspect/material_model/reaction_model/reaction_chain.h>
 #include <aspect/material_model/interface.h>
 #include <aspect/simulator_access.h>
 #include <aspect/utilities.h>
 
+#include <string>
 #include <vector>
 
 namespace aspect
@@ -38,230 +39,149 @@ namespace aspect
   namespace MaterialModel
   {
     /**
-     * A material model that implements phase transformation kinetics for up to three reactions:
-     * (1) olivine <-> wadsleyite following Hosoya et al. (2005)
-     * (2) wadsleyite <-> ringwoodite following Hosoya et al. (2005)
-     * (3) ringwoodite <-> bridgmanite + periclase following Kubo et al. (2002)
+     * A compressible material model that implements 1-3 phase transformations
+     * as a ReactionChain (ol-wd, wd-ri, ri-ps), driven by dynamic
+     * (non-hydrostatic) pressure for non-hydrostatic benchmark experiments.
      *
-     * Benchmark configurations enable any subset (1-3 reactions) via the
-     * enable_*_transformation flags. Non-hydrostatic benchmark extensions:
-     * relaxed dynamic-pressure driving force (S2), explicit bulk-viscosity
-     * Stokes RHS force (S1b), and capped dynamic-pressure correction (S4).
+     * The chain length N is set by the "Reaction chain/Kinetic models" list;
+     * the model expects exactly N cumulative reaction progress fields plus an
+     * optional projected "density_field" and an optional "relaxed_pressure"
+     * field (relaxed-pressure variant). Per-reaction thermodynamic reference
+     * data come from ASCII .tsv profiles. Non-hydrostatic extensions:
+     * relaxed dynamic-pressure driving force, explicit bulk-viscosity Stokes
+     * RHS force, and a capped dynamic-pressure correction.
      *
-     * Each transformation reads thermodynamic data from separate ascii .tsv files.
-     * The thermodynamic data are evaluated along an adiabatic reference profile and
-     * used to compute reaction rates using the operator splitting technique. Average
-     * material properties are computed from the mass fractions of the reacting phases.
-     * The model is considered compressible.
+     * Unlike the upstream MTZ kinetics cookbook, kinetic prefactors Z are
+     * entered in SI units (1/s/K, 1/s/K-style) and used directly: ASPECT's
+     * operator splitter integrates in seconds, so no year conversion is
+     * applied. (The cookbook divides by year_in_seconds; see the note in
+     * evaluate().)
      *
-     * The olivine <-> wadsleyite transformation uses interface-controlled kinetics:
-     * dX/dt = Z * T * exp(-Ha + PVa/RT) * (1 - exp(dG/RT)) * (1 - X)
-     *
-     * The wadsleyite <-> ringwoodite transformation uses interface-controlled kinetics:
-     * dX/dt = Z * T * exp(-Ha + PVa/RT) * (1 - exp(dG/RT)) * (1 - X)
-     *
-     * The ringwoodite <-> bridgmanite + periclase transformation uses diffusion-controlled kinetics:
-     * dX/dt = Z * -dG * |dG| * exp(-Ea/RT) * (1 - X)
-     *
-     * Viscosity is computed as:
-     * eta(P,T) = eta_0 * eta_phase(P_ref) * exp(-A * (T - T_ref) / T_ref)
-     *
-     * where eta_phase(P_ref) is a Gibbs-free-energy-based smooth phase prefactor computed
-     * from tanh transitions centred on the equilibrium phase boundaries (dG = 0). This
-     * decouples the viscosity structure from the kinetic phase fields, preventing spurious
-     * viscosity patches caused by metastable nuclei.
+     * Viscosity uses per-phase prefactors blended via tanh transitions
+     * centred on the equilibrium phase boundaries (dG = 0), decoupled from
+     * the kinetic phase fields.
      *
      * @ingroup MaterialModels
      */
     template <int dim>
     class NHKinetics : public MaterialModel::Interface<dim>, public ::aspect::SimulatorAccess<dim>
     {
-    public:
-      /**
-       * Constructor. Initialize variables.
-       */
-      NHKinetics();
+      public:
+        NHKinetics();
 
-      /**
-       * Initialization function. This function is called once at the
-       * beginning of the program after parse_parameters is run and after
-       * the SimulatorAccess (if applicable) is initialized.
-       */
-      void
-      initialize() override;
+        void
+        initialize() override;
 
-      /**
-       * @name Qualitative properties one can ask a material model
-       * @{
-       */
+        bool
+        is_compressible() const override;
 
-      /**
-       * Return whether the model is compressible or not.
-       */
-      bool
-      is_compressible() const override;
+        void
+        evaluate(const MaterialModel::MaterialModelInputs<dim> &in, MaterialModel::MaterialModelOutputs<dim> &out) const override;
 
-      /**
-       * @}
-       */
+        void
+        clamp_reaction_progress_fields(MaterialModel::MaterialModelInputs<dim> &in) const override;
 
-      /**
-       * Evaluate material properties.
-       */
-      void
-      evaluate(const MaterialModel::MaterialModelInputs<dim> &in, MaterialModel::MaterialModelOutputs<dim> &out) const override;
+        static void
+        declare_parameters(ParameterHandler &prm);
 
-      /**
-       * @name Functions used in dealing with run-time parameters
-       * @{
-       */
+        void
+        parse_parameters(ParameterHandler &prm) override;
 
-      /**
-       * Declare the parameters this class takes through input files.
-       */
-      static void
-      declare_parameters(ParameterHandler &prm);
+        void
+        create_additional_named_outputs(MaterialModel::MaterialModelOutputs<dim> &out) const override;
 
-      /**
-       * Read the parameters this class declares from the parameter file.
-       */
-      void
-      parse_parameters(ParameterHandler &prm) override;
+      private:
+        /**
+         * Reaction chain manager configuring kinetic models for the
+         * sequential phase transitions.
+         */
+        ReactionModel::ReactionChain<dim> reaction_chain;
 
-      /**
-       * @}
-       */
+        /**
+         * Array of ASCII data profiles storing the thermodynamic and physical
+         * data for each reaction.
+         */
+        std::vector<Utilities::AsciiDataProfile<dim>> profiles;
 
-      /**
-       * Add the named outputs for reaction rates.
-       */
-      void
-      create_additional_named_outputs(MaterialModel::MaterialModelOutputs<dim> &out) const override;
+        /**
+         * Data directory and per-reaction file names for the ASCII profiles.
+         */
+        std::string data_directory;
+        std::vector<std::string> data_file_names;
 
-    private:
-      /**
-       * Object that stores the thermodynamic data for the olivine <-> wadsleyite transformation.
-       */
-      Utilities::AsciiDataProfile<dim> profile_ol_wd;
+        /**
+         * Per-phase material property column indices.
+         */
+        std::vector<unsigned int> rho_idx, alpha_idx, beta_idx, cp_idx;
+        std::vector<unsigned int> Vp_idx, Vs_idx, dVp_dT_idx, dVs_dT_idx;
 
-      /**
-       * Object that stores the thermodynamic data for the wadsleyite <-> ringwoodite transformation.
-       */
-      Utilities::AsciiDataProfile<dim> profile_wd_ri;
+        /**
+         * Per-reaction thermodynamic property column indices.
+         */
+        std::vector<unsigned int> dG_idx, dS_idx, dV_idx;
 
-      /**
-       * Object that stores the thermodynamic data for the ringwoodite <-> bridgmanite + periclase transformation.
-       */
-      Utilities::AsciiDataProfile<dim> profile_ri_ps;
+        /**
+         * Cached indices of the cumulative reaction progress fields
+         * (all compositional fields except density_field/relaxed_pressure).
+         */
+        std::vector<unsigned int> reaction_field_indices;
 
-      std::string data_directory_ol_wd;
-      std::string data_filename_ol_wd;
-      std::string data_directory_wd_ri;
-      std::string data_filename_wd_ri;
-      std::string data_directory_ri_ps;
-      std::string data_filename_ri_ps;
+        /**
+         * Reference viscosity. Units: Pa s
+         */
+        double viscosity;
 
-      /**
-       * Column indices for all four phases.
-       */
-      unsigned int rho_ol_idx, rho_wd_idx, rho_ri_idx, rho_ps_idx;
-      unsigned int alpha_ol_idx, alpha_wd_idx, alpha_ri_idx, alpha_ps_idx;
-      unsigned int beta_ol_idx, beta_wd_idx, beta_ri_idx, beta_ps_idx;
-      unsigned int cp_ol_idx, cp_wd_idx, cp_ri_idx, cp_ps_idx;
-      unsigned int dG_ol_wd_idx, dG_wd_ri_idx, dG_ri_ps_idx;
-      unsigned int dS_ol_wd_idx, dS_wd_ri_idx, dS_ri_ps_idx;
-      unsigned int dV_ol_wd_idx, dV_wd_ri_idx, dV_ri_ps_idx;
-      unsigned int Vp_ol_idx, Vp_wd_idx, Vp_ri_idx, Vp_ps_idx;
-      unsigned int Vs_ol_idx, Vs_wd_idx, Vs_ri_idx, Vs_ps_idx;
-      unsigned int dVp_dT_ol_idx, dVp_dT_wd_idx, dVp_dT_ri_idx, dVp_dT_ps_idx;
-      unsigned int dVs_dT_ol_idx, dVs_dT_wd_idx, dVs_dT_ri_idx, dVs_dT_ps_idx;
+        /**
+         * Minimum and maximum viscosity cutoffs. Units: Pa s
+         */
+        double minimum_viscosity;
+        double maximum_viscosity;
 
-      /**
-       * Reference viscosity. Units: Pa s
-       */
-      double viscosity;
+        /**
+         * Exponent A in the temperature dependence exp(-A * (T - T_ref) / T_ref).
+         * Dimensionless
+         */
+        double thermal_viscosity_exponent;
 
-      /**
-       * Minimum and maximum viscosity cutoffs. Units: Pa s
-       */
-      double minimum_viscosity;
-      double maximum_viscosity;
+        /**
+         * Per-phase viscosity prefactors, one per phase (n_reactions + 1).
+         * Dimensionless
+         */
+        std::vector<double> phase_viscosity_prefactors;
 
-      /**
-       * Exponent A in the temperature dependence exp(-A * (T - T_ref) / T_ref).
-       * Dimensionless
-       */
-      double thermal_viscosity_exponent;
+        /**
+         * Width of the tanh viscosity transition in Gibbs free energy space.
+         * Units: J/mol
+         */
+        double gibbs_viscosity_width;
 
-      /**
-       * Per-phase viscosity prefactors applied via a Gibbs-based tanh transition.
-       * These are completely decoupled from the kinetic Xi fields to prevent
-       * spurious viscosity patches from metastable nuclei.
-       * Dimensionless
-       */
-      double visc_prefactor_ol;
-      double visc_prefactor_wd;
-      double visc_prefactor_ri;
-      double visc_prefactor_ps;
+        /**
+         * Reference thermal conductivity. Units: W/m/K
+         */
+        double k;
 
-      /**
-       * Width of the tanh viscosity transition in Gibbs free energy space.
-       * Smaller values give sharper transitions; larger values smooth them out.
-       * A value of ~1000 J/mol corresponds to a transition width of a few km.
-       * Units: J/mol
-       */
-      double gibbs_viscosity_width;
+        bool use_dynamic_pressure_correction_for_density;
+        bool use_dynamic_pressure_correction_for_gibbs;
 
-      /**
-       * Reference thermal conductivity. Units: W/m/K
-       */
-      double k;
+        /**
+         * Relaxation time for the low-pass-filtered (relaxed) dynamic pressure
+         * used as the reaction driving pressure (relaxed-pressure variant).
+         * Units: s. Zero disables relaxation.
+         */
+        double relaxation_time_dynamic_pressure;
 
-      /**
-       * Kinetic parameters for olivine <-> wadsleyite (Hosoya 2005).
-       */
-      double kinetic_factor_ol_wd;
-      double Ha_ol_wd;
-      double Va_ol_wd;
+        /**
+         * Explicit bulk viscosity for the lagged Stokes RHS damping force
+         * (explicit-bulk variant). Units: Pa s. Zero disables the force.
+         */
+        double bulk_viscosity_explicit;
 
-      /**
-       * Kinetic parameters for wadsleyite <-> ringwoodite (interface-controlled).
-       */
-      double kinetic_factor_wd_ri;
-      double Ha_wd_ri;
-      double Va_wd_ri;
-
-      /**
-       * Kinetic parameters for ringwoodite <-> bridgmanite + periclase (Kubo 2002).
-       */
-      double kinetic_factor_ri_ps;
-      double Ea_ri_ps;
-
-      bool use_dynamic_pressure_correction_for_density;
-      bool use_dynamic_pressure_correction_for_gibbs;
-      bool enable_ol_wd_transformation;
-      bool enable_wd_ri_transformation;
-      bool enable_ri_ps_transformation;
-
-      /**
-       * Relaxation time for the low-pass-filtered (relaxed) dynamic pressure
-       * used as the reaction driving pressure (S2). Units: s. Zero disables
-       * relaxation (reactions see the instantaneous Stokes pressure).
-       */
-      double relaxation_time_dynamic_pressure;
-
-      /**
-       * Explicit bulk viscosity for the lagged Stokes RHS damping force
-       * (S1b). Units: Pa s. Zero disables the force.
-       */
-      double bulk_viscosity_explicit;
-
-      /**
-       * Magnitude cap on the dynamic pressure correction (P_drive - P_ref)
-       * applied to density and Gibbs energy (S4). Units: Pa. Zero or negative
-       * disables capping.
-       */
-      double max_dynamic_pressure_correction;
+        /**
+         * Magnitude cap on the dynamic pressure correction (P_drive - P_ref)
+         * applied to density and Gibbs energy (capped-pressure variant).
+         * Units: Pa. Zero or negative disables capping.
+         */
+        double max_dynamic_pressure_correction;
     };
 
 
@@ -272,54 +192,35 @@ namespace aspect
     template <int dim>
     class NHKineticsOutputs : public NamedAdditionalMaterialOutputs<dim>
     {
-    public:
-      NHKineticsOutputs(const unsigned int n_points);
+      public:
+        NHKineticsOutputs(const unsigned int n_points,
+                          const unsigned int n_phases,
+                          const unsigned int n_reactions);
 
-      std::vector<double>
-      get_nth_output(const unsigned int idx) const override;
+        std::vector<double>
+        get_nth_output(const unsigned int idx) const override;
 
-      /**
-       * Arrhenius term for olivine-wadsleyite: exp(-Ha + PVa/RT). Dimensionless
-       */
-      std::vector<double> arrhenius_ol_wd;
+        /**
+         * Viscosity temperature dependence term exp(-A * (T - T_ref) / T_ref).
+         * Dimensionless
+         */
+        std::vector<double> visc_temperature_dependence;
 
-      /**
-       * Arrhenius term for wadsleyite-ringwoodite: exp(-Ha + PVa/RT). Dimensionless
-       */
-      std::vector<double> arrhenius_wd_ri;
+        /**
+         * Phase mass fractions [phase][point]. Dimensionless
+         */
+        std::vector<std::vector<double>> phase_mass_fractions;
 
-      /**
-       * Arrhenius term for ringwoodite-postspinel: exp(-Ea/RT). Dimensionless
-       */
-      std::vector<double> arrhenius_ri_ps;
+        /**
+         * Corrected Gibbs driving energy actually used for each reaction
+         * (dG_ref + dynamic-pressure term - thermal term) [reaction][point].
+         * Units: J/mol
+         */
+        std::vector<std::vector<double>> corrected_gibbs;
 
-      /**
-       * Thermodynamic driving force for olivine-wadsleyite: (1 - exp(dG/RT)). Dimensionless
-       */
-      std::vector<double> thermodynamic_ol_wd;
-
-      /**
-       * Thermodynamic driving force for wadsleyite-ringwoodite: (1 - exp(dG/RT)). Dimensionless
-       */
-      std::vector<double> thermodynamic_wd_ri;
-
-      /**
-       * Thermodynamic driving force for ringwoodite-postspinel: -dG * |dG|. Units: J^2/mol^2
-       */
-      std::vector<double> thermodynamic_ri_ps;
-
-      /**
-       * Viscosity temperature dependence term exp(-A * (T - T_ref) / T_ref). Dimensionless
-       */
-      std::vector<double> visc_temperature_dependence;
-
-      /**
-       * Mass fractions for all four phases. Dimensionless
-       */
-      std::vector<double> X_ol;
-      std::vector<double> X_wd;
-      std::vector<double> X_ri;
-      std::vector<double> X_ps;
+      private:
+        unsigned int n_phases;
+        unsigned int n_reactions;
     };
   } // namespace MaterialModel
 } // namespace aspect

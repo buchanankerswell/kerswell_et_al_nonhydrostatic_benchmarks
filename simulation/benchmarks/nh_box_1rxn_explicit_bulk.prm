@@ -1,11 +1,12 @@
-# NH benchmark 1-reaction box, S1: implicit bulk viscosity in Stokes.
+# NH benchmark: 1-reaction box, explicit-bulk-viscosity damping.
 #
-# As S0 plus the fork's StokesBulkViscosityTerm (zeta = eta_ref, implicit,
-# unconditionally stable). Requires the agent/bulk-viscosity ASPECT build.
+# As undamped plus a lagged bulk-viscosity penalty in the continuity equation
+# (zeta = 0.1*eta_ref, explicit). Explicit-iteration stable for zeta < eta;
+# measures how far an explicit treatment gets versus implicit_bulk.
 #
 # Invoke ASPECT from the repository root so relative paths resolve.
 
-set Output directory              = simulation/results/nh_box_1rxn_s1
+set Output directory              = simulation/results/nh_box_1rxn_explicit_bulk
 set Dimension                     = 2
 set Use years instead of seconds  = true
 set End time                      = 10e+06
@@ -23,8 +24,7 @@ set Additional shared libraries   = simulation/plugins/build/libnh-kinetics.rele
 subsection Formulation
   set Mass conservation         = projected density field
   set Temperature equation      = real density
-  set Enable bulk viscosity     = true
-  set Constant bulk viscosity   = 1.0e+21
+  set Enable additional Stokes RHS = true
 end
 
 subsection Solver parameters
@@ -74,7 +74,7 @@ subsection Boundary composition model
   subsection Function
     set Variable names      = x, y
     set Function expression = (y<5.9e+05 ? 1 : 0); \
-                              3500; \
+                              3200; \
                               2.0e+09 + 3900*10.0*(1.0e+06-y)
   end
 end
@@ -85,7 +85,7 @@ subsection Initial composition model
   subsection Function
     set Variable names      = x, y
     set Function expression = (y<5.9e+05 ? 1 : 0); \
-                              3500; \
+                              (y<5.9e+05 ? 3200 : 3850); \
                               2.0e+09 + 3900*10.0*(1.0e+06-y)
   end
 end
@@ -137,16 +137,20 @@ subsection Material model
   set Model name = NH kinetics
 
   subsection NH kinetics
-    set Enable olivine wadsleyite transformation     = true
-    set Enable wadsleyite ringwoodite transformation = false
-    set Enable ringwoodite postspinel transformation = false
+    subsection Reaction chain
+      set Kinetic models = Interface controlled growth
 
-    set Use dynamic pressure correction for density = true
-    set Use dynamic pressure correction for gibbs   = true
+      subsection Interface controlled growth
+        set Kinetic prefactors    = 4.44e-04
+        set Activation enthalpies = 274e+03
+        set Activation volumes    = 3.3e-06
+      end
+    end
 
-    set Relaxation time for dynamic pressure  = 0.0
-    set Explicit bulk viscosity               = 0.0
-    set Maximum dynamic pressure correction   = 0.0
+    set Data directory  = simulation/benchmark_data/
+    set Data file names = olivine-wadsleyite-profile-Mg100.tsv
+
+    set Phase viscosity prefactors = 1.0, 1.0
 
     set Viscosity                  = 1e+21
     set Minimum viscosity          = 1e+19
@@ -154,13 +158,12 @@ subsection Material model
     set Thermal viscosity exponent = 0
     set Gibbs viscosity width      = 1e+03
 
-    subsection Olivine wadsleyite
-      set Kinetic factor    = 4.44e-04
-      set Activation enthalpy = 274e+03
-      set Activation volume   = 3.3e-06
-      set Data directory    = simulation/benchmark_data/
-      set Data file name    = olivine-wadsleyite-profile-Mg100.tsv
-    end
+    set Use dynamic pressure correction for density = true
+    set Use dynamic pressure correction for gibbs   = true
+
+    set Relaxation time for dynamic pressure  = 0.0
+    set Explicit bulk viscosity               = 1.0e+20
+    set Maximum dynamic pressure correction   = 0.0
   end
 end
 

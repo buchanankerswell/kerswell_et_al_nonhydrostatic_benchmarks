@@ -1,13 +1,15 @@
-# NH benchmark 1-reaction box, S2: relaxed dynamic-pressure driving force.
+# NH benchmark: 1-reaction box, undamped dynamic-pressure reference.
 #
-# As S0 but reactions see the low-pass-filtered relaxed_pressure field
-# (tau_rel = 100 kyr) instead of the instantaneous Stokes pressure. The
-# relaxation timescale plays the bulk-viscosity role with zero solver
-# changes.
+# Single olivine<->wadsleyite kinetic reaction (ReactionChain, N=1) governed
+# by the full dynamic pressure (density + Gibbs corrections ON, uncapped).
+# Z = 4.44e-04 1/s/K entered directly in SI units (no time conversion).
+# Stepped initial density (3200/3850 kg/m3) avoids the uniform-3500 init shock.
+# Reference for the damped variants: implicit_bulk, explicit_bulk,
+# relaxed_pressure, capped_pressure.
 #
 # Invoke ASPECT from the repository root so relative paths resolve.
 
-set Output directory              = simulation/results/nh_box_1rxn_s2
+set Output directory              = simulation/results/nh_box_1rxn_undamped
 set Dimension                     = 2
 set Use years instead of seconds  = true
 set End time                      = 10e+06
@@ -74,7 +76,7 @@ subsection Boundary composition model
   subsection Function
     set Variable names      = x, y
     set Function expression = (y<5.9e+05 ? 1 : 0); \
-                              3500; \
+                              3200; \
                               2.0e+09 + 3900*10.0*(1.0e+06-y)
   end
 end
@@ -85,7 +87,7 @@ subsection Initial composition model
   subsection Function
     set Variable names      = x, y
     set Function expression = (y<5.9e+05 ? 1 : 0); \
-                              3500; \
+                              (y<5.9e+05 ? 3200 : 3850); \
                               2.0e+09 + 3900*10.0*(1.0e+06-y)
   end
 end
@@ -137,16 +139,20 @@ subsection Material model
   set Model name = NH kinetics
 
   subsection NH kinetics
-    set Enable olivine wadsleyite transformation     = true
-    set Enable wadsleyite ringwoodite transformation = false
-    set Enable ringwoodite postspinel transformation = false
+    subsection Reaction chain
+      set Kinetic models = Interface controlled growth
 
-    set Use dynamic pressure correction for density = true
-    set Use dynamic pressure correction for gibbs   = true
+      subsection Interface controlled growth
+        set Kinetic prefactors    = 4.44e-04
+        set Activation enthalpies = 274e+03
+        set Activation volumes    = 3.3e-06
+      end
+    end
 
-    set Relaxation time for dynamic pressure  = 3.156e+12
-    set Explicit bulk viscosity               = 0.0
-    set Maximum dynamic pressure correction   = 0.0
+    set Data directory  = simulation/benchmark_data/
+    set Data file names = olivine-wadsleyite-profile-Mg100.tsv
+
+    set Phase viscosity prefactors = 1.0, 1.0
 
     set Viscosity                  = 1e+21
     set Minimum viscosity          = 1e+19
@@ -154,13 +160,12 @@ subsection Material model
     set Thermal viscosity exponent = 0
     set Gibbs viscosity width      = 1e+03
 
-    subsection Olivine wadsleyite
-      set Kinetic factor    = 4.44e-04
-      set Activation enthalpy = 274e+03
-      set Activation volume   = 3.3e-06
-      set Data directory    = simulation/benchmark_data/
-      set Data file name    = olivine-wadsleyite-profile-Mg100.tsv
-    end
+    set Use dynamic pressure correction for density = true
+    set Use dynamic pressure correction for gibbs   = true
+
+    set Relaxation time for dynamic pressure  = 0.0
+    set Explicit bulk viscosity               = 0.0
+    set Maximum dynamic pressure correction   = 0.0
   end
 end
 

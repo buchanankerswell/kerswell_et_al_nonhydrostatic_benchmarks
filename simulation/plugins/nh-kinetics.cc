@@ -36,49 +36,7 @@ namespace aspect
   namespace MaterialModel
   {
     template <int dim>
-    NHKinetics<dim>::NHKinetics()
-      : rho_ol_idx(numbers::invalid_unsigned_int)
-      , rho_wd_idx(numbers::invalid_unsigned_int)
-      , rho_ri_idx(numbers::invalid_unsigned_int)
-      , rho_ps_idx(numbers::invalid_unsigned_int)
-      , alpha_ol_idx(numbers::invalid_unsigned_int)
-      , alpha_wd_idx(numbers::invalid_unsigned_int)
-      , alpha_ri_idx(numbers::invalid_unsigned_int)
-      , alpha_ps_idx(numbers::invalid_unsigned_int)
-      , beta_ol_idx(numbers::invalid_unsigned_int)
-      , beta_wd_idx(numbers::invalid_unsigned_int)
-      , beta_ri_idx(numbers::invalid_unsigned_int)
-      , beta_ps_idx(numbers::invalid_unsigned_int)
-      , cp_ol_idx(numbers::invalid_unsigned_int)
-      , cp_wd_idx(numbers::invalid_unsigned_int)
-      , cp_ri_idx(numbers::invalid_unsigned_int)
-      , cp_ps_idx(numbers::invalid_unsigned_int)
-      , dG_ol_wd_idx(numbers::invalid_unsigned_int)
-      , dG_wd_ri_idx(numbers::invalid_unsigned_int)
-      , dG_ri_ps_idx(numbers::invalid_unsigned_int)
-      , dS_ol_wd_idx(numbers::invalid_unsigned_int)
-      , dS_wd_ri_idx(numbers::invalid_unsigned_int)
-      , dS_ri_ps_idx(numbers::invalid_unsigned_int)
-      , dV_ol_wd_idx(numbers::invalid_unsigned_int)
-      , dV_wd_ri_idx(numbers::invalid_unsigned_int)
-      , dV_ri_ps_idx(numbers::invalid_unsigned_int)
-      , Vp_ol_idx(numbers::invalid_unsigned_int)
-      , Vp_wd_idx(numbers::invalid_unsigned_int)
-      , Vp_ri_idx(numbers::invalid_unsigned_int)
-      , Vp_ps_idx(numbers::invalid_unsigned_int)
-      , Vs_ol_idx(numbers::invalid_unsigned_int)
-      , Vs_wd_idx(numbers::invalid_unsigned_int)
-      , Vs_ri_idx(numbers::invalid_unsigned_int)
-      , Vs_ps_idx(numbers::invalid_unsigned_int)
-      , dVp_dT_ol_idx(numbers::invalid_unsigned_int)
-      , dVp_dT_wd_idx(numbers::invalid_unsigned_int)
-      , dVp_dT_ri_idx(numbers::invalid_unsigned_int)
-      , dVp_dT_ps_idx(numbers::invalid_unsigned_int)
-      , dVs_dT_ol_idx(numbers::invalid_unsigned_int)
-      , dVs_dT_wd_idx(numbers::invalid_unsigned_int)
-      , dVs_dT_ri_idx(numbers::invalid_unsigned_int)
-      , dVs_dT_ps_idx(numbers::invalid_unsigned_int)
-    {}
+    NHKinetics<dim>::NHKinetics() = default;
 
 
 
@@ -86,69 +44,68 @@ namespace aspect
     void
     NHKinetics<dim>::initialize()
     {
-      // Initialize the olivine-wadsleyite data reader
-      if (enable_ol_wd_transformation)
+      reaction_chain.initialize_simulator(this->get_simulator());
+      reaction_chain.initialize();
+
+      const unsigned int n_reactions = reaction_chain.n_reactions();
+      const unsigned int n_phases    = n_reactions + 1;
+
+      const unsigned int projected_density_idx = this->introspection().compositional_name_exists("density_field")
+                                                 ? this->introspection().compositional_index_for_name("density_field")
+                                                 : numbers::invalid_unsigned_int;
+      // The relaxed-pressure field carries its own reaction rate and must
+      // not be treated as a chain progress variable.
+      const unsigned int relaxed_pressure_idx = this->introspection().compositional_name_exists("relaxed_pressure")
+                                                ? this->introspection().compositional_index_for_name("relaxed_pressure")
+                                                : numbers::invalid_unsigned_int;
+
+      reaction_field_indices.clear();
+      for (unsigned int c = 0; c < this->introspection().n_compositional_fields; ++c)
+        if (c != projected_density_idx && c != relaxed_pressure_idx)
+          reaction_field_indices.push_back(c);
+
+      AssertThrow(reaction_field_indices.size() == n_reactions,
+                  ExcMessage("The number of compositional fields available for reactions (excluding density_field "
+                             "and relaxed_pressure) does not match the number of reactions in the chain."));
+
+      // Size property index arrays
+      rho_idx.assign(n_phases, numbers::invalid_unsigned_int);
+      alpha_idx.assign(n_phases, numbers::invalid_unsigned_int);
+      beta_idx.assign(n_phases, numbers::invalid_unsigned_int);
+      cp_idx.assign(n_phases, numbers::invalid_unsigned_int);
+      Vp_idx.assign(n_phases, numbers::invalid_unsigned_int);
+      Vs_idx.assign(n_phases, numbers::invalid_unsigned_int);
+      dVp_dT_idx.assign(n_phases, numbers::invalid_unsigned_int);
+      dVs_dT_idx.assign(n_phases, numbers::invalid_unsigned_int);
+
+      dG_idx.assign(n_reactions, numbers::invalid_unsigned_int);
+      dS_idx.assign(n_reactions, numbers::invalid_unsigned_int);
+      dV_idx.assign(n_reactions, numbers::invalid_unsigned_int);
+
+      // Initialize profiles and assign indices
+      for (unsigned int r = 0; r < n_reactions; ++r)
         {
-          profile_ol_wd.initialize(this->get_mpi_communicator());
+          profiles[r].initialize(this->get_mpi_communicator());
 
-          rho_ol_idx   = profile_ol_wd.get_column_index_from_name("density_a");
-          rho_wd_idx   = profile_ol_wd.get_column_index_from_name("density_b");
-          alpha_ol_idx = profile_ol_wd.get_column_index_from_name("thermal_expansivity_a");
-          alpha_wd_idx = profile_ol_wd.get_column_index_from_name("thermal_expansivity_b");
-          beta_ol_idx  = profile_ol_wd.get_column_index_from_name("compressibility_a");
-          beta_wd_idx  = profile_ol_wd.get_column_index_from_name("compressibility_b");
-          cp_ol_idx    = profile_ol_wd.get_column_index_from_name("specific_heat_a");
-          cp_wd_idx    = profile_ol_wd.get_column_index_from_name("specific_heat_b");
-          dG_ol_wd_idx = profile_ol_wd.get_column_index_from_name("delta_molar_gibbs");
-          dS_ol_wd_idx = profile_ol_wd.get_column_index_from_name("delta_molar_entropy");
-          dV_ol_wd_idx = profile_ol_wd.get_column_index_from_name("delta_molar_volume");
-
-          Vp_ol_idx     = profile_ol_wd.maybe_get_column_index_from_name("pressure_wave_velocity_a");
-          Vp_wd_idx     = profile_ol_wd.maybe_get_column_index_from_name("pressure_wave_velocity_b");
-          dVp_dT_ol_idx = profile_ol_wd.maybe_get_column_index_from_name("pressure_wave_velocity_T_derivative_a");
-          dVp_dT_wd_idx = profile_ol_wd.maybe_get_column_index_from_name("pressure_wave_velocity_T_derivative_b");
-          Vs_ol_idx     = profile_ol_wd.maybe_get_column_index_from_name("shear_wave_velocity_a");
-          Vs_wd_idx     = profile_ol_wd.maybe_get_column_index_from_name("shear_wave_velocity_b");
-          dVs_dT_ol_idx = profile_ol_wd.maybe_get_column_index_from_name("shear_wave_velocity_T_derivative_a");
-          dVs_dT_wd_idx = profile_ol_wd.maybe_get_column_index_from_name("shear_wave_velocity_T_derivative_b");
+          dG_idx[r] = profiles[r].get_column_index_from_name("delta_molar_gibbs");
+          dS_idx[r] = profiles[r].get_column_index_from_name("delta_molar_entropy");
+          dV_idx[r] = profiles[r].get_column_index_from_name("delta_molar_volume");
         }
 
-      // Initialize the wadsleyite-ringwoodite data reader
-      if (enable_wd_ri_transformation)
+      for (unsigned int p = 0; p < n_phases; ++p)
         {
-          profile_wd_ri.initialize(this->get_mpi_communicator());
+          const bool from_a        = (p == 0);
+          const unsigned int r     = from_a ? 0 : p - 1;
+          const std::string suffix = from_a ? "_a" : "_b";
 
-          rho_ri_idx   = profile_wd_ri.get_column_index_from_name("density_b");
-          alpha_ri_idx = profile_wd_ri.get_column_index_from_name("thermal_expansivity_b");
-          beta_ri_idx  = profile_wd_ri.get_column_index_from_name("compressibility_b");
-          cp_ri_idx    = profile_wd_ri.get_column_index_from_name("specific_heat_b");
-          dG_wd_ri_idx = profile_wd_ri.get_column_index_from_name("delta_molar_gibbs");
-          dS_wd_ri_idx = profile_wd_ri.get_column_index_from_name("delta_molar_entropy");
-          dV_wd_ri_idx = profile_wd_ri.get_column_index_from_name("delta_molar_volume");
-
-          Vp_ri_idx     = profile_wd_ri.maybe_get_column_index_from_name("pressure_wave_velocity_b");
-          dVp_dT_ri_idx = profile_wd_ri.maybe_get_column_index_from_name("pressure_wave_velocity_T_derivative_b");
-          Vs_ri_idx     = profile_wd_ri.maybe_get_column_index_from_name("shear_wave_velocity_b");
-          dVs_dT_ri_idx = profile_wd_ri.maybe_get_column_index_from_name("shear_wave_velocity_T_derivative_b");
-        }
-
-      // Initialize the ringwoodite-postspinel data reader
-      if (enable_ri_ps_transformation)
-        {
-          profile_ri_ps.initialize(this->get_mpi_communicator());
-
-          rho_ps_idx   = profile_ri_ps.get_column_index_from_name("density_b");
-          alpha_ps_idx = profile_ri_ps.get_column_index_from_name("thermal_expansivity_b");
-          beta_ps_idx  = profile_ri_ps.get_column_index_from_name("compressibility_b");
-          cp_ps_idx    = profile_ri_ps.get_column_index_from_name("specific_heat_b");
-          dG_ri_ps_idx = profile_ri_ps.get_column_index_from_name("delta_molar_gibbs");
-          dS_ri_ps_idx = profile_ri_ps.get_column_index_from_name("delta_molar_entropy");
-          dV_ri_ps_idx = profile_ri_ps.get_column_index_from_name("delta_molar_volume");
-
-          Vp_ps_idx     = profile_ri_ps.maybe_get_column_index_from_name("pressure_wave_velocity_b");
-          dVp_dT_ps_idx = profile_ri_ps.maybe_get_column_index_from_name("pressure_wave_velocity_T_derivative_b");
-          Vs_ps_idx     = profile_ri_ps.maybe_get_column_index_from_name("shear_wave_velocity_b");
-          dVs_dT_ps_idx = profile_ri_ps.maybe_get_column_index_from_name("shear_wave_velocity_T_derivative_b");
+          rho_idx[p]    = profiles[r].get_column_index_from_name("density" + suffix);
+          alpha_idx[p]  = profiles[r].get_column_index_from_name("thermal_expansivity" + suffix);
+          beta_idx[p]   = profiles[r].get_column_index_from_name("compressibility" + suffix);
+          cp_idx[p]     = profiles[r].get_column_index_from_name("specific_heat" + suffix);
+          Vp_idx[p]     = profiles[r].maybe_get_column_index_from_name("pressure_wave_velocity" + suffix);
+          dVp_dT_idx[p] = profiles[r].maybe_get_column_index_from_name("pressure_wave_velocity_T_derivative" + suffix);
+          Vs_idx[p]     = profiles[r].maybe_get_column_index_from_name("shear_wave_velocity" + suffix);
+          dVs_dT_idx[p] = profiles[r].maybe_get_column_index_from_name("shear_wave_velocity_T_derivative" + suffix);
         }
     }
 
@@ -175,22 +132,19 @@ namespace aspect
       std::shared_ptr<MaterialModel::AdditionalMaterialOutputsStokesRHS<dim>> stokes_rhs_out =
         out.template get_additional_output_object<MaterialModel::AdditionalMaterialOutputsStokesRHS<dim>>();
 
-      // Get compositional field indices
-      auto idx_or_invalid = [&](bool enabled, const std::string &name) {
-        if (!enabled)
-          return numbers::invalid_unsigned_int;
-        if (!this->introspection().compositional_name_exists(name))
-          return numbers::invalid_unsigned_int;
-        return this->introspection().compositional_index_for_name(name);
-      };
+      const unsigned int n_reactions = reaction_chain.n_reactions();
+      const unsigned int n_phases    = n_reactions + 1;
 
-      const unsigned int projected_density_idx = idx_or_invalid(true, "density_field");
-      const unsigned int xi_ol_wd_idx          = idx_or_invalid(enable_ol_wd_transformation, "xi_ol_wd");
-      const unsigned int xi_wd_ri_idx          = idx_or_invalid(enable_wd_ri_transformation, "xi_wd_ri");
-      const unsigned int xi_ri_ps_idx          = idx_or_invalid(enable_ri_ps_transformation, "xi_ri_ps");
-      // Relaxed dynamic pressure field (S2). Governed by its own reaction
-      // rate toward the instantaneous Stokes pressure (see below).
-      const unsigned int relaxed_pressure_idx  = idx_or_invalid(relaxation_time_dynamic_pressure > 0.0, "relaxed_pressure");
+      const bool output_diagnostics  = (nh_kinetics_out != nullptr);
+
+      // Get compositional field indices
+      const unsigned int projected_density_idx = this->introspection().compositional_name_exists("density_field")
+                                                 ? this->introspection().compositional_index_for_name("density_field")
+                                                 : numbers::invalid_unsigned_int;
+      const unsigned int relaxed_pressure_idx = (relaxation_time_dynamic_pressure > 0.0 &&
+                                                 this->introspection().compositional_name_exists("relaxed_pressure"))
+                                                ? this->introspection().compositional_index_for_name("relaxed_pressure")
+                                                : numbers::invalid_unsigned_int;
 
       for (unsigned int q = 0; q < in.n_evaluation_points(); ++q)
         {
@@ -203,9 +157,10 @@ namespace aspect
           const double   T_ref = this->get_adiabatic_conditions().temperature(position);
           const Point<1> profile_pos(P_ref);
 
-          // Non-hydrostatic benchmark driving pressure (S2): reactions see
-          // the relaxed pressure when enabled, else the instantaneous one.
-          // The deviation from the adiabat is capped (S4) when requested.
+          // Non-hydrostatic driving pressure (relaxed-pressure variant):
+          // reactions see the low-pass-filtered pressure when enabled, else
+          // the instantaneous Stokes pressure. The deviation from the adiabat
+          // is capped (capped-pressure variant) when requested.
           double p_drive = P;
           if (relaxed_pressure_idx != numbers::invalid_unsigned_int)
             p_drive = in.composition[q][relaxed_pressure_idx];
@@ -215,12 +170,11 @@ namespace aspect
                                           -max_dynamic_pressure_correction,
                                           max_dynamic_pressure_correction);
 
-          // Explicit bulk-viscosity damping force (S1b). Penalty on the
-          // divergence rate: rhs_p = +(zeta/eta_ref) * div(u_old), assembled
-          // into the continuity equation. Fixed point div* = -B/(1+zeta/eta):
-          // damped for zeta > 0, explicit-iteration stable for zeta < eta.
-          // Requires strain-rate input; silently does nothing without it.
-          if (stokes_rhs_out != nullptr && bulk_viscosity_explicit > 0.0)
+          // Explicit bulk-viscosity damping force (explicit-bulk variant).
+          // Penalty on the divergence rate: rhs_p = +(zeta/eta_ref)*div(u_old),
+          // assembled into the continuity equation. Requires strain-rate
+          // input; silently does nothing without it.
+          if (stokes_rhs_out != nullptr && bulk_viscosity_explicit > 0.0 && in.requests_property(MaterialProperties::additional_outputs))
             {
               double div_u = 0.0;
               if (q < in.strain_rate.size())
@@ -233,146 +187,59 @@ namespace aspect
                 (bulk_viscosity_explicit / viscosity) * div_u;
             }
 
-          const double R = 8.314; // J/mol/K
+          // Initialize reaction rates to zero for all compositional fields
+          if (reaction_rate_out != nullptr)
+            for (unsigned int c = 0; c < this->introspection().n_compositional_fields; ++c)
+              reaction_rate_out->reaction_rates[q][c] = 0.0;
 
           // Get cumulative reaction progress from compositional fields
-          double xi_ol_wd_cumulative = enable_ol_wd_transformation ? in.composition[q][xi_ol_wd_idx] : 0.0;
-          double xi_wd_ri_cumulative = enable_wd_ri_transformation ? in.composition[q][xi_wd_ri_idx] : 0.0;
-          double xi_ri_ps_cumulative = enable_ri_ps_transformation ? in.composition[q][xi_ri_ps_idx] : 0.0;
+          std::vector<double> reaction_progress_values(n_reactions);
+          for (unsigned int r = 0; r < n_reactions; ++r)
+            reaction_progress_values[r] = in.composition[q][reaction_field_indices[r]];
 
-          // Enforce bounds and ordering: 1 >= xi_ol_wd >= xi_wd_ri >= xi_ri_ps >= 0
-          xi_ol_wd_cumulative = std::clamp(xi_ol_wd_cumulative, 0.0, 1.0);
-          xi_wd_ri_cumulative = std::clamp(xi_wd_ri_cumulative, 0.0, xi_ol_wd_cumulative);
-          xi_ri_ps_cumulative = std::clamp(xi_ri_ps_cumulative, 0.0, xi_wd_ri_cumulative);
+          // Ensure physical range [0, 1] and monotonicity xi[i] <= xi[i-1]
+          const std::vector<double> reaction_progress_clamped = reaction_chain.clamp_cumulative_progress(reaction_progress_values);
 
-          // Compute actual phase mass fractions from cumulative variables
-          const double X_ol = std::max(0.0, 1.0 - xi_ol_wd_cumulative);
-          const double X_wd = std::max(0.0, xi_ol_wd_cumulative - xi_wd_ri_cumulative);
-          const double X_ri = std::max(0.0, xi_wd_ri_cumulative - xi_ri_ps_cumulative);
-          const double X_ps = std::max(0.0, xi_ri_ps_cumulative);
+          // Storage for all phases
+          std::vector<double> densities(n_phases, 0.0);
+          std::vector<double> alphas(n_phases, 0.0);
+          std::vector<double> betas(n_phases, 0.0);
+          std::vector<double> cps(n_phases, 0.0);
+          std::vector<double> Vps(n_phases, 0.0);
+          std::vector<double> Vss(n_phases, 0.0);
 
-          if (nh_kinetics_out != nullptr)
+          // Get properties from profiles (phase p comes from reaction 0 side
+          // _a for p == 0, else from reaction p-1 side _b)
+          for (unsigned int p = 0; p < n_phases; ++p)
             {
-              nh_kinetics_out->X_ol[q] = X_ol;
-              nh_kinetics_out->X_wd[q] = X_wd;
-              nh_kinetics_out->X_ri[q] = X_ri;
-              nh_kinetics_out->X_ps[q] = X_ps;
-            }
+              const bool from_a    = (p == 0);
+              const unsigned int r = from_a ? 0 : p - 1;
 
-          const double total_mass = X_ol + X_wd + X_ri + X_ps;
-          AssertThrow(std::abs(total_mass - 1.0) < 1e-8, ExcMessage("Phase mass fractions do not sum to 1.0: " + std::to_string(total_mass)));
+              densities[p] = profiles[r].get_data_component(profile_pos, rho_idx[p]);
+              alphas[p]    = profiles[r].get_data_component(profile_pos, alpha_idx[p]);
+              betas[p]     = profiles[r].get_data_component(profile_pos, beta_idx[p]);
+              cps[p]       = profiles[r].get_data_component(profile_pos, cp_idx[p]);
 
-          // Storage for all four phases
-          std::vector<double> densities(4, 0.0);
-          std::vector<double> alphas(4, 0.0);
-          std::vector<double> betas(4, 0.0);
-          std::vector<double> cps(4, 0.0);
-          std::vector<double> Vps(4, 0.0);
-          std::vector<double> Vss(4, 0.0);
-          std::vector<double> mass_fractions = {X_ol, X_wd, X_ri, X_ps};
-
-          // Get properties from profiles (olivine and wadsleyite)
-          if (enable_ol_wd_transformation)
-            {
-              densities[0] = profile_ol_wd.get_data_component(profile_pos, rho_ol_idx);
-              densities[1] = profile_ol_wd.get_data_component(profile_pos, rho_wd_idx);
-              alphas[0]    = profile_ol_wd.get_data_component(profile_pos, alpha_ol_idx);
-              alphas[1]    = profile_ol_wd.get_data_component(profile_pos, alpha_wd_idx);
-              betas[0]     = profile_ol_wd.get_data_component(profile_pos, beta_ol_idx);
-              betas[1]     = profile_ol_wd.get_data_component(profile_pos, beta_wd_idx);
-              cps[0]       = profile_ol_wd.get_data_component(profile_pos, cp_ol_idx);
-              cps[1]       = profile_ol_wd.get_data_component(profile_pos, cp_wd_idx);
-
-              if (seismic_out != nullptr && Vp_ol_idx != numbers::invalid_unsigned_int)
+              if (seismic_out != nullptr && Vp_idx[p] != numbers::invalid_unsigned_int)
                 {
-                  Vps[0] = profile_ol_wd.get_data_component(profile_pos, Vp_ol_idx);
-                  Vps[1] = profile_ol_wd.get_data_component(profile_pos, Vp_wd_idx);
-                  if (dVp_dT_ol_idx != numbers::invalid_unsigned_int)
-                    {
-                      Vps[0] += profile_ol_wd.get_data_component(profile_pos, dVp_dT_ol_idx) * (T - T_ref);
-                      Vps[1] += profile_ol_wd.get_data_component(profile_pos, dVp_dT_wd_idx) * (T - T_ref);
-                    }
+                  Vps[p] = profiles[r].get_data_component(profile_pos, Vp_idx[p]);
+                  if (dVp_dT_idx[p] != numbers::invalid_unsigned_int)
+                    Vps[p] += profiles[r].get_data_component(profile_pos, dVp_dT_idx[p]) * (T - T_ref);
                 }
-              if (seismic_out != nullptr && Vs_ol_idx != numbers::invalid_unsigned_int)
+              if (seismic_out != nullptr && Vs_idx[p] != numbers::invalid_unsigned_int)
                 {
-                  Vss[0] = profile_ol_wd.get_data_component(profile_pos, Vs_ol_idx);
-                  Vss[1] = profile_ol_wd.get_data_component(profile_pos, Vs_wd_idx);
-                  if (dVs_dT_ol_idx != numbers::invalid_unsigned_int)
-                    {
-                      Vss[0] += profile_ol_wd.get_data_component(profile_pos, dVs_dT_ol_idx) * (T - T_ref);
-                      Vss[1] += profile_ol_wd.get_data_component(profile_pos, dVs_dT_wd_idx) * (T - T_ref);
-                    }
+                  Vss[p] = profiles[r].get_data_component(profile_pos, Vs_idx[p]);
+                  if (dVs_dT_idx[p] != numbers::invalid_unsigned_int)
+                    Vss[p] += profiles[r].get_data_component(profile_pos, dVs_dT_idx[p]) * (T - T_ref);
                 }
             }
 
-          // Get properties from profiles (ringwoodite)
-          if (enable_wd_ri_transformation)
-            {
-              densities[2] = profile_wd_ri.get_data_component(profile_pos, rho_ri_idx);
-              alphas[2]    = profile_wd_ri.get_data_component(profile_pos, alpha_ri_idx);
-              betas[2]     = profile_wd_ri.get_data_component(profile_pos, beta_ri_idx);
-              cps[2]       = profile_wd_ri.get_data_component(profile_pos, cp_ri_idx);
+          // Compute phase mass fractions from cumulative reaction progress
+          const std::vector<double> mass_fractions = reaction_chain.compute_phase_mass_fractions(reaction_progress_clamped, densities);
 
-              if (seismic_out != nullptr && Vp_ri_idx != numbers::invalid_unsigned_int)
-                {
-                  Vps[2] = profile_wd_ri.get_data_component(profile_pos, Vp_ri_idx);
-                  if (dVp_dT_ri_idx != numbers::invalid_unsigned_int)
-                    Vps[2] += profile_wd_ri.get_data_component(profile_pos, dVp_dT_ri_idx) * (T - T_ref);
-                }
-              if (seismic_out != nullptr && Vs_ri_idx != numbers::invalid_unsigned_int)
-                {
-                  Vss[2] = profile_wd_ri.get_data_component(profile_pos, Vs_ri_idx);
-                  if (dVs_dT_ri_idx != numbers::invalid_unsigned_int)
-                    Vss[2] += profile_wd_ri.get_data_component(profile_pos, dVs_dT_ri_idx) * (T - T_ref);
-                }
-            }
-
-          // Get properties from profiles (post-spinel)
-          if (enable_ri_ps_transformation)
-            {
-              densities[3] = profile_ri_ps.get_data_component(profile_pos, rho_ps_idx);
-              alphas[3]    = profile_ri_ps.get_data_component(profile_pos, alpha_ps_idx);
-              betas[3]     = profile_ri_ps.get_data_component(profile_pos, beta_ps_idx);
-              cps[3]       = profile_ri_ps.get_data_component(profile_pos, cp_ps_idx);
-
-              if (seismic_out != nullptr && Vp_ps_idx != numbers::invalid_unsigned_int)
-                {
-                  Vps[3] = profile_ri_ps.get_data_component(profile_pos, Vp_ps_idx);
-                  if (dVp_dT_ps_idx != numbers::invalid_unsigned_int)
-                    Vps[3] += profile_ri_ps.get_data_component(profile_pos, dVp_dT_ps_idx) * (T - T_ref);
-                }
-              if (seismic_out != nullptr && Vs_ps_idx != numbers::invalid_unsigned_int)
-                {
-                  Vss[3] = profile_ri_ps.get_data_component(profile_pos, Vs_ps_idx);
-                  if (dVs_dT_ps_idx != numbers::invalid_unsigned_int)
-                    Vss[3] += profile_ri_ps.get_data_component(profile_pos, dVs_dT_ps_idx) * (T - T_ref);
-                }
-            }
-
-          // Backfill property slots of disabled reactions from the nearest
-          // enabled slot. Disabled phases carry zero mass, but the averaging
-          // routines still touch every slot (0/0 -> NaN), so all slots must
-          // hold finite values. This enables 1- and 2-reaction configs.
-          const bool slot_valid[4] = {enable_ol_wd_transformation,
-                                      enable_ol_wd_transformation,
-                                      enable_wd_ri_transformation,
-                                      enable_ri_ps_transformation};
-          for (unsigned int i = 0; i < 4; ++i)
-            if (!slot_valid[i])
-              {
-                unsigned int j = i;
-                for (unsigned int d = 1; d < 4; ++d)
-                  {
-                    if (i >= d && slot_valid[i-d]) { j = i-d; break; }
-                    if (i+d < 4 && slot_valid[i+d]) { j = i+d; break; }
-                  }
-                densities[i] = densities[j];
-                alphas[i]    = alphas[j];
-                betas[i]     = betas[j];
-                cps[i]       = cps[j];
-                Vps[i]       = Vps[j];
-                Vss[i]       = Vss[j];
-              }
+          if (output_diagnostics)
+            for (unsigned int p = 0; p < n_phases; ++p)
+              nh_kinetics_out->phase_mass_fractions[p][q] = mass_fractions[p];
 
           // Compute volume fractions from mass fractions
           const std::vector<double> volume_fractions = MaterialUtilities::compute_volumes_from_masses(mass_fractions, densities, true);
@@ -394,183 +261,100 @@ namespace aspect
                 seismic_out->vs[q] = MaterialUtilities::average_value(volume_fractions, Vss, MaterialUtilities::arithmetic);
             }
 
-          // Apply temperature and pressure corrections to density
-          const double temperature_correction_density = (T - T_ref) * alpha_avg;
-          const double pressure_correction_density    = use_dynamic_pressure_correction_for_density ? dynamic_pressure * beta_avg : 0.0;
-          const double density_factor                 = (1.0 - temperature_correction_density) * (1.0 + pressure_correction_density);
-          const double final_rho                      = rho_avg * density_factor;
-
-          // Compute viscosity
-          if (in.requests_property(MaterialProperties::viscosity))
-            {
-              // Temperature dependence: exp(-A * (T - T_ref) / T_ref)
-              double visc_temperature_dependence = std::max(std::min(std::exp(-thermal_viscosity_exponent * (T - T_ref) / T_ref), 1e3), 1e-3);
-              if (std::isnan(visc_temperature_dependence))
-                visc_temperature_dependence = 1.0;
-
-              // ---------------------------------------------------------------
-              // Gibbs-based phase viscosity prefactor
-              //
-              // Viscosity jumps are anchored to the equilibrium phase boundaries (where dG = 0 along the reference adiabat) using tanh transitions
-              // of width gibbs_viscosity_width (J/mol). This is fully decoupled from the kinetic Xi fields, so metastable nuclei in the slab do
-              // not produce spurious viscosity patches.
-              //
-              // The chained construction ensures the stability fields are mutually exclusive and partition of unity:
-              //   phi_ol  = above 410
-              //   phi_wd  = between 410 and 520
-              //   phi_ri  = between 520 and 660
-              //   phi_ps  = below 660
-              // ---------------------------------------------------------------
-              const double w = gibbs_viscosity_width;
-
-              // Transition fractions: f -> 1 when the high-pressure phase is stable (dG < 0)
-              const double f_wd =
-                enable_ol_wd_transformation ? 0.5 * (1.0 - std::tanh(profile_ol_wd.get_data_component(profile_pos, dG_ol_wd_idx) / w)) : 0.0;
-              const double f_ri =
-                enable_wd_ri_transformation ? 0.5 * (1.0 - std::tanh(profile_wd_ri.get_data_component(profile_pos, dG_wd_ri_idx) / w)) : 0.0;
-              const double f_ps =
-                enable_ri_ps_transformation ? 0.5 * (1.0 - std::tanh(profile_ri_ps.get_data_component(profile_pos, dG_ri_ps_idx) / w)) : 0.0;
-
-              // Chained stability fractions (partition of unity)
-              const double phi_ol = 1.0 - f_wd;
-              const double phi_wd = f_wd * (1.0 - f_ri);
-              const double phi_ri = f_wd * f_ri * (1.0 - f_ps);
-              const double phi_ps = f_wd * f_ri * f_ps;
-
-              // Log-linear (geometric) average of per-phase prefactors
-              const double log_prefactor = phi_ol * std::log(visc_prefactor_ol) + phi_wd * std::log(visc_prefactor_wd) +
-                                           phi_ri * std::log(visc_prefactor_ri) + phi_ps * std::log(visc_prefactor_ps);
-              const double visc_depth_dependence = std::exp(log_prefactor);
-
-              const double eta           = viscosity * visc_temperature_dependence * visc_depth_dependence;
-              const double eta_effective = std::min(std::max(eta, minimum_viscosity), maximum_viscosity);
-
-              out.viscosities[q] = eta_effective;
-
-              if (nh_kinetics_out != nullptr)
-                nh_kinetics_out->visc_temperature_dependence[q] = visc_temperature_dependence;
-            }
-
-          // Compute reaction rates with phase-topology constraints
-          // NOTE: Z prefactors are in native SI units (K^-1 s^-1 for
-          // interface-controlled, mol^2 J^-2 s^-1 for diffusion-controlled).
-          // Reaction rates are returned in s^-1. No time-scale conversion is
-          // applied here: ASPECT integrates rates internally in SI seconds
-          // (see simulator/helper_functions.cc and parameters.cc, where
-          // user-facing year inputs are converted with year_in_seconds).
-          if (reaction_rate_out != nullptr)
-            {
-              auto clamp_exp = [](double x) { return std::exp(std::clamp(x, -700.0, 700.0)); };
-
-              // Olivine-wadsleyite reaction rate (interface-controlled)
-              if (enable_ol_wd_transformation)
-                {
-                  const double dG_ol_wd = profile_ol_wd.get_data_component(profile_pos, dG_ol_wd_idx);
-                  const double dS_ol_wd = profile_ol_wd.get_data_component(profile_pos, dS_ol_wd_idx);
-                  const double dV_ol_wd = profile_ol_wd.get_data_component(profile_pos, dV_ol_wd_idx);
-
-                  const double arrhenius_ol_wd         = clamp_exp(-(Ha_ol_wd + P * Va_ol_wd) / (R * T));
-                  nh_kinetics_out->arrhenius_ol_wd[q] = arrhenius_ol_wd;
-
-                  const double temperature_correction_gibbs_ol_wd = (T - T_ref) * dS_ol_wd;
-                  const double pressure_correction_gibbs_ol_wd    = use_dynamic_pressure_correction_for_gibbs ? dynamic_pressure * dV_ol_wd : 0.0;
-                  const double gibbs_ol_wd                        = dG_ol_wd + pressure_correction_gibbs_ol_wd - temperature_correction_gibbs_ol_wd;
-
-                  double thermodynamic_ol_wd = 0.0;
-                  double reaction_rate_ol_wd = 0.0;
-
-                  if (gibbs_ol_wd < 0.0) // Forward: olivine -> wadsleyite
-                    {
-                      thermodynamic_ol_wd = 1.0 - clamp_exp(gibbs_ol_wd / (R * T));
-                      reaction_rate_ol_wd = kinetic_factor_ol_wd * T * arrhenius_ol_wd * thermodynamic_ol_wd * X_ol;
-                    }
-                  else // Reverse: wadsleyite -> olivine
-                    {
-                      thermodynamic_ol_wd = 1.0 - clamp_exp(-gibbs_ol_wd / (R * T));
-                      reaction_rate_ol_wd = -kinetic_factor_ol_wd * T * arrhenius_ol_wd * thermodynamic_ol_wd * X_wd;
-                    }
-
-                  nh_kinetics_out->thermodynamic_ol_wd[q]           = gibbs_ol_wd < 0.0 ? thermodynamic_ol_wd : -thermodynamic_ol_wd;
-                  reaction_rate_out->reaction_rates[q][xi_ol_wd_idx] = reaction_rate_ol_wd;
-                }
-
-              // Wadsleyite-ringwoodite reaction rate (interface-controlled)
-              if (enable_wd_ri_transformation)
-                {
-                  const double dG_wd_ri = profile_wd_ri.get_data_component(profile_pos, dG_wd_ri_idx);
-                  const double dS_wd_ri = profile_wd_ri.get_data_component(profile_pos, dS_wd_ri_idx);
-                  const double dV_wd_ri = profile_wd_ri.get_data_component(profile_pos, dV_wd_ri_idx);
-
-                  const double arrhenius_wd_ri         = clamp_exp(-(Ha_wd_ri + P * Va_wd_ri) / (R * T));
-                  nh_kinetics_out->arrhenius_wd_ri[q] = arrhenius_wd_ri;
-
-                  const double temperature_correction_gibbs_wd_ri = (T - T_ref) * dS_wd_ri;
-                  const double pressure_correction_gibbs_wd_ri    = use_dynamic_pressure_correction_for_gibbs ? dynamic_pressure * dV_wd_ri : 0.0;
-                  const double gibbs_wd_ri                        = dG_wd_ri + pressure_correction_gibbs_wd_ri - temperature_correction_gibbs_wd_ri;
-
-                  double thermodynamic_wd_ri = 0.0;
-                  double reaction_rate_wd_ri = 0.0;
-
-                  if (gibbs_wd_ri < 0.0) // Forward: wadsleyite -> ringwoodite
-                    {
-                      thermodynamic_wd_ri = 1.0 - clamp_exp(gibbs_wd_ri / (R * T));
-                      reaction_rate_wd_ri = kinetic_factor_wd_ri * T * arrhenius_wd_ri * thermodynamic_wd_ri * X_wd;
-                    }
-                  else // Reverse: ringwoodite -> wadsleyite
-                    {
-                      thermodynamic_wd_ri = 1.0 - clamp_exp(-gibbs_wd_ri / (R * T));
-                      reaction_rate_wd_ri = -kinetic_factor_wd_ri * T * arrhenius_wd_ri * thermodynamic_wd_ri * X_ri;
-                    }
-
-                  nh_kinetics_out->thermodynamic_wd_ri[q]           = gibbs_wd_ri < 0.0 ? thermodynamic_wd_ri : -thermodynamic_wd_ri;
-                  reaction_rate_out->reaction_rates[q][xi_wd_ri_idx] = reaction_rate_wd_ri;
-                }
-
-              // Ringwoodite-postspinel reaction rate (diffusion-controlled)
-              if (enable_ri_ps_transformation)
-                {
-                  const double dG_ri_ps = profile_ri_ps.get_data_component(profile_pos, dG_ri_ps_idx);
-                  const double dS_ri_ps = profile_ri_ps.get_data_component(profile_pos, dS_ri_ps_idx);
-                  const double dV_ri_ps = profile_ri_ps.get_data_component(profile_pos, dV_ri_ps_idx);
-
-                  const double arrhenius_ri_ps         = clamp_exp(-Ea_ri_ps / (R * T));
-                  nh_kinetics_out->arrhenius_ri_ps[q] = arrhenius_ri_ps;
-
-                  const double temperature_correction_gibbs_ri_ps = (T - T_ref) * dS_ri_ps;
-                  const double pressure_correction_gibbs_ri_ps    = use_dynamic_pressure_correction_for_gibbs ? dynamic_pressure * dV_ri_ps : 0.0;
-                  const double gibbs_ri_ps                        = dG_ri_ps + pressure_correction_gibbs_ri_ps - temperature_correction_gibbs_ri_ps;
-
-                  const double thermodynamic_ri_ps         = -gibbs_ri_ps * std::abs(gibbs_ri_ps);
-                  nh_kinetics_out->thermodynamic_ri_ps[q] = thermodynamic_ri_ps;
-
-                  double reaction_rate_ri_ps = 0.0;
-
-                  if (gibbs_ri_ps < 0.0) // Forward: ringwoodite -> postspinel
-                    reaction_rate_ri_ps = kinetic_factor_ri_ps * thermodynamic_ri_ps * arrhenius_ri_ps * X_ri;
-                  else // Reverse: postspinel -> ringwoodite
-                    reaction_rate_ri_ps = kinetic_factor_ri_ps * thermodynamic_ri_ps * arrhenius_ri_ps * X_ps;
-
-                  reaction_rate_out->reaction_rates[q][xi_ri_ps_idx] = reaction_rate_ri_ps;
-                }
-
-              // Zero out all other reaction rates
-              for (unsigned int c = 0; c < this->introspection().n_compositional_fields; ++c)
-                {
-                  if ((enable_ol_wd_transformation && c == xi_ol_wd_idx) || (enable_wd_ri_transformation && c == xi_wd_ri_idx) ||
-                      (enable_ri_ps_transformation && c == xi_ri_ps_idx))
-                    continue;
-                  reaction_rate_out->reaction_rates[q][c] = 0.0;
-                }
-            }
-
-          // Update material model outputs
-          out.densities[q]                      = final_rho;
+          out.densities[q]                      = rho_avg;
           out.thermal_expansion_coefficients[q] = alpha_avg;
           out.compressibilities[q]              = beta_avg;
           out.thermal_conductivities[q]         = k;
           out.specific_heat[q]                  = cp_avg;
           out.entropy_derivative_pressure[q]    = 0.0;
           out.entropy_derivative_temperature[q] = 0.0;
+
+          // Apply temperature and pressure corrections to density
+          const double temperature_correction_density = (T - T_ref) * alpha_avg;
+          const double pressure_correction_density    = use_dynamic_pressure_correction_for_density ? dynamic_pressure * beta_avg : 0.0;
+          const double density_factor                 = (1.0 - temperature_correction_density) * (1.0 + pressure_correction_density);
+          out.densities[q]                            = rho_avg * density_factor;
+
+          // Compute viscosity temperature dependence: exp(-A * (T - T_ref) / T_ref)
+          double visc_temperature_dependence = std::max(std::min(std::exp(-thermal_viscosity_exponent * (T - T_ref) / T_ref), 1e3), 1e-3);
+          if (std::isnan(visc_temperature_dependence))
+            visc_temperature_dependence = 1.0;
+
+          if (output_diagnostics)
+            nh_kinetics_out->visc_temperature_dependence[q] = visc_temperature_dependence;
+
+          // Compute viscosity with Gibbs-anchored phase prefactors.
+          // Transition fractions f_r -> 1 when the high-pressure phase is
+          // stable (dG < 0); chained into mutually exclusive stability
+          // fractions (partition of unity), decoupled from the kinetic fields.
+          if (in.requests_property(MaterialProperties::viscosity))
+            {
+              const double w = gibbs_viscosity_width;
+
+              std::vector<double> f_transition(n_reactions, 0.0);
+              for (unsigned int r = 0; r < n_reactions; ++r)
+                {
+                  const double dG_val = profiles[r].get_data_component(profile_pos, dG_idx[r]);
+                  f_transition[r] = 0.5 * (1.0 - std::tanh(dG_val / w));
+                }
+
+              std::vector<double> phi(n_phases, 1.0);
+              double accumulated_prod = 1.0;
+              for (unsigned int p = 0; p < n_phases; ++p)
+                {
+                  if (p == 0)
+                    phi[p] = 1.0 - f_transition[0];
+                  else if (p < n_reactions)
+                    {
+                      accumulated_prod *= f_transition[p - 1];
+                      phi[p] = accumulated_prod * (1.0 - f_transition[p]);
+                    }
+                  else
+                    {
+                      accumulated_prod *= f_transition[p - 1];
+                      phi[p] = accumulated_prod;
+                    }
+                }
+
+              double log_prefactor = 0.0;
+              for (unsigned int p = 0; p < n_phases; ++p)
+                log_prefactor += phi[p] * std::log(phase_viscosity_prefactors[p]);
+
+              const double visc_depth_dependence = std::exp(log_prefactor);
+              const double eta                   = viscosity * visc_temperature_dependence * visc_depth_dependence;
+              out.viscosities[q]                 = std::min(std::max(eta, minimum_viscosity), maximum_viscosity);
+            }
+
+          // Evaluate reaction rates and driving energies.
+          //
+          // NOTE on units: the chain returns SI rates (s^-1) and the operator
+          // splitter integrates in seconds, so kinetic prefactors Z are
+          // entered directly in SI units (e.g. Z = 4.44e-04 1/s/K gives the
+          // same effective kinetics as the cookbook's Z = 1.4e+04 divided by
+          // year_in_seconds). No time conversion is applied here; the
+          // cookbook's division is arguably a units bug, flagged for a
+          // separate upstream fix.
+          if (reaction_rate_out != nullptr &&
+              (in.requests_property(MaterialProperties::reaction_rates) ||
+               in.requests_property(MaterialProperties::additional_outputs)))
+            {
+              for (unsigned int r = 0; r < n_reactions; ++r)
+                {
+                  const double dG_ref = profiles[r].get_data_component(profile_pos, dG_idx[r]);
+                  const double dS     = profiles[r].get_data_component(profile_pos, dS_idx[r]);
+                  const double dV     = profiles[r].get_data_component(profile_pos, dV_idx[r]);
+
+                  const double gibbs_driving = dG_ref
+                                               + (use_dynamic_pressure_correction_for_gibbs ? dynamic_pressure * dV : 0.0)
+                                               - (T - T_ref) * dS;
+
+                  if (output_diagnostics)
+                    nh_kinetics_out->corrected_gibbs[r][q] = gibbs_driving;
+
+                  reaction_rate_out->reaction_rates[q][reaction_field_indices[r]] =
+                    reaction_chain.net_forward_reaction_rate(T, P, gibbs_driving, reaction_progress_clamped[r], r);
+                }
+            }
 
           for (unsigned int c = 0; c < this->introspection().n_compositional_fields; ++c)
             out.reaction_terms[q][c] = 0.0;
@@ -582,8 +366,8 @@ namespace aspect
           out.reaction_terms[q][projected_density_idx] = out.densities[q] - in.composition[q][projected_density_idx];
 
       // Relax the dynamic pressure field toward the instantaneous Stokes
-      // pressure (S2): d(p_bar)/dt = (P - p_bar) / tau_rel, integrated by
-      // the operator-splitting reaction solver like the xi fields.
+      // pressure: d(p_bar)/dt = (P - p_bar) / tau_rel, integrated by the
+      // operator-splitting reaction solver like the xi fields.
       if (relaxed_pressure_idx != numbers::invalid_unsigned_int && reaction_rate_out != nullptr)
         for (unsigned int q = 0; q < in.n_evaluation_points(); ++q)
           reaction_rate_out->reaction_rates[q][relaxed_pressure_idx] =
@@ -599,24 +383,66 @@ namespace aspect
 
     template <int dim>
     void
+    NHKinetics<dim>::clamp_reaction_progress_fields(MaterialModel::MaterialModelInputs<dim> &in) const
+    {
+      const unsigned int n_reactions = reaction_chain.n_reactions();
+
+      for (unsigned int q = 0; q < in.n_evaluation_points(); ++q)
+        {
+          std::vector<double> reaction_progress_values(n_reactions);
+          for (unsigned int r = 0; r < n_reactions; ++r)
+            reaction_progress_values[r] = in.composition[q][reaction_field_indices[r]];
+
+          const std::vector<double> reaction_progress_clamped = reaction_chain.clamp_cumulative_progress(reaction_progress_values);
+
+          for (unsigned int r = 0; r < n_reactions; ++r)
+            in.composition[q][reaction_field_indices[r]] = reaction_progress_clamped[r];
+        }
+    }
+
+
+
+    template <int dim>
+    void
     NHKinetics<dim>::declare_parameters(ParameterHandler &prm)
     {
       prm.enter_subsection("Material model");
       {
         prm.enter_subsection("NH kinetics");
         {
-          prm.declare_entry("Enable olivine wadsleyite transformation",
-                            "true",
-                            Patterns::Bool(),
-                            "Enable the olivine <-> wadsleyite phase transformation.");
-          prm.declare_entry("Enable wadsleyite ringwoodite transformation",
-                            "false",
-                            Patterns::Bool(),
-                            "Enable the wadsleyite <-> ringwoodite phase transformation.");
-          prm.declare_entry("Enable ringwoodite postspinel transformation",
-                            "false",
-                            Patterns::Bool(),
-                            "Enable the ringwoodite <-> bridgmanite + periclase phase transformation.");
+          ReactionModel::ReactionChain<dim>::declare_parameters(prm);
+
+          prm.declare_entry("Data directory",
+                            "simulation/benchmark_data/",
+                            Patterns::DirectoryName(),
+                            "Directory containing the per-reaction thermodynamic data profiles.");
+          prm.declare_entry("Data file names",
+                            "olivine-wadsleyite-profile-Mg100.tsv",
+                            Patterns::List(Patterns::Anything()),
+                            "'|'-separated list of thermodynamic data files, one per reaction.");
+
+          prm.enter_subsection("Ascii data model");
+          {
+            Utilities::AsciiDataProfile<dim>::declare_parameters(prm,
+                                                                 "simulation/benchmark_data/",
+                                                                 "olivine-wadsleyite-profile-Mg100.tsv");
+          }
+          prm.leave_subsection();
+
+          prm.declare_entry("Viscosity", "1e21", Patterns::Double(0.), "Reference viscosity. Units: Pa s");
+          prm.declare_entry("Minimum viscosity", "1e19", Patterns::Double(0.), "Minimum viscosity cutoff. Units: Pa s");
+          prm.declare_entry("Maximum viscosity", "1e24", Patterns::Double(0.), "Maximum viscosity cutoff. Units: Pa s");
+          prm.declare_entry("Thermal viscosity exponent", "0.0", Patterns::Double(0.), "Exponent A in exp(-A*(T-T_ref)/T_ref). Dimensionless.");
+          prm.declare_entry("Phase viscosity prefactors",
+                            "1.0, 1.0",
+                            Patterns::List(Patterns::Double(0.)),
+                            "Comma-separated list of dimensionless viscosity prefactors, one per phase (n_reactions + 1).");
+          prm.declare_entry("Gibbs viscosity width",
+                            "1000.0",
+                            Patterns::Double(0.),
+                            "Width of the tanh viscosity transition in Gibbs free energy space. Units: J/mol");
+
+          prm.declare_entry("Thermal conductivity", "4.0", Patterns::Double(0.), "Reference thermal conductivity. Units: W/m/K");
 
           prm.declare_entry("Use dynamic pressure correction for density", "true", Patterns::Bool(), "Apply dynamic pressure correction to density.");
           prm.declare_entry("Use dynamic pressure correction for gibbs",
@@ -627,117 +453,20 @@ namespace aspect
           prm.declare_entry("Relaxation time for dynamic pressure",
                             "0.0",
                             Patterns::Double(0.),
-                            "Relaxation time tau_rel for the low-pass-filtered dynamic pressure (S2). "
+                            "Relaxation time tau_rel for the low-pass-filtered dynamic pressure (relaxed-pressure variant). "
                             "Reactions are driven by the relaxed pressure field 'relaxed_pressure', which must be "
                             "defined as a compositional field. Units: s. Zero disables relaxation.");
           prm.declare_entry("Explicit bulk viscosity",
                             "0.0",
                             Patterns::Double(0.),
-                            "Explicit bulk viscosity zeta for the lagged Stokes RHS damping force (S1b). "
+                            "Explicit bulk viscosity zeta for the lagged Stokes RHS damping force (explicit-bulk variant). "
                             "Requires 'Enable additional Stokes RHS' in the Formulation section. "
                             "Stable for zeta below the shear viscosity. Units: Pa s. Zero disables the force.");
           prm.declare_entry("Maximum dynamic pressure correction",
                             "0.0",
                             Patterns::Double(0.),
-                            "Magnitude cap on (P_drive - P_ref) applied to density and Gibbs energy (S4). "
+                            "Magnitude cap on (P_drive - P_ref) applied to density and Gibbs energy (capped-pressure variant). "
                             "Units: Pa. Zero or negative disables capping.");
-
-          prm.declare_entry("Viscosity", "1e21", Patterns::Double(0.), "Reference viscosity. Units: Pa s");
-          prm.declare_entry("Minimum viscosity", "1e19", Patterns::Double(0.), "Minimum viscosity cutoff. Units: Pa s");
-          prm.declare_entry("Maximum viscosity", "1e24", Patterns::Double(0.), "Maximum viscosity cutoff. Units: Pa s");
-          prm.declare_entry("Thermal viscosity exponent", "0.0", Patterns::Double(0.), "Exponent A in exp(-A*(T-T_ref)/T_ref). Dimensionless.");
-
-          prm.declare_entry("Viscosity prefactor olivine",
-                            "1.0",
-                            Patterns::Double(0.),
-                            "Viscosity prefactor for olivine stability field. Dimensionless.");
-          prm.declare_entry("Viscosity prefactor wadsleyite",
-                            "1.0",
-                            Patterns::Double(0.),
-                            "Viscosity prefactor for wadsleyite stability field. Dimensionless.");
-          prm.declare_entry("Viscosity prefactor ringwoodite",
-                            "1.0",
-                            Patterns::Double(0.),
-                            "Viscosity prefactor for ringwoodite stability field. Dimensionless.");
-          prm.declare_entry("Viscosity prefactor postspinel",
-                            "1.0",
-                            Patterns::Double(0.),
-                            "Viscosity prefactor for post-spinel stability field. Dimensionless.");
-          prm.declare_entry("Gibbs viscosity width",
-                            "1000.0",
-                            Patterns::Double(0.),
-                            "Width of the tanh viscosity transition in Gibbs free energy space. "
-                            "Controls sharpness of viscosity jumps at equilibrium phase boundaries. "
-                            "Smaller values give sharper transitions. ~1000 J/mol gives a transition "
-                            "spread of a few km. Units: J/mol");
-
-          prm.declare_entry("Thermal conductivity", "4.0", Patterns::Double(0.), "Reference thermal conductivity. Units: W/m/K");
-
-          // Olivine-wadsleyite parameters
-          prm.enter_subsection("Olivine wadsleyite");
-          {
-            Utilities::AsciiDataProfile<dim>::declare_parameters(prm, "$ASPECT_SOURCE_DIR/cookbooks/mtz_kinetics/", "olivine-wadsleyite-profile.tsv");
-            prm.declare_entry("Data directory",
-                              "$ASPECT_SOURCE_DIR/cookbooks/mtz_kinetics/",
-                              Patterns::DirectoryName(),
-                              "Directory containing the olivine-wadsleyite thermodynamic data file.");
-            prm.declare_entry("Data file name",
-                              "olivine-wadsleyite-profile.tsv",
-                              Patterns::Anything(),
-                              "Name of the olivine-wadsleyite thermodynamic data file.");
-            prm.declare_entry("Kinetic factor",
-                              "7.0e7",
-                              Patterns::Double(0.0),
-                              "Z for olivine-wadsleyite: dX/dt = Z*T*exp(-Ha+PVa/RT)*(1-exp(dG/RT))*X. Units: 1/s/K");
-            prm.declare_entry("Activation enthalpy", "274e3", Patterns::Double(0.0), "Ha for olivine-wadsleyite. Units: J/mol");
-            prm.declare_entry("Activation volume", "3.3e-6", Patterns::Double(0.0), "Va for olivine-wadsleyite. Units: m^3/mol");
-          }
-          prm.leave_subsection();
-
-          // Wadsleyite-ringwoodite parameters
-          prm.enter_subsection("Wadsleyite ringwoodite");
-          {
-            Utilities::AsciiDataProfile<dim>::declare_parameters(prm,
-                                                                 "$ASPECT_SOURCE_DIR/cookbooks/mtz_kinetics/",
-                                                                 "wadsleyite-ringwoodite-profile.tsv");
-            prm.declare_entry("Data directory",
-                              "$ASPECT_SOURCE_DIR/cookbooks/mtz_kinetics/",
-                              Patterns::DirectoryName(),
-                              "Directory containing the wadsleyite-ringwoodite thermodynamic data file.");
-            prm.declare_entry("Data file name",
-                              "wadsleyite-ringwoodite-profile.tsv",
-                              Patterns::Anything(),
-                              "Name of the wadsleyite-ringwoodite thermodynamic data file.");
-            prm.declare_entry("Kinetic factor",
-                              "7.0e7",
-                              Patterns::Double(0.0),
-                              "Z for wadsleyite-ringwoodite: dX/dt = Z*T*exp(-Ha+PVa/RT)*(1-exp(dG/RT))*X. Units: 1/s/K");
-            prm.declare_entry("Activation enthalpy", "274e3", Patterns::Double(0.0), "Ha for wadsleyite-ringwoodite. Units: J/mol");
-            prm.declare_entry("Activation volume", "3.3e-6", Patterns::Double(0.0), "Va for wadsleyite-ringwoodite. Units: m^3/mol");
-          }
-          prm.leave_subsection();
-
-          // Ringwoodite-postspinel parameters
-          prm.enter_subsection("Ringwoodite postspinel");
-          {
-            Utilities::AsciiDataProfile<dim>::declare_parameters(prm,
-                                                                 "$ASPECT_SOURCE_DIR/cookbooks/mtz_kinetics/",
-                                                                 "ringwoodite-postspinel-profile.tsv");
-            prm.declare_entry("Data directory",
-                              "$ASPECT_SOURCE_DIR/cookbooks/mtz_kinetics/",
-                              Patterns::DirectoryName(),
-                              "Directory containing the ringwoodite-postspinel thermodynamic data file.");
-            prm.declare_entry("Data file name",
-                              "ringwoodite-postspinel-profile.tsv",
-                              Patterns::Anything(),
-                              "Name of the ringwoodite-postspinel thermodynamic data file.");
-            prm.declare_entry("Kinetic factor",
-                              "2.7e-16",
-                              Patterns::Double(0.0),
-                              "Z for ringwoodite-postspinel: dX/dt = Z*-dG*|dG|*exp(-Ea/RT)*X. Units: mol^2/J^2/s");
-            prm.declare_entry("Activation energy", "355e3", Patterns::Double(0.0), "Ea for ringwoodite-postspinel (Kubo et al. 2002). Units: J/mol");
-          }
-          prm.leave_subsection();
         }
         prm.leave_subsection();
       }
@@ -754,77 +483,35 @@ namespace aspect
       {
         prm.enter_subsection("NH kinetics");
         {
-          enable_ol_wd_transformation = prm.get_bool("Enable olivine wadsleyite transformation");
-          enable_wd_ri_transformation = prm.get_bool("Enable wadsleyite ringwoodite transformation");
-          enable_ri_ps_transformation = prm.get_bool("Enable ringwoodite postspinel transformation");
+          data_directory  = Utilities::expand_ASPECT_SOURCE_DIR(prm.get("Data directory"));
+          data_file_names = Utilities::split_string_list(prm.get("Data file names"), "|");
 
-          if (enable_ol_wd_transformation)
-            {
-              prm.enter_subsection("Olivine wadsleyite");
-              {
-                data_directory_ol_wd = Utilities::expand_ASPECT_SOURCE_DIR(prm.get("Data directory"));
-                data_filename_ol_wd  = prm.get("Data file name");
-                prm.enter_subsection("Ascii data model");
-                {
-                  prm.set("Data directory", data_directory_ol_wd);
-                  prm.set("Data file name", data_filename_ol_wd);
-                }
-                prm.leave_subsection();
-                profile_ol_wd.parse_parameters(prm);
-                kinetic_factor_ol_wd = prm.get_double("Kinetic factor");
-                Ha_ol_wd             = prm.get_double("Activation enthalpy");
-                Va_ol_wd             = prm.get_double("Activation volume");
-              }
-              prm.leave_subsection();
-            }
+          reaction_chain.parse_parameters(prm);
 
-          if (enable_wd_ri_transformation)
-            {
-              prm.enter_subsection("Wadsleyite ringwoodite");
-              {
-                data_directory_wd_ri = Utilities::expand_ASPECT_SOURCE_DIR(prm.get("Data directory"));
-                data_filename_wd_ri  = prm.get("Data file name");
-                prm.enter_subsection("Ascii data model");
-                {
-                  prm.set("Data directory", data_directory_wd_ri);
-                  prm.set("Data file name", data_filename_wd_ri);
-                }
-                prm.leave_subsection();
-                profile_wd_ri.parse_parameters(prm);
-                kinetic_factor_wd_ri = prm.get_double("Kinetic factor");
-                Ha_wd_ri             = prm.get_double("Activation enthalpy");
-                Va_wd_ri             = prm.get_double("Activation volume");
-              }
-              prm.leave_subsection();
-            }
+          const unsigned int n_reactions = reaction_chain.n_reactions();
+          const unsigned int n_phases    = n_reactions + 1;
 
-          if (enable_ri_ps_transformation)
+          AssertThrow(data_file_names.size() == n_reactions,
+                      ExcMessage("The number of entries in 'Data file names' must match the number of reactions."));
+
+          profiles.resize(n_reactions);
+          for (unsigned int r = 0; r < n_reactions; ++r)
             {
-              prm.enter_subsection("Ringwoodite postspinel");
-              {
-                data_directory_ri_ps = Utilities::expand_ASPECT_SOURCE_DIR(prm.get("Data directory"));
-                data_filename_ri_ps  = prm.get("Data file name");
-                prm.enter_subsection("Ascii data model");
-                {
-                  prm.set("Data directory", data_directory_ri_ps);
-                  prm.set("Data file name", data_filename_ri_ps);
-                }
-                prm.leave_subsection();
-                profile_ri_ps.parse_parameters(prm);
-                kinetic_factor_ri_ps = prm.get_double("Kinetic factor");
-                Ea_ri_ps             = prm.get_double("Activation energy");
-              }
+              prm.enter_subsection("Ascii data model");
+              profiles[r].parse_parameters(prm);
               prm.leave_subsection();
+
+              profiles[r].data_directory = data_directory;
+              profiles[r].data_file_name = data_file_names[r];
             }
 
           viscosity                                   = prm.get_double("Viscosity");
           minimum_viscosity                           = prm.get_double("Minimum viscosity");
           maximum_viscosity                           = prm.get_double("Maximum viscosity");
           thermal_viscosity_exponent                  = prm.get_double("Thermal viscosity exponent");
-          visc_prefactor_ol                           = prm.get_double("Viscosity prefactor olivine");
-          visc_prefactor_wd                           = prm.get_double("Viscosity prefactor wadsleyite");
-          visc_prefactor_ri                           = prm.get_double("Viscosity prefactor ringwoodite");
-          visc_prefactor_ps                           = prm.get_double("Viscosity prefactor postspinel");
+          phase_viscosity_prefactors                  = Utilities::string_to_double(Utilities::split_string_list(prm.get("Phase viscosity prefactors")));
+          AssertThrow(phase_viscosity_prefactors.size() == n_phases,
+                      ExcMessage("The number of entries in 'Phase viscosity prefactors' must match the number of phases (n_reactions + 1)."));
           gibbs_viscosity_width                       = prm.get_double("Gibbs viscosity width");
           k                                           = prm.get_double("Thermal conductivity");
           use_dynamic_pressure_correction_for_density = prm.get_bool("Use dynamic pressure correction for density");
@@ -837,9 +524,7 @@ namespace aspect
       }
       prm.leave_subsection();
 
-      AssertThrow(enable_ol_wd_transformation || enable_wd_ri_transformation || enable_ri_ps_transformation,
-                  ExcMessage("At least one phase transformation must be enabled."));
-
+      AssertThrow(reaction_chain.n_reactions() > 0, ExcMessage("At least one phase transformation must be defined."));
       AssertThrow(gibbs_viscosity_width > 0.0, ExcMessage("Gibbs viscosity width must be positive."));
 
       this->model_dependence.viscosity            = NonlinearDependence::none;
@@ -872,11 +557,13 @@ namespace aspect
 
       if (out.template get_additional_output_object<NHKineticsOutputs<dim>>() == nullptr)
         {
-          const unsigned int n_points = out.n_evaluation_points();
-          out.additional_outputs.push_back(std::make_unique<MaterialModel::NHKineticsOutputs<dim>>(n_points));
+          const unsigned int n_points    = out.n_evaluation_points();
+          const unsigned int n_reactions = reaction_chain.n_reactions();
+          out.additional_outputs.push_back(
+            std::make_unique<MaterialModel::NHKineticsOutputs<dim>>(n_points, n_reactions + 1, n_reactions));
         }
 
-      // Explicit bulk-viscosity force (S1b) needs the Stokes RHS outputs.
+      // Explicit bulk-viscosity force needs the Stokes RHS outputs.
       // The assembler also auto-creates these when 'Enable additional Stokes
       // RHS' is set; creating them here keeps direct evaluate() calls working.
       if (bulk_viscosity_explicit > 0.0 &&
@@ -899,38 +586,28 @@ namespace aspect
     namespace
     {
       std::vector<std::string>
-      make_additional_output_names()
+      make_additional_output_names(const unsigned int n_phases, const unsigned int n_reactions)
       {
         std::vector<std::string> names;
-        names.emplace_back("arrhenius_ol_wd");
-        names.emplace_back("arrhenius_wd_ri");
-        names.emplace_back("arrhenius_ri_ps");
-        names.emplace_back("thermodynamic_ol_wd");
-        names.emplace_back("thermodynamic_wd_ri");
-        names.emplace_back("thermodynamic_ri_ps");
         names.emplace_back("visc_temperature_dependence");
-        names.emplace_back("X_ol");
-        names.emplace_back("X_wd");
-        names.emplace_back("X_ri");
-        names.emplace_back("X_ps");
+        for (unsigned int p = 0; p < n_phases; ++p)
+          names.emplace_back("X_phase_" + std::to_string(p));
+        for (unsigned int r = 0; r < n_reactions; ++r)
+          names.emplace_back("dG_driving_" + std::to_string(r));
         return names;
       }
     } // namespace
 
     template <int dim>
-    NHKineticsOutputs<dim>::NHKineticsOutputs(const unsigned int n_points)
-      : NamedAdditionalMaterialOutputs<dim>(make_additional_output_names())
-      , arrhenius_ol_wd(n_points, numbers::signaling_nan<double>())
-      , arrhenius_wd_ri(n_points, numbers::signaling_nan<double>())
-      , arrhenius_ri_ps(n_points, numbers::signaling_nan<double>())
-      , thermodynamic_ol_wd(n_points, numbers::signaling_nan<double>())
-      , thermodynamic_wd_ri(n_points, numbers::signaling_nan<double>())
-      , thermodynamic_ri_ps(n_points, numbers::signaling_nan<double>())
+    NHKineticsOutputs<dim>::NHKineticsOutputs(const unsigned int n_points,
+                                              const unsigned int n_phases_,
+                                              const unsigned int n_reactions_)
+      : NamedAdditionalMaterialOutputs<dim>(make_additional_output_names(n_phases_, n_reactions_))
       , visc_temperature_dependence(n_points, numbers::signaling_nan<double>())
-      , X_ol(n_points, numbers::signaling_nan<double>())
-      , X_wd(n_points, numbers::signaling_nan<double>())
-      , X_ri(n_points, numbers::signaling_nan<double>())
-      , X_ps(n_points, numbers::signaling_nan<double>())
+      , phase_mass_fractions(n_phases_, std::vector<double>(n_points, numbers::signaling_nan<double>()))
+      , corrected_gibbs(n_reactions_, std::vector<double>(n_points, numbers::signaling_nan<double>()))
+      , n_phases(n_phases_)
+      , n_reactions(n_reactions_)
     {}
 
 
@@ -939,35 +616,12 @@ namespace aspect
     std::vector<double>
     NHKineticsOutputs<dim>::get_nth_output(const unsigned int idx) const
     {
-      AssertIndexRange(idx, make_additional_output_names().size());
-      switch (idx)
-        {
-          case 0:
-            return arrhenius_ol_wd;
-          case 1:
-            return arrhenius_wd_ri;
-          case 2:
-            return arrhenius_ri_ps;
-          case 3:
-            return thermodynamic_ol_wd;
-          case 4:
-            return thermodynamic_wd_ri;
-          case 5:
-            return thermodynamic_ri_ps;
-          case 6:
-            return visc_temperature_dependence;
-          case 7:
-            return X_ol;
-          case 8:
-            return X_wd;
-          case 9:
-            return X_ri;
-          case 10:
-            return X_ps;
-          default:
-            AssertThrow(false, ExcInternalError());
-        }
-      return visc_temperature_dependence;
+      AssertIndexRange(idx, 1 + n_phases + n_reactions);
+      if (idx == 0)
+        return visc_temperature_dependence;
+      if (idx < 1 + n_phases)
+        return phase_mass_fractions[idx - 1];
+      return corrected_gibbs[idx - 1 - n_phases];
     }
   } // namespace MaterialModel
 } // namespace aspect
@@ -979,15 +633,9 @@ namespace aspect
     ASPECT_REGISTER_MATERIAL_MODEL(
       NHKinetics,
       "NH kinetics",
-      "Models phase transformations for three reactions with stoichiometric coupling:\n"
-      "(1: interface-controlled) Olivine <-> wadsleyite (Hosoya et al. 2005): dX/dt = Z * T * exp(-Ha + PVa/RT) * (1 - exp(dG/RT)) * X\n"
-      "(2: interface-controlled) Wadsleyite <-> ringwoodite: dX/dt = Z * T * exp(-Ha + PVa/RT) * (1 - exp(dG/RT)) * X\n"
-      "(3: diffusion-controlled) Ringwoodite <-> bridgmanite + periclase (Kubo et al. 2002): dX/dt = Z * -dG * |dG| * exp(-Ea/RT) * X\n\n"
-      "Compositional fields xi_ol_wd, xi_wd_ri, xi_ri_ps are cumulative reaction progress variables.\n"
-      "Actual phase fractions: X_ol = 1 - xi_ol_wd, X_wd = xi_ol_wd - xi_wd_ri, X_ri = xi_wd_ri - xi_ri_ps, X_ps = xi_ri_ps.\n\n"
-      "Viscosity uses per-phase prefactors blended via tanh transitions centred on the equilibrium phase boundaries\n"
-      "(where dG = 0 along the reference adiabat). This decouples the viscosity structure from the kinetic phase\n"
-      "fields, preventing spurious viscosity patches from metastable nuclei in subducting slabs.\n"
-      "Transition sharpness is controlled by 'Gibbs viscosity width' (J/mol).")
+      "Chain-based phase transformation kinetics for non-hydrostatic benchmarks. "
+      "Reactions form a ReactionChain (kinetic models per the 'Reaction chain' subsection); "
+      "kinetic prefactors Z are SI rates directly integrated by the operator splitter (no time conversion). "
+      "Reactions are driven by the dynamic pressure, optionally relaxed, capped, or damped.")
   } // namespace MaterialModel
 } // namespace aspect
