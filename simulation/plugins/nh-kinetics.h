@@ -18,8 +18,8 @@
   <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _aspect_cookbooks_mtz_kinetics_mtz_kinetics_h
-#define _aspect_cookbooks_mtz_kinetics_mtz_kinetics_h
+#ifndef _aspect_nh_kinetics_h
+#define _aspect_nh_kinetics_h
 
 #include <deal.II/base/patterns.h>
 #include <deal.II/base/types.h>
@@ -38,10 +38,15 @@ namespace aspect
   namespace MaterialModel
   {
     /**
-     * A material model that implements phase transformation kinetics for three reactions:
+     * A material model that implements phase transformation kinetics for up to three reactions:
      * (1) olivine <-> wadsleyite following Hosoya et al. (2005)
      * (2) wadsleyite <-> ringwoodite following Hosoya et al. (2005)
      * (3) ringwoodite <-> bridgmanite + periclase following Kubo et al. (2002)
+     *
+     * Benchmark configurations enable any subset (1-3 reactions) via the
+     * enable_*_transformation flags. Non-hydrostatic benchmark extensions:
+     * relaxed dynamic-pressure driving force (S2), explicit bulk-viscosity
+     * Stokes RHS force (S1b), and capped dynamic-pressure correction (S4).
      *
      * Each transformation reads thermodynamic data from separate ascii .tsv files.
      * The thermodynamic data are evaluated along an adiabatic reference profile and
@@ -69,13 +74,13 @@ namespace aspect
      * @ingroup MaterialModels
      */
     template <int dim>
-    class MTZKinetics : public MaterialModel::Interface<dim>, public ::aspect::SimulatorAccess<dim>
+    class NHKinetics : public MaterialModel::Interface<dim>, public ::aspect::SimulatorAccess<dim>
     {
     public:
       /**
        * Constructor. Initialize variables.
        */
-      MTZKinetics();
+      NHKinetics();
 
       /**
        * Initialization function. This function is called once at the
@@ -237,18 +242,38 @@ namespace aspect
       bool enable_ol_wd_transformation;
       bool enable_wd_ri_transformation;
       bool enable_ri_ps_transformation;
+
+      /**
+       * Relaxation time for the low-pass-filtered (relaxed) dynamic pressure
+       * used as the reaction driving pressure (S2). Units: s. Zero disables
+       * relaxation (reactions see the instantaneous Stokes pressure).
+       */
+      double relaxation_time_dynamic_pressure;
+
+      /**
+       * Explicit bulk viscosity for the lagged Stokes RHS damping force
+       * (S1b). Units: Pa s. Zero disables the force.
+       */
+      double bulk_viscosity_explicit;
+
+      /**
+       * Magnitude cap on the dynamic pressure correction (P_drive - P_ref)
+       * applied to density and Gibbs energy (S4). Units: Pa. Zero or negative
+       * disables capping.
+       */
+      double max_dynamic_pressure_correction;
     };
 
 
 
     /**
-     * Additional output fields for the MTZKinetics material model.
+     * Additional output fields for the NHKinetics material model.
      */
     template <int dim>
-    class MTZKineticsOutputs : public NamedAdditionalMaterialOutputs<dim>
+    class NHKineticsOutputs : public NamedAdditionalMaterialOutputs<dim>
     {
     public:
-      MTZKineticsOutputs(const unsigned int n_points);
+      NHKineticsOutputs(const unsigned int n_points);
 
       std::vector<double>
       get_nth_output(const unsigned int idx) const override;

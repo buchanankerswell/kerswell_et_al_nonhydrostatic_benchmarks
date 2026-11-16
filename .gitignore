@@ -11,6 +11,7 @@ simulation/configs
 simulation/data
 simulation/results
 simulation/plugins/CMakeFiles
+simulation/plugins/build
 simulation/plugins/Makefile
 simulation/plugins/CMakeCache.txt
 simulation/plugins/aspect*

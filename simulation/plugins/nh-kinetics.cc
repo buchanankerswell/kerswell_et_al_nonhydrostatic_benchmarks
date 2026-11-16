@@ -18,7 +18,7 @@
   <http://www.gnu.org/licenses/>.
 */
 
-#include "mtz-kinetics.h"
+#include "nh-kinetics.h"
 
 #include <deal.II/base/numbers.h>
 #include <deal.II/base/parameter_handler.h>
@@ -27,6 +27,7 @@
 
 #include <aspect/global.h>
 
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -35,7 +36,7 @@ namespace aspect
   namespace MaterialModel
   {
     template <int dim>
-    MTZKinetics<dim>::MTZKinetics()
+    NHKinetics<dim>::NHKinetics()
       : rho_ol_idx(numbers::invalid_unsigned_int)
       , rho_wd_idx(numbers::invalid_unsigned_int)
       , rho_ri_idx(numbers::invalid_unsigned_int)
@@ -83,7 +84,7 @@ namespace aspect
 
     template <int dim>
     void
-    MTZKinetics<dim>::initialize()
+    NHKinetics<dim>::initialize()
     {
       // Initialize the olivine-wadsleyite data reader
       if (enable_ol_wd_transformation)
@@ -155,7 +156,7 @@ namespace aspect
 
     template <int dim>
     bool
-    MTZKinetics<dim>::is_compressible() const
+    NHKinetics<dim>::is_compressible() const
     {
       return true;
     }
@@ -164,13 +165,15 @@ namespace aspect
 
     template <int dim>
     void
-    MTZKinetics<dim>::evaluate(const MaterialModel::MaterialModelInputs<dim> &in, MaterialModel::MaterialModelOutputs<dim> &out) const
+    NHKinetics<dim>::evaluate(const MaterialModel::MaterialModelInputs<dim> &in, MaterialModel::MaterialModelOutputs<dim> &out) const
     {
       // Set up additional output objects
       std::shared_ptr<PrescribedFieldOutputs<dim>>   prescribed_field_out = out.template get_additional_output_object<PrescribedFieldOutputs<dim>>();
       std::shared_ptr<ReactionRateOutputs<dim>>      reaction_rate_out    = out.template get_additional_output_object<ReactionRateOutputs<dim>>();
-      std::shared_ptr<MTZKineticsOutputs<dim>>       mtz_kinetics_out     = out.template get_additional_output_object<MTZKineticsOutputs<dim>>();
+      std::shared_ptr<NHKineticsOutputs<dim>>       nh_kinetics_out     = out.template get_additional_output_object<NHKineticsOutputs<dim>>();
       std::shared_ptr<SeismicAdditionalOutputs<dim>> seismic_out = out.template get_additional_output_object<SeismicAdditionalOutputs<dim>>();
+      std::shared_ptr<MaterialModel::AdditionalMaterialOutputsStokesRHS<dim>> stokes_rhs_out =
+        out.template get_additional_output_object<MaterialModel::AdditionalMaterialOutputsStokesRHS<dim>>();
 
       // Get compositional field indices
       auto idx_or_invalid = [&](bool enabled, const std::string &name) {
@@ -185,6 +188,9 @@ namespace aspect
       const unsigned int xi_ol_wd_idx          = idx_or_invalid(enable_ol_wd_transformation, "xi_ol_wd");
       const unsigned int xi_wd_ri_idx          = idx_or_invalid(enable_wd_ri_transformation, "xi_wd_ri");
       const unsigned int xi_ri_ps_idx          = idx_or_invalid(enable_ri_ps_transformation, "xi_ri_ps");
+      // Relaxed dynamic pressure field (S2). Governed by its own reaction
+      // rate toward the instantaneous Stokes pressure (see below).
+      const unsigned int relaxed_pressure_idx  = idx_or_invalid(relaxation_time_dynamic_pressure > 0.0, "relaxed_pressure");
 
       for (unsigned int q = 0; q < in.n_evaluation_points(); ++q)
         {
@@ -196,6 +202,36 @@ namespace aspect
           const double   P_ref = this->get_adiabatic_conditions().pressure(position);
           const double   T_ref = this->get_adiabatic_conditions().temperature(position);
           const Point<1> profile_pos(P_ref);
+
+          // Non-hydrostatic benchmark driving pressure (S2): reactions see
+          // the relaxed pressure when enabled, else the instantaneous one.
+          // The deviation from the adiabat is capped (S4) when requested.
+          double p_drive = P;
+          if (relaxed_pressure_idx != numbers::invalid_unsigned_int)
+            p_drive = in.composition[q][relaxed_pressure_idx];
+          double dynamic_pressure = p_drive - P_ref;
+          if (max_dynamic_pressure_correction > 0.0)
+            dynamic_pressure = std::clamp(dynamic_pressure,
+                                          -max_dynamic_pressure_correction,
+                                          max_dynamic_pressure_correction);
+
+          // Explicit bulk-viscosity damping force (S1b). Penalty on the
+          // divergence rate: rhs_p = +(zeta/eta_ref) * div(u_old), assembled
+          // into the continuity equation. Fixed point div* = -B/(1+zeta/eta):
+          // damped for zeta > 0, explicit-iteration stable for zeta < eta.
+          // Requires strain-rate input; silently does nothing without it.
+          if (stokes_rhs_out != nullptr && bulk_viscosity_explicit > 0.0)
+            {
+              double div_u = 0.0;
+              if (q < in.strain_rate.size())
+                {
+                  const double tr = trace(in.strain_rate[q]);
+                  if (!std::isnan(tr))
+                    div_u = tr;
+                }
+              stokes_rhs_out->rhs_p[q] =
+                (bulk_viscosity_explicit / viscosity) * div_u;
+            }
 
           const double R = 8.314; // J/mol/K
 
@@ -215,12 +251,12 @@ namespace aspect
           const double X_ri = std::max(0.0, xi_wd_ri_cumulative - xi_ri_ps_cumulative);
           const double X_ps = std::max(0.0, xi_ri_ps_cumulative);
 
-          if (mtz_kinetics_out != nullptr)
+          if (nh_kinetics_out != nullptr)
             {
-              mtz_kinetics_out->X_ol[q] = X_ol;
-              mtz_kinetics_out->X_wd[q] = X_wd;
-              mtz_kinetics_out->X_ri[q] = X_ri;
-              mtz_kinetics_out->X_ps[q] = X_ps;
+              nh_kinetics_out->X_ol[q] = X_ol;
+              nh_kinetics_out->X_wd[q] = X_wd;
+              nh_kinetics_out->X_ri[q] = X_ri;
+              nh_kinetics_out->X_ps[q] = X_ps;
             }
 
           const double total_mass = X_ol + X_wd + X_ri + X_ps;
@@ -335,7 +371,7 @@ namespace aspect
 
           // Apply temperature and pressure corrections to density
           const double temperature_correction_density = (T - T_ref) * alpha_avg;
-          const double pressure_correction_density    = use_dynamic_pressure_correction_for_density ? (P - P_ref) * beta_avg : 0.0;
+          const double pressure_correction_density    = use_dynamic_pressure_correction_for_density ? dynamic_pressure * beta_avg : 0.0;
           const double density_factor                 = (1.0 - temperature_correction_density) * (1.0 + pressure_correction_density);
           const double final_rho                      = rho_avg * density_factor;
 
@@ -386,8 +422,8 @@ namespace aspect
 
               out.viscosities[q] = eta_effective;
 
-              if (mtz_kinetics_out != nullptr)
-                mtz_kinetics_out->visc_temperature_dependence[q] = visc_temperature_dependence;
+              if (nh_kinetics_out != nullptr)
+                nh_kinetics_out->visc_temperature_dependence[q] = visc_temperature_dependence;
             }
 
           // Compute reaction rates with phase-topology constraints
@@ -409,10 +445,10 @@ namespace aspect
                   const double dV_ol_wd = profile_ol_wd.get_data_component(profile_pos, dV_ol_wd_idx);
 
                   const double arrhenius_ol_wd         = clamp_exp(-(Ha_ol_wd + P * Va_ol_wd) / (R * T));
-                  mtz_kinetics_out->arrhenius_ol_wd[q] = arrhenius_ol_wd;
+                  nh_kinetics_out->arrhenius_ol_wd[q] = arrhenius_ol_wd;
 
                   const double temperature_correction_gibbs_ol_wd = (T - T_ref) * dS_ol_wd;
-                  const double pressure_correction_gibbs_ol_wd    = use_dynamic_pressure_correction_for_gibbs ? (P - P_ref) * dV_ol_wd : 0.0;
+                  const double pressure_correction_gibbs_ol_wd    = use_dynamic_pressure_correction_for_gibbs ? dynamic_pressure * dV_ol_wd : 0.0;
                   const double gibbs_ol_wd                        = dG_ol_wd + pressure_correction_gibbs_ol_wd - temperature_correction_gibbs_ol_wd;
 
                   double thermodynamic_ol_wd = 0.0;
@@ -429,7 +465,7 @@ namespace aspect
                       reaction_rate_ol_wd = -kinetic_factor_ol_wd * T * arrhenius_ol_wd * thermodynamic_ol_wd * X_wd;
                     }
 
-                  mtz_kinetics_out->thermodynamic_ol_wd[q]           = gibbs_ol_wd < 0.0 ? thermodynamic_ol_wd : -thermodynamic_ol_wd;
+                  nh_kinetics_out->thermodynamic_ol_wd[q]           = gibbs_ol_wd < 0.0 ? thermodynamic_ol_wd : -thermodynamic_ol_wd;
                   reaction_rate_out->reaction_rates[q][xi_ol_wd_idx] = reaction_rate_ol_wd;
                 }
 
@@ -441,10 +477,10 @@ namespace aspect
                   const double dV_wd_ri = profile_wd_ri.get_data_component(profile_pos, dV_wd_ri_idx);
 
                   const double arrhenius_wd_ri         = clamp_exp(-(Ha_wd_ri + P * Va_wd_ri) / (R * T));
-                  mtz_kinetics_out->arrhenius_wd_ri[q] = arrhenius_wd_ri;
+                  nh_kinetics_out->arrhenius_wd_ri[q] = arrhenius_wd_ri;
 
                   const double temperature_correction_gibbs_wd_ri = (T - T_ref) * dS_wd_ri;
-                  const double pressure_correction_gibbs_wd_ri    = use_dynamic_pressure_correction_for_gibbs ? (P - P_ref) * dV_wd_ri : 0.0;
+                  const double pressure_correction_gibbs_wd_ri    = use_dynamic_pressure_correction_for_gibbs ? dynamic_pressure * dV_wd_ri : 0.0;
                   const double gibbs_wd_ri                        = dG_wd_ri + pressure_correction_gibbs_wd_ri - temperature_correction_gibbs_wd_ri;
 
                   double thermodynamic_wd_ri = 0.0;
@@ -461,7 +497,7 @@ namespace aspect
                       reaction_rate_wd_ri = -kinetic_factor_wd_ri * T * arrhenius_wd_ri * thermodynamic_wd_ri * X_ri;
                     }
 
-                  mtz_kinetics_out->thermodynamic_wd_ri[q]           = gibbs_wd_ri < 0.0 ? thermodynamic_wd_ri : -thermodynamic_wd_ri;
+                  nh_kinetics_out->thermodynamic_wd_ri[q]           = gibbs_wd_ri < 0.0 ? thermodynamic_wd_ri : -thermodynamic_wd_ri;
                   reaction_rate_out->reaction_rates[q][xi_wd_ri_idx] = reaction_rate_wd_ri;
                 }
 
@@ -473,14 +509,14 @@ namespace aspect
                   const double dV_ri_ps = profile_ri_ps.get_data_component(profile_pos, dV_ri_ps_idx);
 
                   const double arrhenius_ri_ps         = clamp_exp(-Ea_ri_ps / (R * T));
-                  mtz_kinetics_out->arrhenius_ri_ps[q] = arrhenius_ri_ps;
+                  nh_kinetics_out->arrhenius_ri_ps[q] = arrhenius_ri_ps;
 
                   const double temperature_correction_gibbs_ri_ps = (T - T_ref) * dS_ri_ps;
-                  const double pressure_correction_gibbs_ri_ps    = use_dynamic_pressure_correction_for_gibbs ? (P - P_ref) * dV_ri_ps : 0.0;
+                  const double pressure_correction_gibbs_ri_ps    = use_dynamic_pressure_correction_for_gibbs ? dynamic_pressure * dV_ri_ps : 0.0;
                   const double gibbs_ri_ps                        = dG_ri_ps + pressure_correction_gibbs_ri_ps - temperature_correction_gibbs_ri_ps;
 
                   const double thermodynamic_ri_ps         = -gibbs_ri_ps * std::abs(gibbs_ri_ps);
-                  mtz_kinetics_out->thermodynamic_ri_ps[q] = thermodynamic_ri_ps;
+                  nh_kinetics_out->thermodynamic_ri_ps[q] = thermodynamic_ri_ps;
 
                   double reaction_rate_ri_ps = 0.0;
 
@@ -520,6 +556,14 @@ namespace aspect
         for (unsigned int q = 0; q < in.n_evaluation_points(); ++q)
           out.reaction_terms[q][projected_density_idx] = out.densities[q] - in.composition[q][projected_density_idx];
 
+      // Relax the dynamic pressure field toward the instantaneous Stokes
+      // pressure (S2): d(p_bar)/dt = (P - p_bar) / tau_rel, integrated by
+      // the operator-splitting reaction solver like the xi fields.
+      if (relaxed_pressure_idx != numbers::invalid_unsigned_int && reaction_rate_out != nullptr)
+        for (unsigned int q = 0; q < in.n_evaluation_points(); ++q)
+          reaction_rate_out->reaction_rates[q][relaxed_pressure_idx] =
+            (in.pressure[q] - in.composition[q][relaxed_pressure_idx]) / relaxation_time_dynamic_pressure;
+
       // Update projected density field
       if (prescribed_field_out != nullptr && projected_density_idx != numbers::invalid_unsigned_int)
         for (unsigned int i = 0; i < in.position.size(); ++i)
@@ -530,11 +574,11 @@ namespace aspect
 
     template <int dim>
     void
-    MTZKinetics<dim>::declare_parameters(ParameterHandler &prm)
+    NHKinetics<dim>::declare_parameters(ParameterHandler &prm)
     {
       prm.enter_subsection("Material model");
       {
-        prm.enter_subsection("MTZ kinetics");
+        prm.enter_subsection("NH kinetics");
         {
           prm.declare_entry("Enable olivine wadsleyite transformation",
                             "true",
@@ -554,6 +598,24 @@ namespace aspect
                             "false",
                             Patterns::Bool(),
                             "Apply dynamic pressure correction to Gibbs free energy.");
+
+          prm.declare_entry("Relaxation time for dynamic pressure",
+                            "0.0",
+                            Patterns::Double(0.),
+                            "Relaxation time tau_rel for the low-pass-filtered dynamic pressure (S2). "
+                            "Reactions are driven by the relaxed pressure field 'relaxed_pressure', which must be "
+                            "defined as a compositional field. Units: s. Zero disables relaxation.");
+          prm.declare_entry("Explicit bulk viscosity",
+                            "0.0",
+                            Patterns::Double(0.),
+                            "Explicit bulk viscosity zeta for the lagged Stokes RHS damping force (S1b). "
+                            "Requires 'Enable additional Stokes RHS' in the Formulation section. "
+                            "Stable for zeta below the shear viscosity. Units: Pa s. Zero disables the force.");
+          prm.declare_entry("Maximum dynamic pressure correction",
+                            "0.0",
+                            Patterns::Double(0.),
+                            "Magnitude cap on (P_drive - P_ref) applied to density and Gibbs energy (S4). "
+                            "Units: Pa. Zero or negative disables capping.");
 
           prm.declare_entry("Viscosity", "1e21", Patterns::Double(0.), "Reference viscosity. Units: Pa s");
           prm.declare_entry("Minimum viscosity", "1e19", Patterns::Double(0.), "Minimum viscosity cutoff. Units: Pa s");
@@ -661,11 +723,11 @@ namespace aspect
 
     template <int dim>
     void
-    MTZKinetics<dim>::parse_parameters(ParameterHandler &prm)
+    NHKinetics<dim>::parse_parameters(ParameterHandler &prm)
     {
       prm.enter_subsection("Material model");
       {
-        prm.enter_subsection("MTZ kinetics");
+        prm.enter_subsection("NH kinetics");
         {
           enable_ol_wd_transformation = prm.get_bool("Enable olivine wadsleyite transformation");
           enable_wd_ri_transformation = prm.get_bool("Enable wadsleyite ringwoodite transformation");
@@ -742,6 +804,9 @@ namespace aspect
           k                                           = prm.get_double("Thermal conductivity");
           use_dynamic_pressure_correction_for_density = prm.get_bool("Use dynamic pressure correction for density");
           use_dynamic_pressure_correction_for_gibbs   = prm.get_bool("Use dynamic pressure correction for gibbs");
+          relaxation_time_dynamic_pressure            = prm.get_double("Relaxation time for dynamic pressure");
+          bulk_viscosity_explicit                     = prm.get_double("Explicit bulk viscosity");
+          max_dynamic_pressure_correction             = prm.get_double("Maximum dynamic pressure correction");
         }
         prm.leave_subsection();
       }
@@ -763,7 +828,7 @@ namespace aspect
 
     template <int dim>
     void
-    MTZKinetics<dim>::create_additional_named_outputs(MaterialModel::MaterialModelOutputs<dim> &out) const
+    NHKinetics<dim>::create_additional_named_outputs(MaterialModel::MaterialModelOutputs<dim> &out) const
     {
       if (out.template get_additional_output_object<ReactionRateOutputs<dim>>() == nullptr)
         {
@@ -780,10 +845,21 @@ namespace aspect
             std::make_unique<MaterialModel::PrescribedFieldOutputs<dim>>(n_points, this->introspection().n_compositional_fields));
         }
 
-      if (out.template get_additional_output_object<MTZKineticsOutputs<dim>>() == nullptr)
+      if (out.template get_additional_output_object<NHKineticsOutputs<dim>>() == nullptr)
         {
           const unsigned int n_points = out.n_evaluation_points();
-          out.additional_outputs.push_back(std::make_unique<MaterialModel::MTZKineticsOutputs<dim>>(n_points));
+          out.additional_outputs.push_back(std::make_unique<MaterialModel::NHKineticsOutputs<dim>>(n_points));
+        }
+
+      // Explicit bulk-viscosity force (S1b) needs the Stokes RHS outputs.
+      // The assembler also auto-creates these when 'Enable additional Stokes
+      // RHS' is set; creating them here keeps direct evaluate() calls working.
+      if (bulk_viscosity_explicit > 0.0 &&
+          out.template get_additional_output_object<MaterialModel::AdditionalMaterialOutputsStokesRHS<dim>>() == nullptr)
+        {
+          const unsigned int n_points = out.n_evaluation_points();
+          out.additional_outputs.push_back(
+            std::make_unique<MaterialModel::AdditionalMaterialOutputsStokesRHS<dim>>(n_points));
         }
 
       if (out.template get_additional_output_object<SeismicAdditionalOutputs<dim>>() == nullptr)
@@ -817,7 +893,7 @@ namespace aspect
     } // namespace
 
     template <int dim>
-    MTZKineticsOutputs<dim>::MTZKineticsOutputs(const unsigned int n_points)
+    NHKineticsOutputs<dim>::NHKineticsOutputs(const unsigned int n_points)
       : NamedAdditionalMaterialOutputs<dim>(make_additional_output_names())
       , arrhenius_ol_wd(n_points, numbers::signaling_nan<double>())
       , arrhenius_wd_ri(n_points, numbers::signaling_nan<double>())
@@ -836,7 +912,7 @@ namespace aspect
 
     template <int dim>
     std::vector<double>
-    MTZKineticsOutputs<dim>::get_nth_output(const unsigned int idx) const
+    NHKineticsOutputs<dim>::get_nth_output(const unsigned int idx) const
     {
       AssertIndexRange(idx, make_additional_output_names().size());
       switch (idx)
@@ -876,8 +952,8 @@ namespace aspect
   namespace MaterialModel
   {
     ASPECT_REGISTER_MATERIAL_MODEL(
-      MTZKinetics,
-      "MTZ kinetics",
+      NHKinetics,
+      "NH kinetics",
       "Models phase transformations for three reactions with stoichiometric coupling:\n"
       "(1: interface-controlled) Olivine <-> wadsleyite (Hosoya et al. 2005): dX/dt = Z * T * exp(-Ha + PVa/RT) * (1 - exp(dG/RT)) * X\n"
       "(2: interface-controlled) Wadsleyite <-> ringwoodite: dX/dt = Z * T * exp(-Ha + PVa/RT) * (1 - exp(dG/RT)) * X\n"
