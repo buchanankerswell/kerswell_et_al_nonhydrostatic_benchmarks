@@ -5,7 +5,7 @@
 include $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../project.mk)
 include $(SIMULATION)/local.mk
 
-PROFILES        := $(foreach g,$(MG_NUM),$(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(g).tsv)
+PROFILES          := $(foreach g,$(MG_NUM),$(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(g).tsv)
 MODELS_BOX_SUITE  := $(notdir $(RESULTS_BOX_SUITE))
 MODELS_SINK_SUITE := $(notdir $(RESULTS_SINK_SUITE))
 
@@ -114,7 +114,7 @@ help:
 	$(call LOG_DETAIL,meshes             Visualize ASPECT models (box + sink))
 	$(call LOG_DETAIL,meshes-box-suite   Visualize NH box benchmarks)
 	$(call LOG_DETAIL,meshes-sink-suite  Visualize NH sinking-block benchmarks)
-	$(call LOG_DETAIL,postprocess         Export postprocessed table (thermal-kinetic split at 410))
-	$(call LOG_DETAIL,timeseries          Extract per-run pressure/front/stats timeseries from solutions)
-	$(call LOG_DETAIL,pressure-waves      Quantify waves: vtu peaks + per-step RMS/probe/depth-average plots)
+	$(call LOG_DETAIL,postprocess        Export postprocessed table (thermal-kinetic split at 410))
+	$(call LOG_DETAIL,timeseries         Extract per-run pressure/front/stats timeseries from solutions)
+	$(call LOG_DETAIL,pressure-waves     Quantify waves: vtu peaks + per-step RMS/probe/depth-average plots)
 	$(call LOG_DETAIL,clean              Remove generated files (safe))

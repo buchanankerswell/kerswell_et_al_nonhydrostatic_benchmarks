@@ -44,5 +44,5 @@ help:
 	$(call LOG_INFO,Available targets:)
 	$(call LOG_DETAIL,sync-barkla                Fetch NH benchmark results from Barkla2)
 	$(call LOG_DETAIL,run-aspect PRM=<file.prm>  Run one ASPECT model (used by simulation/Makefile))
-	$(call LOG_DETAIL,download                  Fetch archived datasets from Zenodo (box + sink))
+	$(call LOG_DETAIL,download                   Fetch archived datasets from Zenodo (box + sink))
 	$(call LOG_DETAIL,clean                      Nothing to remove (no-op))

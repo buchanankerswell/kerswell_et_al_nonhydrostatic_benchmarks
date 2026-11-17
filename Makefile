@@ -41,8 +41,6 @@ deep-clean: clean
 	@$(MAKE) --no-print-directory -C $(SIMULATION) deep-clean
 	@$(MAKE) --no-print-directory -C $(DRAFT) deep-clean
 
-# Formatters (idiomatic style, 150-col lines; C++ matches ASPECT astyle 2.04).
-# ASTYLE falls back to the deal.II-bundled 2.04 binary used for this project.
 ASTYLE := $(shell command -v astyle 2>/dev/null || echo /opt/dealii/v9.8.0/astyle-2.04/astyle)
 
 format:
@@ -53,13 +51,13 @@ format:
 
 help:
 	$(call LOG_INFO,Available targets:)
-	$(call LOG_DETAIL,build         Fetch data and reproduce figures and manuscript)
-	$(call LOG_DETAIL,models        Run all NH benchmark models (needs aspect/dealii links))
-	$(call LOG_DETAIL,sync-barkla   Sync data from Barkla2 (box + sink suites))
-	$(call LOG_DETAIL,visualize     Visualize all results (meshes + postprocess + R))
-	$(call LOG_DETAIL,manuscript    Render manuscript + SI + response)
-	$(call LOG_DETAIL,download      Fetch archived datasets from Zenodo)
-	$(call LOG_DETAIL,environments  Create Conda environments)
+	$(call LOG_DETAIL,build          Fetch data and reproduce figures and manuscript)
+	$(call LOG_DETAIL,models         Run all NH benchmark models (needs aspect/dealii links))
+	$(call LOG_DETAIL,sync-barkla    Sync data from Barkla2 (box + sink suites))
+	$(call LOG_DETAIL,visualize      Visualize all results (meshes + postprocess + R))
+	$(call LOG_DETAIL,manuscript     Render manuscript + SI + response)
+	$(call LOG_DETAIL,download       Fetch archived datasets from Zenodo)
+	$(call LOG_DETAIL,environments   Create Conda environments)
 	$(call LOG_DETAIL,format         Format python/R/bash/C++ with repo formatters)
-	$(call LOG_DETAIL,clean         Remove generated files (safe))
-	$(call LOG_DETAIL,deep-clean    Remove results and data (use with caution!))
+	$(call LOG_DETAIL,clean          Remove generated files (safe))
+	$(call LOG_DETAIL,deep-clean     Remove results and data (use with caution!))
