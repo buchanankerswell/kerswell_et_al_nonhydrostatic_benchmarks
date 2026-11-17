@@ -1,7 +1,7 @@
 """Export the per-benchmark postprocessed table for the combined analysis.
 
 Reads each suite's structure-summary-{tag}.csv and seismic-profile-cache-{tag}.pkl
-from the flattened simulation/data/ dir, interpolates core nonadiabatic
+from the flattened simulation/results/ dir, interpolates core nonadiabatic
 temperature at the measured 410 transition depth, and splits measured
 displacement into thermal offset (gamma*hat_T/(rho*g)) and kinetic
 contribution (measured minus thermal). One row per model (max timestep).
@@ -33,7 +33,7 @@ UID_RE = re.compile(
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Export NH postprocessed table.")
-    parser.add_argument("--data-dir", required=True, help="Flattened simulation/data dir")
+    parser.add_argument("--data-dir", required=True, help="Flattened simulation/results dir")
     parser.add_argument("--out-csv", required=True, help="Output CSV path")
     parser.add_argument("--profile-ol-wd", required=True)
     parser.add_argument("--profile-wd-ri", required=True)

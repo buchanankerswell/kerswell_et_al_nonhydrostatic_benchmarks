@@ -29,7 +29,7 @@ sha256_file() {
 }
 
 complete() {
-  [ -f "${PROJECT_ROOT}/simulation/data/postprocessed.csv" ] &&
+  [ -f "${PROJECT_ROOT}/simulation/results/postprocessed.csv" ] &&
     [ "$(find "${PROJECT_ROOT}/simulation/results" -maxdepth 1 -name 'NH_*' 2>/dev/null | wc -l)" -ge 42 ]
 }
 

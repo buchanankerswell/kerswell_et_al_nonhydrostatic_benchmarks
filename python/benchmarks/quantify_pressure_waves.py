@@ -11,7 +11,7 @@ Usage (repo root):
   PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
     python/benchmarks/quantify_pressure_waves.py --runs <uid ...> \\
       --plot-box <uid ...> --plot-sink <uid ...> --plot-laptop <uid ...> \\
-      --out-csv simulation/data/pressure-wave-summary.csv --fig-dir figs/benchmarks
+      --out-csv simulation/results/pressure-wave-summary.csv --fig-dir figs/benchmarks
 """
 
 import argparse
@@ -147,7 +147,7 @@ def main():
   ap.add_argument("--plot-box", nargs="*", default=None)
   ap.add_argument("--plot-sink", nargs="*", default=None)
   ap.add_argument("--plot-laptop", nargs="*", default=None)
-  ap.add_argument("--out-csv", default="simulation/data/pressure-wave-summary.csv")
+  ap.add_argument("--out-csv", default="simulation/results/pressure-wave-summary.csv")
   ap.add_argument("--fig-dir", default="figs/benchmarks")
   args = ap.parse_args()
 

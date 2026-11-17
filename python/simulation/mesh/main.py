@@ -30,7 +30,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument("model_height", type=float, help="Model height [m]")
     parser.add_argument("surface_pressure", type=float, help="Surface pressure [Pa]")
     parser.add_argument("out_fig_dir", type=str, help="Output figure directory")
-    parser.add_argument("out_data_dir", type=str, help="Flattened simulation/data dir")
+    parser.add_argument("out_data_dir", type=str, help="Flattened simulation/results dir")
     parser.add_argument("--suite-tag", type=str, required=True, help="Suite tag: sw, nc, or test")
 
     parser.add_argument("--model-ids", nargs="+", type=str, required=True, help="Simulation names")

@@ -33,11 +33,11 @@ postprocess: meshes-box-suite meshes-sink-suite $(POSTPROCESSED_CSV)
 $(POSTPROCESSED_CSV):
 	@mkdir -p $(dir $@)
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/export-postprocessed.py \
-	  --data-dir $(SIMULATION)/data \
+	  --data-dir $(SIMULATION)/results \
 	  --out-csv $@ \
-	  --profile-ol-wd $(BENCH_DATA)/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
-	  --profile-wd-ri $(BENCH_DATA)/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
-	  --profile-ri-ps $(BENCH_DATA)/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
+	  --profile-ol-wd $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
+	  --profile-wd-ri $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
+	  --profile-ri-ps $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
 	  --model-height $(MODEL_HEIGHT_BOX) \
 	  --surface-pressure $(SURFACE_PRESSURE) \
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
@@ -57,7 +57,7 @@ pressure-waves: timeseries
 	  --plot-box $(PLOT_BOX_RUNS) \
 	  --plot-sink $(PLOT_SINK_RUNS) \
 	  --plot-laptop $(PLOT_LAPTOP_RUNS) \
-	  --out-csv $(SIMULATION)/data/pressure-wave-summary.csv \
+	  --out-csv $(SIMULATION)/results/pressure-wave-summary.csv \
 	  --fig-dir $(FIGS)/benchmarks
 	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
@@ -70,13 +70,13 @@ meshes-box-suite meshes-sink-suite:
 	@$(eval DIRS := $(addprefix $(SIMULATION)/results/, $(MODELS)))
 	@$(eval VIS := $(VIS_MODELS_$(SUITE)))
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/main.py \
-	  $(BENCH_DATA)/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
-	  $(BENCH_DATA)/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
-	  $(BENCH_DATA)/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
+	  $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
+	  $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
+	  $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
 	  $(MODEL_HEIGHT_BOX) \
 	  $(SURFACE_PRESSURE) \
 	  $(FIGS_SIM_$(SUITE)) \
-	  $(SIMULATION)/data \
+	  $(SIMULATION)/results \
 	  --model-ids $(MODELS) \
 	  --timesteps $(TIMESTEPS_MESH_$(SUITE)) \
 	  --suite-tag $(TAG_$(SUITE)) \

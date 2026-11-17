@@ -12,7 +12,7 @@ all: visualize
 visualize: adiabat simulation seismic
 
 tables: $(POSTPROCESSED_CSV)
-	@Rscript $(R)/tables.R $(R)/utils $(POSTPROCESSED_CSV) $(SIMULATION)/data
+	@Rscript $(R)/tables.R $(R)/utils $(POSTPROCESSED_CSV) $(SIMULATION)/results
 
 adiabat:
 	@for model in $(PERPLEX_MODELS); do Rscript $(R)/adiabat.R $(R)/utils $$model $(SIMULATION)/data $(FIGS)/adiabat; done
@@ -21,7 +21,7 @@ seismic: $(MESH_CSV_BOX_SUITE) $(MESH_CSV_SINK_SUITE)
 	@Rscript $(R)/seismic.R $(R)/utils $(SEISMIC_BOX_SUITE) $(SEISMIC_SINK_SUITE) $(FIGS_SEISMIC) $(FORCE_REWRITE)
 
 simulation: $(POSTPROCESSED_CSV)
-	@mkdir -p $(SIMULATION)/data
+	@mkdir -p $(SIMULATION)/results
 	@Rscript $(R)/simulation.R $(R)/utils $(POSTPROCESSED_CSV) $(FIGS_STRUCTURE) $(FORCE_REWRITE)
 
 $(MESH_CSV_BOX_SUITE):

@@ -8,7 +8,10 @@ bash/candi
 perplex/**/*-table.txt
 perplex/**/*-profile.txt
 simulation/configs
-simulation/data
+simulation/data/*
+!simulation/data/olivine-wadsleyite-profile-Mg100.tsv
+!simulation/data/wadsleyite-ringwoodite-profile-Mg100.tsv
+!simulation/data/ringwoodite-postspinel-profile-Mg100.tsv
 simulation/results
 simulation/plugins/CMakeFiles
 simulation/plugins/build

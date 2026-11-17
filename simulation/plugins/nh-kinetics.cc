@@ -414,7 +414,7 @@ namespace aspect
           ReactionModel::ReactionChain<dim>::declare_parameters(prm);
 
           prm.declare_entry("Data directory",
-                            "simulation/benchmark_data/",
+                            "simulation/data/",
                             Patterns::DirectoryName(),
                             "Directory containing the per-reaction thermodynamic data profiles.");
           prm.declare_entry("Data file names",
@@ -425,7 +425,7 @@ namespace aspect
           prm.enter_subsection("Ascii data model");
           {
             Utilities::AsciiDataProfile<dim>::declare_parameters(prm,
-                                                                 "simulation/benchmark_data/",
+                                                                 "simulation/data/",
                                                                  "olivine-wadsleyite-profile-Mg100.tsv");
           }
           prm.leave_subsection();

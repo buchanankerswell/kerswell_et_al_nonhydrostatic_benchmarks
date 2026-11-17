@@ -56,18 +56,22 @@ FIGS_STRUCTURE  := $(FIGS)/structure
 FIGS_SEISMIC    := $(FIGS)/seismic
 FIGS_SETUP      := $(FIGS)/setup
 FIGS_KUBO       := $(FIGS)/kubo
-POSTPROCESSED_CSV := $(SIMULATION)/data/postprocessed.csv
-POSTPROCESSED_MD   := $(SIMULATION)/data/postprocessed.md
+# All generated outputs live under results (ASPECT runs + mesh/postprocess
+# products); data holds required versioned inputs only.
+POSTPROCESSED_CSV := $(ASPECT_RESULTS)/postprocessed.csv
+POSTPROCESSED_MD   := $(ASPECT_RESULTS)/postprocessed.md
 
 PERPLEX_MODELS  := $(shell find $(PERPLEX) -type f -name '*.dat' -exec basename {} .dat \;)
-BENCH_DATA      := $(SIMULATION)/benchmark_data
-MESH_CSV_BOX_SUITE  := $(SIMULATION)/data/structure-summary-box.csv
-MESH_CSV_SINK_SUITE := $(SIMULATION)/data/structure-summary-sink.csv
-SEISMIC_BOX_SUITE   := $(SIMULATION)/data/seismic_profiles_box
-SEISMIC_SINK_SUITE  := $(SIMULATION)/data/seismic_profiles_sink
+# Versioned thermodynamic inputs (tracked) live alongside generated outputs in
+# SIMULATION/data; deep-clean and .gitignore spare exactly these files.
+VERSIONED_DATA := olivine-wadsleyite-profile-Mg100.tsv wadsleyite-ringwoodite-profile-Mg100.tsv ringwoodite-postspinel-profile-Mg100.tsv
+MESH_CSV_BOX_SUITE  := $(ASPECT_RESULTS)/structure-summary-box.csv
+MESH_CSV_SINK_SUITE := $(ASPECT_RESULTS)/structure-summary-sink.csv
+SEISMIC_BOX_SUITE   := $(ASPECT_RESULTS)/seismic_profiles_box
+SEISMIC_SINK_SUITE  := $(ASPECT_RESULTS)/seismic_profiles_sink
 
-DATA_MESH_BOX_SUITE  := $(addprefix $(SIMULATION)/data/,structure-summary-box.csv structure-cache-box.pkl seismic-profile-cache-box.pkl seismic_profiles_box)
-DATA_MESH_SINK_SUITE := $(addprefix $(SIMULATION)/data/,structure-summary-sink.csv structure-cache-sink.pkl seismic-profile-cache-sink.pkl seismic_profiles_sink)
+DATA_MESH_BOX_SUITE  := $(addprefix $(ASPECT_RESULTS)/,structure-summary-box.csv structure-cache-box.pkl seismic-profile-cache-box.pkl seismic_profiles_box)
+DATA_MESH_SINK_SUITE := $(addprefix $(ASPECT_RESULTS)/,structure-summary-sink.csv structure-cache-sink.pkl seismic-profile-cache-sink.pkl seismic_profiles_sink)
 
 # NH reference UIDs (paper matrix). NH_{Box,Sink}_Dynp{0|1}_Damp{..}[_Block{b}]
 # _Z{z}_Res{r}_CFL{c}_End{e}. Dynp0+DampNone = no-feedback equilibrium ground
@@ -244,7 +248,7 @@ define GENERATE_NH_PRM
 	  "output-dir=$(ASPECT_RESULTS)/$(2)" \
 	  "config-dir=$(ASPECT_CONFIGS)" \
 	  "aspect-plugin=$(SIMULATION)/plugins/build/libnh-kinetics.release.so" \
-	  "benchmark-data-dir=$(BENCH_DATA)/" \
+	  "benchmark-data-dir=$(SIMULATION)/data/" \
 	  "uid=$(2)"
 endef
 

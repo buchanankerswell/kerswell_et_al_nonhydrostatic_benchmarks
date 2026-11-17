@@ -1,4 +1,4 @@
-# Nominal 410 depth (km): Mg100 benchmark_data profile equilibrium
+# Nominal 410 depth (km): Mg100 versioned profile equilibrium
 # (359.2 km via python/simulation/params/transitions.py) plus the 5 km
 # ASPECT depth correction used at runtime. The measured front sits a few km
 # deeper under dynamic-pressure loading; the band marks the reference only.

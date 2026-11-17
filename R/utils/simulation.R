@@ -1,5 +1,5 @@
 # Postprocessed NH benchmark figures (box + sink suites, 410 transition).
-# One row per model comes from simulation/data/postprocessed.csv
+# One row per model comes from simulation/results/postprocessed.csv
 # (python postprocess target); damping groups parse straight from the UID.
 
 SUITE_LAB_BOX <- "Box"

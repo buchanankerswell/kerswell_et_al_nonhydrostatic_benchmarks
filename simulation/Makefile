@@ -11,7 +11,7 @@ CORE_BOX  := $(PRMS_GLOBALS_BOX) $(PRMS_SOLVER_BOX) $(PRMS_GEOMETRY_BOX) $(PRMS_
 CORE_SINK := $(PRMS_GLOBALS_SINK) $(PRMS_SOLVER_SINK) $(PRMS_GEOMETRY_SINK) $(PRMS_BOUNDARY_SINK) $(PRMS_COMPOSITION_SINK) $(PRMS_INITIAL_SINK) $(PRMS_PHYSICS_SINK) $(PRMS_MATERIAL_SINK) $(PRMS_POSTPROCESS_SINK)
 
 CLEAN      := $(ASPECT_PLUGIN) $(ASPECT_CONFIGS)
-DEEP_CLEAN := $(ASPECT_RESULTS) $(ASPECT_DATA)
+DEEP_CLEAN := $(ASPECT_RESULTS)
 
 .PHONY: all all-models models-box-suite models-sink-suite configs configs-box-suite configs-sink-suite clean deep-clean help
 .PRECIOUS: $(ASPECT_CONFIGS)
@@ -61,6 +61,9 @@ clean:
 
 deep-clean:
 	@$(call SAFE_RM_LIST,$(DEEP_CLEAN))
+	@if [ -d "$(ASPECT_DATA)" ]; then \
+	  find "$(ASPECT_DATA)" -mindepth 1 $(foreach f,$(VERSIONED_DATA),-not -name '$(f)') -print0 | xargs -0 rm -rf; \
+	fi
 
 help:
 	$(call LOG_INFO,Available targets:)
