@@ -9,10 +9,11 @@ include $(SIMULATION)/local.mk
 
 all: ;
 
-# Fetch archived datasets from Zenodo (all suites: SW + NC + TEST).
+# Fetch archived datasets from Zenodo (slab suites: SW + NC + TEST; NH TBD).
 download:
 	@$(BASH)/simulation/download-zenodo.sh "$(ZENODO_DATASET_DOI)" "$(PROJECT_ROOT)" "$(ZENODO_FILES)" "$(FORCE_DOWNLOAD)"
 
+# Sync slab results from Barkla2 (NH benchmark sync TBD).
 sync-barkla:
 	@FORCE_SYNC=$(FORCE_SYNC) $(BASH)/simulation/sync-barkla2.sh \
 	  "$(notdir $(RESULTS_SW_SUITE) $(RESULTS_NC_SUITE) $(RESULTS_TEST_SUITE))" "$(TIMESTEPS_SYNC)" "$(SIMULATION)" "$(BARKLA2_SIMULATION)"
@@ -63,8 +64,8 @@ clean:
 
 help:
 	$(call LOG_INFO,Available targets:)
-	$(call LOG_DETAIL,sync-barkla                Fetch simulation results from Barkla2 (all suites))
+	$(call LOG_DETAIL,sync-barkla                Fetch slab simulation results from Barkla2)
 	$(call LOG_DETAIL,compositions-si            SI montages (SW + NC triplets))
 	$(call LOG_DETAIL,run-aspect PRM=<file.prm>  Run one ASPECT model (used by simulation/Makefile))
-	$(call LOG_DETAIL,download                  Fetch archived datasets from Zenodo (all suites))
+	$(call LOG_DETAIL,download                  Fetch archived datasets from Zenodo (slab suites; NH TBD))
 	$(call LOG_DETAIL,clean                      Nothing to remove (no-op))

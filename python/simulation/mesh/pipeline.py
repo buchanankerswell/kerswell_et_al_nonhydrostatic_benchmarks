@@ -21,6 +21,10 @@ class BasePipeline:
     Shared infrastructure for all pipeline variants.
 
     Provides file discovery, mesh loading, timestep filtering, and the phase-transition metadata tables used by both post-processing and plotting.
+
+    suite_tag dispatches benchmark geometry: 'box'/'sink' use the single
+    NH reaction (xi_ol_wd at 410 geometry); all other tags keep the slab
+    X_wd (410) + X_ps (660) transitions. Slab behavior is unchanged.
     """
 
     config: MeshConfig
@@ -28,11 +32,24 @@ class BasePipeline:
     tsteps: list[int]
     trans_data: dict[str, PhaseTransition]
     verbosity: int = 0
+    suite_tag: str = ""
 
     def __post_init__(self) -> None:
         self.preprocessor = MeshPreProcessor(self.verbosity)
         self._pvtu_file_cache: dict | None = None
-        self.trans_info: dict = {
+        if self.suite_tag in ("box", "sink"):
+            self.trans_info: dict = {
+                "xi_ol_wd": (
+                    "reaction_rate_C0",
+                    "profile_x_410",
+                    "displacement_410",
+                    "width_410",
+                    self.trans_data["X_wd"].y,
+                    self.trans_data["X_wd"].depth,
+                ),
+            }
+        else:
+            self.trans_info: dict = {
             "X_wd": (
                 "reaction_rate_C0",
                 "profile_x_410",
@@ -56,7 +73,13 @@ class BasePipeline:
         Yield (path, timestep) pairs that are in the requested timestep list.
 
         Skips sentinel value -1, which marks files whose timestep could not be parsed from the filename.
+        A requested -1 means the last output per model (benchmark suites use
+        varying output counts, so no single fixed number fits all runs).
+        Slab suites never request -1, so their behavior is unchanged.
         """
+        if -1 in self.tsteps and pvtu_files:
+            yield pvtu_files[-1], timesteps[-1]
+            return
         for pvtu_path, tstep in zip(pvtu_files, timesteps):
             if tstep != -1 and tstep in self.tsteps:
                 yield pvtu_path, tstep
@@ -259,19 +282,22 @@ class PostProcessingPipeline(BasePipeline):
         ):
             return transition_summary_cache, seismic_profile_cache
 
+        is_bench = self.suite_tag in ("box", "sink")
+
         eta_therm_vals = set()
         velocity_vals = set()
         eta_trans_vals = set()
 
-        for model_id, _ in self._get_ordered_pvtu_files().items():
-            _, _, _, eta_therm, _, _, eta_trans_ri_ps, velocity, _, _ = self._get_prams_from_model_uid(model_id)
+        if not is_bench:
+            for model_id, _ in self._get_ordered_pvtu_files().items():
+                _, _, _, eta_therm, _, _, eta_trans_ri_ps, velocity, _, _ = self._get_prams_from_model_uid(model_id)
 
-            if not np.isnan(eta_therm):
-                eta_therm_vals.add(eta_therm)
-            if not np.isnan(velocity):
-                velocity_vals.add(velocity)
-            if not np.isnan(eta_trans_ri_ps):
-                eta_trans_vals.add(eta_trans_ri_ps)
+                if not np.isnan(eta_therm):
+                    eta_therm_vals.add(eta_therm)
+                if not np.isnan(velocity):
+                    velocity_vals.add(velocity)
+                if not np.isnan(eta_trans_ri_ps):
+                    eta_trans_vals.add(eta_trans_ri_ps)
 
         velocity_vals = sorted(velocity_vals)
         eta_therm_vals = sorted(eta_therm_vals)
@@ -289,20 +315,28 @@ class PostProcessingPipeline(BasePipeline):
                     log_warn(f"no result files for model: {model_id}")
                 continue
 
-            z_ol_wd, z_wd_ri, z_ri_ps, eta_therm, eta_trans_ol_wd, eta_trans_wd_ri, eta_trans_ri_ps, velocity, temperature, mg_num = (
-                self._get_prams_from_model_uid(model_id)
-            )
+            if is_bench:
+                # NH benchmark IDs (nh_box_1rxn_*, nh_sink_block_*) carry the
+                # variant in the name; no slab sweep params to parse.
+                z_ol_wd = z_wd_ri = z_ri_ps = np.nan
+                eta_therm = eta_trans_ol_wd = eta_trans_wd_ri = eta_trans_ri_ps = np.nan
+                velocity = temperature = mg_num = np.nan
+                scenario = 0
+            else:
+                z_ol_wd, z_wd_ri, z_ri_ps, eta_therm, eta_trans_ol_wd, eta_trans_wd_ri, eta_trans_ri_ps, velocity, temperature, mg_num = (
+                    self._get_prams_from_model_uid(model_id)
+                )
 
-            try:
-                i = velocity_idx[velocity]
-                j = eta_therm_idx[eta_therm]
-                k = eta_trans_idx[eta_trans_ri_ps]
-            except Exception as e:
-                if self.verbosity >= 1:
-                    log_warn(f"could not compute scenario for {model_id}: {e}")
-                continue
+                try:
+                    i = velocity_idx[velocity]
+                    j = eta_therm_idx[eta_therm]
+                    k = eta_trans_idx[eta_trans_ri_ps]
+                except Exception as e:
+                    if self.verbosity >= 1:
+                        log_warn(f"could not compute scenario for {model_id}: {e}")
+                    continue
 
-            scenario = k * (len(velocity_vals) * len(eta_therm_vals)) + i * len(eta_therm_vals) + j
+                scenario = k * (len(velocity_vals) * len(eta_therm_vals)) + i * len(eta_therm_vals) + j
 
             transition_summary_cache[model_id] = {}
             seismic_profile_cache[model_id] = {}
@@ -851,7 +885,7 @@ class FullPipeline(BasePipeline):
         """
         out_profile_dir = out_profile_dir or Path("postprocess_data")
 
-        post_processor = PostProcessingPipeline(self.config, self.pvtu_in_dirs, self.tsteps, self.trans_data, self.verbosity)
+        post_processor = PostProcessingPipeline(self.config, self.pvtu_in_dirs, self.tsteps, self.trans_data, self.verbosity, self.suite_tag)
         transition_summary_cache, seismic_profile_cache = post_processor.run(
             transition_summary_cache_path, seismic_profile_cache_path, force_reprocess
         )
@@ -863,6 +897,6 @@ class FullPipeline(BasePipeline):
             if fields_for_seismic_profiles:
                 post_processor.export_seismic_profiles(out_profile_dir, fields_for_seismic_profiles, seismic_profile_cache)
 
-        plotter = PlottingPipeline(self.config, self.pvtu_in_dirs, self.tsteps, self.trans_data, self.verbosity, transition_summary_cache)
+        plotter = PlottingPipeline(self.config, self.pvtu_in_dirs, self.tsteps, self.trans_data, self.verbosity, self.suite_tag, transition_summary_cache)
         plotter._pvtu_file_cache = post_processor._pvtu_file_cache
         plotter.run(fields_to_plot, plot_ids)

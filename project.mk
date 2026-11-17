@@ -30,29 +30,49 @@ FORCE_REWRITE             := true
 RESULTS_SW_SUITE       = $(addprefix $(ASPECT_RESULTS)/slab_, $(UIDS_SW_SUITE))
 RESULTS_NC_SUITE       = $(addprefix $(ASPECT_RESULTS)/slab_, $(UIDS_NC_SUITE))
 RESULTS_TEST_SUITE     = $(addprefix $(ASPECT_RESULTS)/slab_, $(UIDS_TEST_SUITE))
-TIMESTEPS_SYNC            := 000 100
-FORCE_SYNC                := 0
-FORCE_COMPOSE             := 0
-FORCE_DOWNLOAD            := 0
-ZENODO_DATASET_DOI        := TODO-no-dataset-yet
-ZENODO_FILES              := TODO-no-files-yet
-TIMESTEPS_MESH_SW_SUITE   := 100
-TIMESTEPS_MESH_NC_SUITE   := 100
-TIMESTEPS_MESH_TEST_SUITE := 100
-CHUNK_SIZE                := 32
+# NH benchmark suites (static prms; result dir = prm basename). Single source
+# of truth for simulation/Makefile (runs) and python/Makefile (meshes).
+NH_BOX_PRMS    := $(wildcard $(SIMULATION)/benchmarks/nh_box_1rxn_*.prm)
+NH_SINK_PRMS   := $(wildcard $(SIMULATION)/benchmarks/nh_sink_block_*.prm)
+NH_BOX_RUNS    := $(basename $(notdir $(NH_BOX_PRMS)))
+NH_SINK_RUNS   := $(basename $(notdir $(NH_SINK_PRMS)))
+RESULTS_BOX_SUITE      = $(addprefix $(ASPECT_RESULTS)/, $(NH_BOX_RUNS))
+RESULTS_SINK_SUITE     = $(addprefix $(ASPECT_RESULTS)/, $(NH_SINK_RUNS))
+TIMESTEPS_SYNC             := 000 100
+FORCE_SYNC                 := 0
+FORCE_COMPOSE              := 0
+FORCE_DOWNLOAD             := 0
+ZENODO_DATASET_DOI         := TODO-no-dataset-yet
+ZENODO_FILES               := TODO-no-files-yet
+TIMESTEPS_MESH_SW_SUITE    := 100
+TIMESTEPS_MESH_NC_SUITE    := 100
+TIMESTEPS_MESH_TEST_SUITE  := 100
+# Benchmark mesh timesteps: -1 = last output per model (runs have varying
+# output counts: box 21, sink full 21, laptop 9, test 5). The shared mesh
+# pipeline treats -1 as last; slab suites never request -1.
+TIMESTEPS_MESH_BOX_SUITE   := -1
+TIMESTEPS_MESH_SINK_SUITE  := -1
+CHUNK_SIZE                 := 32
 
-# Namespaces: sw (SW), nc (NC), test (T1-T4). Per-suite mesh outputs live flat
+# Namespaces: sw (SW), nc (NC), test (T1-T4) for the legacy slab sweep;
+# box/sink for the NH benchmarks. Per-suite mesh outputs live flat
 # under simulation/data/; shared physics inputs (PerpleX profiles,
 # figs/adiabat) stay at their top-level paths.
 TAG_SW_SUITE   := sw
 TAG_NC_SUITE   := nc
 TAG_TEST_SUITE := test
+TAG_BOX_SUITE  := box
+TAG_SINK_SUITE := sink
 FIGS_SW_SUITE       := $(FIGS)/sw_suite
 FIGS_NC_SUITE       := $(FIGS)/nc_suite
 FIGS_TEST_SUITE     := $(FIGS)/test_suite
+FIGS_BOX_SUITE      := $(FIGS)/box_suite
+FIGS_SINK_SUITE     := $(FIGS)/sink_suite
 FIGS_SIM_SW_SUITE   := $(FIGS_SW_SUITE)/simulation
 FIGS_SIM_NC_SUITE   := $(FIGS_NC_SUITE)/simulation
 FIGS_SIM_TEST_SUITE := $(FIGS_TEST_SUITE)/simulation
+FIGS_SIM_BOX_SUITE  := $(FIGS_BOX_SUITE)/simulation
+FIGS_SIM_SINK_SUITE := $(FIGS_SINK_SUITE)/simulation
 
 # Manuscript outputs (all suites) live directly under figs/ and simulation/data/.
 FIGS_SIMULATION       := $(FIGS)/simulation
@@ -65,15 +85,21 @@ POSTPROCESSED_MD        := $(SIMULATION)/data/postprocessed.md
 
 # Shared pipeline inputs (single source of truth)
 PERPLEX_MODELS    := $(shell find $(PERPLEX) -type f -name '*.dat' -exec basename {} .dat \;)
-MESH_CSV_SW_SUITE := $(SIMULATION)/data/structure-summary-sw.csv
-MESH_CSV_NC_SUITE := $(SIMULATION)/data/structure-summary-nc.csv
-SEISMIC_SW_SUITE  := $(SIMULATION)/data/seismic_profiles_sw
-SEISMIC_NC_SUITE  := $(SIMULATION)/data/seismic_profiles_nc
+MESH_CSV_SW_SUITE   := $(SIMULATION)/data/structure-summary-sw.csv
+MESH_CSV_NC_SUITE   := $(SIMULATION)/data/structure-summary-nc.csv
+MESH_CSV_BOX_SUITE  := $(SIMULATION)/data/structure-summary-box.csv
+MESH_CSV_SINK_SUITE := $(SIMULATION)/data/structure-summary-sink.csv
+SEISMIC_SW_SUITE   := $(SIMULATION)/data/seismic_profiles_sw
+SEISMIC_NC_SUITE   := $(SIMULATION)/data/seismic_profiles_nc
+SEISMIC_BOX_SUITE  := $(SIMULATION)/data/seismic_profiles_box
+SEISMIC_SINK_SUITE := $(SIMULATION)/data/seismic_profiles_sink
 
 # Flat per-suite mesh outputs (regenerable from simulation/results/).
 DATA_MESH_SW_SUITE   := $(addprefix $(SIMULATION)/data/,structure-summary-sw.csv structure-cache-sw.pkl seismic-profile-cache-sw.pkl seismic_profiles_sw)
 DATA_MESH_NC_SUITE   := $(addprefix $(SIMULATION)/data/,structure-summary-nc.csv structure-cache-nc.pkl seismic-profile-cache-nc.pkl seismic_profiles_nc)
 DATA_MESH_TEST_SUITE := $(addprefix $(SIMULATION)/data/,structure-summary-test.csv structure-cache-test.pkl seismic-profile-cache-test.pkl seismic_profiles_test)
+DATA_MESH_BOX_SUITE   := $(addprefix $(SIMULATION)/data/,structure-summary-box.csv structure-cache-box.pkl seismic-profile-cache-box.pkl seismic_profiles_box)
+DATA_MESH_SINK_SUITE  := $(addprefix $(SIMULATION)/data/,structure-summary-sink.csv structure-cache-sink.pkl seismic-profile-cache-sink.pkl seismic_profiles_sink)
 
 # Composition reference models
 ID_SW1  := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri5.08e-11_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel5e-02_Temp5e+02
@@ -171,9 +197,9 @@ DEPTH_CORRECTION_OL_WD := 5e+03
 DEPTH_CORRECTION_WD_RI := 5e+03
 DEPTH_CORRECTION_RI_PS := 15e+03
 
-VELOCITY_BC             := 5e-02 10e-02
-TEMPERATURE_BC_SW_SUITE := 5e+02
-TEMPERATURE_BC_NC_SUITE := 10e+02
+VELOCITY_BC               := 5e-02 10e-02
+TEMPERATURE_BC_SW_SUITE   := 5e+02
+TEMPERATURE_BC_NC_SUITE   := 10e+02
 
 MODEL_WIDTH        := 1500e+03
 MODEL_HEIGHT       := 1000e+03

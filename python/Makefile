@@ -9,6 +9,7 @@ PROFILES           := $(foreach g,$(MG_NUM),$(SIMULATION)/data/olivine-wadsleyit
 MODELS_SW_SUITE    := $(notdir $(RESULTS_SW_SUITE))
 MODELS_NC_SUITE    := $(notdir $(RESULTS_NC_SUITE))
 MODELS_TEST_SUITE  := $(notdir $(RESULTS_TEST_SUITE))
+# NH benchmark run lists come from project.mk (NH_BOX/SINK_RUNS).
 
 CLEAN := $(PYTHON)/**/__pycache__ \
 	 $(PYTHON)/simulation/**/__pycache__ \
@@ -16,18 +17,24 @@ CLEAN := $(PYTHON)/**/__pycache__ \
 	 $(FIGS_SW_SUITE) \
 	 $(FIGS_NC_SUITE) \
 	 $(FIGS_TEST_SUITE) \
+	 $(FIGS_BOX_SUITE) \
+	 $(FIGS_SINK_SUITE) \
 	 $(FIGS_SIMULATION) \
 	 $(FIGS_SETUP) \
 	 $(FIGS_KUBO) \
 	 $(DATA_MESH_SW_SUITE) \
 	 $(DATA_MESH_NC_SUITE) \
 	 $(DATA_MESH_TEST_SUITE) \
+	 $(DATA_MESH_BOX_SUITE) \
+	 $(DATA_MESH_SINK_SUITE) \
 	 $(POSTPROCESSED_CSV)
 
-.PHONY: all visualize sync-barkla postprocess compositions-si setup kubo adiabat meshes meshes-sw-suite meshes-nc-suite meshes-test-suite clean help
+.PHONY: all visualize visualize-benchmarks sync-barkla postprocess compositions-si setup kubo adiabat meshes meshes-sw-suite meshes-nc-suite meshes-test-suite meshes-benchmarks meshes-box-suite meshes-sink-suite clean help
 
 all: visualize
 visualize: setup kubo meshes compositions-si
+
+visualize-benchmarks: meshes-benchmarks
 
 # Delegates to bash/Makefile so each .sh is invoked once.
 sync-barkla:
@@ -75,6 +82,43 @@ kubo:
 
 meshes: meshes-sw-suite meshes-nc-suite
 
+meshes-benchmarks: meshes-box-suite meshes-sink-suite
+
+meshes-box-suite: MODELS_BENCH := $(NH_BOX_RUNS)
+meshes-box-suite: DIRS_BENCH := $(addprefix $(SIMULATION)/results/, $(NH_BOX_RUNS))
+meshes-box-suite: OUT_BENCH := $(FIGS_SIM_BOX_SUITE)
+meshes-box-suite: TAG_BENCH := $(TAG_BOX_SUITE)
+meshes-box-suite: STEPS_BENCH := $(TIMESTEPS_MESH_BOX_SUITE)
+meshes-sink-suite: MODELS_BENCH := $(NH_SINK_RUNS)
+meshes-sink-suite: DIRS_BENCH := $(addprefix $(SIMULATION)/results/, $(NH_SINK_RUNS))
+meshes-sink-suite: OUT_BENCH := $(FIGS_SIM_SINK_SUITE)
+meshes-sink-suite: TAG_BENCH := $(TAG_SINK_SUITE)
+meshes-sink-suite: STEPS_BENCH := $(TIMESTEPS_MESH_SINK_SUITE)
+# Benchmark profiles live in simulation/benchmark_data/ (versioned inputs the
+# prms actually ran with), not the generated simulation/data/ slab profiles.
+meshes-box-suite meshes-sink-suite:
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/main.py \
+	  $(SIMULATION)/benchmark_data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
+	  $(SIMULATION)/benchmark_data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
+	  $(SIMULATION)/benchmark_data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
+	  $(MODEL_HEIGHT) \
+	  $(SURFACE_PRESSURE) \
+	  $(OUT_BENCH) \
+	  $(SIMULATION)/data \
+	  --model-ids $(MODELS_BENCH) \
+	  --timesteps $(STEPS_BENCH) \
+	  --suite-tag $(TAG_BENCH) \
+	  --in-dirs $(DIRS_BENCH) \
+	  --visualize-ids $(MODELS_BENCH) \
+	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
+	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
+	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
+	  --mode=$(POSTPROCESS_MODE) \
+	  --save-csv=$(SAVE_CSV) \
+	  --force-reprocess=$(FORCE_REPROCESS) \
+	  --verbosity=$(POSTPROCESS_VERBOSITY) \
+	  --chunk-size=$(CHUNK_SIZE)
+
 meshes-sw-suite: SUITE := SW_SUITE
 meshes-nc-suite: SUITE := NC_SUITE
 meshes-test-suite: SUITE := TEST_SUITE
@@ -116,12 +160,16 @@ clean:
 
 help:
 	$(call LOG_INFO,Available targets:)
-	$(call LOG_DETAIL,visualize          Visualize all results (SW + NC + TEST + combined))
-	$(call LOG_DETAIL,sync-barkla        Fetch simulation results from Barkla2 (delegates to bash))
-	$(call LOG_DETAIL,setup              Visualize initial numerical setup (slab-only))
-	$(call LOG_DETAIL,adiabat            Build PerpleX phase profiles + adiabat figures)
-	$(call LOG_DETAIL,kubo               Visualize Kubo 2022 regression + parameter ranges)
-	$(call LOG_DETAIL,meshes             Visualize ASPECT models (SW + NC))
-	$(call LOG_DETAIL,meshes-test-suite  Visualize TEST-suite meshes)
-	$(call LOG_DETAIL,postprocess         Export postprocessed table (thermal-kinetic split))
-	$(call LOG_DETAIL,clean              Remove generated files (safe))
+	$(call LOG_DETAIL,visualize            Visualize slab results (setup + kubo + SW/NC meshes))
+	$(call LOG_DETAIL,visualize-benchmarks Visualize NH benchmarks (box + sink meshes))
+	$(call LOG_DETAIL,sync-barkla          Fetch simulation results from Barkla2 (delegates to bash))
+	$(call LOG_DETAIL,setup                Visualize initial numerical setup (slab-only))
+	$(call LOG_DETAIL,adiabat              Build PerpleX phase profiles + adiabat figures)
+	$(call LOG_DETAIL,kubo                 Visualize Kubo 2022 regression + parameter ranges)
+	$(call LOG_DETAIL,meshes               Visualize ASPECT models (SW + NC))
+	$(call LOG_DETAIL,meshes-test-suite    Visualize TEST-suite meshes)
+	$(call LOG_DETAIL,meshes-benchmarks    Visualize NH benchmarks (box + sink, shared plotter))
+	$(call LOG_DETAIL,meshes-box-suite     Visualize NH box benchmarks)
+	$(call LOG_DETAIL,meshes-sink-suite    Visualize NH sinking-block benchmarks)
+	$(call LOG_DETAIL,postprocess           Export postprocessed table (thermal-kinetic split))
+	$(call LOG_DETAIL,clean                Remove generated files (safe))

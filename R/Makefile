@@ -37,7 +37,7 @@ clean:
 
 help:
 	$(call LOG_INFO,Available targets:)
-	$(call LOG_DETAIL,visualize   Visualize all results (SW + NC + TEST + combined))
+	$(call LOG_DETAIL,visualize   Visualize slab results (SW + NC))
 	$(call LOG_DETAIL,adiabat     Visualize adiabatic profiles)
 	$(call LOG_DETAIL,simulation  Visualize combined simulation results)
 	$(call LOG_DETAIL,seismic     Visualize combined seismic profiles)

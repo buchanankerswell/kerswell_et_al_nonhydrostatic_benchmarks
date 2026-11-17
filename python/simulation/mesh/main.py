@@ -151,12 +151,31 @@ def main():
         "X_ri",
         "X_ps",
     ]
+    if args.suite_tag in ("box", "sink"):
+        # NH benchmarks: single ol-wd reaction; pressure is the key
+        # diagnostic (spurious-wave control), xi tracks the front.
+        fields_to_plot = [
+            "nonadiabatic_temperature",
+            "nonadiabatic_pressure",
+            "velocity_vertical",
+            "viscosity",
+            "xi_ol_wd",
+            "density",
+        ]
 
     fields_for_seismic_profiles = ["density", "seismic_Vp", "seismic_Vs"]
 
     plot_config = MeshConfig()
     plot_config.file_map = {k: plot_config.file_map[k] for k in fields_to_plot if k in plot_config.file_map}
     plot_config.default_fig_dir = out_fig_dir
+    if args.suite_tag in ("box", "sink"):
+        # Narrow/square domains: normalize camera framing to mesh height so
+        # the colorbar keeps its white band below the mesh. The slab framing
+        # is relative to max_span = 1.5e6 (1.5x the 1e6 height); bench
+        # max_span equals the 1e6 height, so scale both by 1.5 to reproduce
+        # the slab-relative geometry.
+        plot_config.camera_zoom_factor *= 1.5
+        plot_config.camera_y_shift_factor *= 1.5
 
     pvtu_in_dirs = dict(zip(model_ids, in_dirs))
     visualize_ids = args.visualize_ids or list(pvtu_in_dirs.keys())
@@ -172,7 +191,7 @@ def main():
     chunk_tag = f"Chunk {args.chunk}: " if args.chunk else ""
     if mode == "postprocess":
         log_info(f"{chunk_tag}{len(pvtu_in_dirs)} models")
-        pipeline = PostProcessingPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity)
+        pipeline = PostProcessingPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity, args.suite_tag)
 
         transition_summary, seismic_profile_cache = pipeline.run(transition_summary_path, seismic_profile_cache_path, force_reprocess)
         pipeline.export_transition_summary(csv_path, transition_summary)
@@ -184,17 +203,17 @@ def main():
     elif mode == "visualize":
         if not transition_summary_path.exists() or force_reprocess:
             log_info(f"{chunk_tag}{len(pvtu_in_dirs)} models")
-            post_pipeline = PostProcessingPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity)
+            post_pipeline = PostProcessingPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity, args.suite_tag)
             transition_summary, seismic_profile_cache = post_pipeline.run(transition_summary_path, seismic_profile_cache_path, force_reprocess)
         else:
             transition_summary = PlottingPipeline.load_cache(transition_summary_path)
 
-        plot_pipeline = PlottingPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity, transition_summary)
+        plot_pipeline = PlottingPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity, args.suite_tag, transition_summary)
         plot_pipeline.run(fields_to_plot, chunk_vis_ids)
 
     else:
         log_info(f"{chunk_tag}{len(pvtu_in_dirs)} models")
-        pipeline = FullPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity)
+        pipeline = FullPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity, args.suite_tag)
         pipeline.run(
             fields_to_plot,
             fields_for_seismic_profiles,
@@ -210,12 +229,18 @@ def main():
             log_artifact(csv_path)
 
     if mode in ["visualize", "full"]:
-        tile_sets = {
-            "set0": {"tags": None, "fields": ["nonadiabatic_temperature", "nonadiabatic_density", "velocity_vertical"]},
-            "set1": {"tags": None, "fields": ["reaction_rate_C0", "reaction_rate_C1", "reaction_rate_C2"]},
-            "set2": {"tags": None, "fields": ["X_wd", "X_ri", "X_ps"]},
-            "set3": {"tags": None, "fields": ["nonadiabatic_temperature", "viscosity", "X_ps"]},
-        }
+        if args.suite_tag in ("box", "sink"):
+            tile_sets = {
+                "set0": {"tags": None, "fields": ["nonadiabatic_temperature", "nonadiabatic_pressure", "velocity_vertical"]},
+                "set1": {"tags": None, "fields": ["viscosity", "xi_ol_wd", "density"]},
+            }
+        else:
+            tile_sets = {
+                "set0": {"tags": None, "fields": ["nonadiabatic_temperature", "nonadiabatic_density", "velocity_vertical"]},
+                "set1": {"tags": None, "fields": ["reaction_rate_C0", "reaction_rate_C1", "reaction_rate_C2"]},
+                "set2": {"tags": None, "fields": ["X_wd", "X_ri", "X_ps"]},
+                "set3": {"tags": None, "fields": ["nonadiabatic_temperature", "viscosity", "X_ps"]},
+            }
 
         for model_id in chunk_vis_ids:
             model_id_padded = re.sub(r"B(\d+)", lambda m: f"B{int(m.group(1)):0{2}d}", model_id)
