@@ -73,30 +73,30 @@ SEISMIC_SINK_SUITE  := $(ASPECT_RESULTS)/seismic_profiles_sink
 DATA_MESH_BOX_SUITE  := $(addprefix $(ASPECT_RESULTS)/,structure-summary-box.csv structure-cache-box.pkl seismic-profile-cache-box.pkl seismic_profiles_box)
 DATA_MESH_SINK_SUITE := $(addprefix $(ASPECT_RESULTS)/,structure-summary-sink.csv structure-cache-sink.pkl seismic-profile-cache-sink.pkl seismic_profiles_sink)
 
-# NH reference UIDs (paper matrix). NH_{Box,Sink}_Dynp{0|1}_Damp{..}[_Block{b}]
-# _Z{z}_Res{r}_CFL{c}_End{e}. Dynp0+DampNone = no-feedback equilibrium ground
-# truth; Dynp1+DampNone = undamped spurious-wave demonstrator. Kinds: none,
+# NH reference UIDs (paper matrix). NH_{Box,Sink}_Dynp{On|Off}_Damp{..}[_Block{b}]
+# _Z{z}_Res{r}_CFL{c}_End{e}. DynpOff+DampNone = no-feedback equilibrium ground
+# truth; DynpOn+DampNone = undamped spurious-wave demonstrator. Kinds: none,
 # Bimpl (implicit bulk zeta), Bexpl (explicit bulk zeta), Rel (relaxation
 # time s), Cap (pressure cap Pa). Must match simulation/local.mk.
-ID_B1 := NH_Box_Dynp1_DampNone_Z4.44e-04_Res5_CFL7e-01_End1e7
-ID_B2 := NH_Box_Dynp0_DampNone_Z4.44e-04_Res5_CFL7e-01_End1e7
-ID_B3 := NH_Box_Dynp1_DampBimpl1e21_Z4.44e-04_Res5_CFL7e-01_End1e7
-ID_B4 := NH_Box_Dynp1_DampBexpl1e20_Z4.44e-04_Res5_CFL7e-01_End1e7
-ID_B5 := NH_Box_Dynp1_DampRel3.156e12_Z4.44e-04_Res5_CFL7e-01_End1e7
-ID_B6 := NH_Box_Dynp1_DampCap1e7_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B1 := NH_Box_DynpOn_DampNone_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B2 := NH_Box_DynpOff_DampNone_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B3 := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B4 := NH_Box_DynpOn_DampBexpl1e20_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B5 := NH_Box_DynpOn_DampRel3.156e12_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B6 := NH_Box_DynpOn_DampCap1e7_Z4.44e-04_Res5_CFL7e-01_End1e7
 
-ID_S1 := NH_Sink_Dynp1_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S2 := NH_Sink_Dynp0_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S3 := NH_Sink_Dynp1_DampBimpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S4 := NH_Sink_Dynp1_DampBimpl1e20_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S5 := NH_Sink_Dynp1_DampBexpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S6 := NH_Sink_Dynp1_DampRel3.156e10_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S7 := NH_Sink_Dynp1_DampRel3.156e11_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S8 := NH_Sink_Dynp1_DampCap2e8_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S1 := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S2 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S3 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S4 := NH_Sink_DynpOn_DampBimpl1e20_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S5 := NH_Sink_DynpOn_DampBexpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S6 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S7 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S8 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
 
 # Local-only smoke/config tests, not paper results. Must match local.mk.
-ID_STEST    := NH_Sink_Dynp1_DampNone_Block400_Z4.44e-04_Res4_CFL5e-01_End1e6
-ID_SNOBLOCK := NH_Sink_Dynp1_DampNone_Block0_Z4.44e-04_Res4_CFL5e-01_End1e6
+ID_STEST    := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res4_CFL5e-01_End1e6
+ID_SNOBLOCK := NH_Sink_DynpOn_DampNone_Block0_Z4.44e-04_Res4_CFL5e-01_End1e6
 
 # Visualization scope (can edit)
 VIS_ALL            := false
@@ -176,14 +176,14 @@ CONDA_PYTHON := $(shell conda run -n $(CONDA_ENV) which python 2>/dev/null || ec
 # --------------------------------------------------
 # Macros (no edits)
 # --------------------------------------------------
-# NH_Box_Dynp{d}_Damp{kind+val}_Z{z}_Res{r}_CFL{c}_End{e}; sink inserts
-# _Block{b} after the damping token. DampNone has no value suffix.
+# NH_Box_Dynp{d}_Damp{kind+val}_Z{z}_Res{r}_CFL{c}_End{e} with d = On|Off;
+# sink inserts _Block{b} after the damping token. DampNone has no value suffix.
 define MAKE_UID_BOX
-  NH_Box_Dynp$(1)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Z$(4)_Res$(5)_CFL$(6)_End$(7)
+  NH_Box_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Z$(4)_Res$(5)_CFL$(6)_End$(7)
 endef
 
 define MAKE_UID_SINK
-  NH_Sink_Dynp$(1)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Block$(4)_Z$(5)_Res$(6)_CFL$(7)_End$(8)
+  NH_Sink_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Block$(4)_Z$(5)_Res$(6)_CFL$(7)_End$(8)
 endef
 
 define REGISTER_NH_BOX

@@ -4,8 +4,8 @@ Reads per-run timeseries.csv and writes a summary CSV plus comparison plots.
 Runs and plot sets arrive from the Makefiles (project.mk UID lists); without
 them the script discovers NH_* runs and derives paper plot sets by UID suffix.
 Each variant is measured against twins derived from its own UID: the undamped
-control (Damp token -> DampNone) and the no-feedback equilibrium (Dynp1 ->
-Dynp0). Positive reduction = damped; positive error = overshoot vs equilibrium.
+control (Damp token -> DampNone) and the no-feedback equilibrium (DynpOn ->
+DynpOff). Positive reduction = damped; positive error = overshoot vs equilibrium.
 
 Usage (repo root):
   PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
@@ -47,7 +47,7 @@ def control_twin(run):
 
 
 def nodynp_twin(run):
-    return run.replace("_Dynp1_", "_Dynp0_", 1)
+    return run.replace("_DynpOn_", "_DynpOff_", 1)
 
 
 def discover(prefix):
@@ -301,21 +301,21 @@ def main():
     box_paper = args.plot_box if args.plot_box is not None else paper_set(box, 5, "1e7")
     sink_paper = args.plot_sink if args.plot_sink is not None else paper_set(sink, 6, "5e6")
     sink_laptop = args.plot_laptop if args.plot_laptop is not None else paper_set(sink, 5, "2e6")
-    und = next((r for r in box_paper if "_Dynp1_DampNone_" in r), None)
-    nod = next((r for r in box_paper if "_Dynp0_DampNone_" in r), None)
+    und = next((r for r in box_paper if "_DynpOn_DampNone_" in r), None)
+    nod = next((r for r in box_paper if "_DynpOff_DampNone_" in r), None)
     plot_suite(box_paper, "Box 1-reaction: pressure-wave magnitude", figdir / "pressure_waves_box.png", und, reference=nod)
-    und = next((r for r in sink_paper if "_Dynp1_DampNone_" in r), None)
-    nod = next((r for r in sink_paper if "_Dynp0_DampNone_" in r), None)
+    und = next((r for r in sink_paper if "_DynpOn_DampNone_" in r), None)
+    nod = next((r for r in sink_paper if "_DynpOff_DampNone_" in r), None)
     plot_suite(sink_paper, "Sink block (full-res): pressure-wave magnitude", figdir / "pressure_waves_sink.png", und, reference=nod)
-    und = next((r for r in sink_laptop if "_Dynp1_DampNone_" in r), None)
+    und = next((r for r in sink_laptop if "_DynpOn_DampNone_" in r), None)
     plot_suite(sink_laptop, "Sink block (laptop): pressure-wave magnitude", figdir / "pressure_waves_sink_laptop.png", und)
     for runs, tag, title in (
         (box_paper, "box", "Box 1-reaction"),
         (sink_paper, "sink", "Sink block (full-res)"),
         (sink_laptop, "sink_laptop", "Sink block (laptop)"),
     ):
-        und = next((r for r in runs if "_Dynp1_DampNone_" in r), None)
-        nod = next((r for r in runs if "_Dynp0_DampNone_" in r), None)
+        und = next((r for r in runs if "_DynpOn_DampNone_" in r), None)
+        nod = next((r for r in runs if "_DynpOff_DampNone_" in r), None)
         plot_rms_suite(runs, f"{title}: RMS velocity (per-step statistics)", figdir / f"rms_velocity_{tag}.png", und, reference=nod)
         plot_probe_suite(runs, f"{title}: 410 probe driving pressure (per-step)", figdir / f"probe_pressure_{tag}.png", und, reference=nod)
     print(f"plots -> {figdir}/")

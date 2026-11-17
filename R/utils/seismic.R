@@ -30,7 +30,7 @@ read_suite_profiles <- function(data_dir, suite_label) {
 }
 
 read_init_profile <- function(data_dir) {
-  files <- list.files(data_dir, pattern = "seismic_profile_.*Dynp1_DampNone.*_t0_representative\\.csv", full.names = TRUE)
+  files <- list.files(data_dir, pattern = "seismic_profile_.*DynpOn_DampNone.*_t0_representative\\.csv", full.names = TRUE)
   if (!length(files)) {
     return(NULL)
   }

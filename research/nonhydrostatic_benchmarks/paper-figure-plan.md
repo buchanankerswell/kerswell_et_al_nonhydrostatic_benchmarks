@@ -7,7 +7,7 @@
 > `NH_{Box,Sink}_Dynp{d}_Damp{kind+val}[_Block{b}]_Z{z}_Res{r}_CFL{c}_End{e}`
 > registered in `simulation/local.mk` (42 total: 20 box, 22 sink; paper sets
 > `ID_B1..B6`/`ID_S1..S8` + test/noblock + laptop + scaling). Old names map:
-> `nh_box_1rxn_undamped` → `NH_Box_Dynp1_DampNone_Z4.44e-04_Res5_CFL7e-01_End1e7`,
+> `nh_box_1rxn_undamped` → `NH_Box_DynpOn_DampNone_Z4.44e-04_Res5_CFL7e-01_End1e7`,
 > `nh_sink_block_undamped_laptop` → `..._Res5_CFL5e-01_End2e6`, etc.
 > (damping token in UID). `make benchmarks`/`visualize-benchmarks` and the
 > laptop/scaling generators are deleted; use `make models` / `make visualize`.

@@ -26,7 +26,7 @@ RHO = 4100.0
 GRAV = 9.81
 
 UID_RE = re.compile(
-    r"^NH_(?P<suite>Box|Sink)_Dynp(?P<dynp>[01])_Damp(?P<dampkind>[A-Za-z]+)(?P<dampval>[\d.e]*)"
+    r"^NH_(?P<suite>Box|Sink)_Dynp(?P<dynp>On|Off)_Damp(?P<dampkind>[A-Za-z]+)(?P<dampval>[\d.e]*)"
     r"(?:_Block(?P<block>\d+))?_Z(?P<z>[\d.e+-]+)_Res(?P<res>\d+)_CFL(?P<cfl>[\d.e+-]+)_End(?P<end>[\d.e+]+)$"
 )
 
@@ -115,7 +115,7 @@ def main():
                     "model_id": mid,
                     "timestep": ts,
                     "damp": f"{dampkind}{dampval}" if dampkind != "None" else "None",
-                    "dynp": int(m.group("dynp")),
+                    "dynp": 1 if m.group("dynp") == "On" else 0,
                     "res": int(m.group("res")),
                     "cfl": m.group("cfl"),
                     "end": m.group("end"),

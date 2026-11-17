@@ -204,7 +204,7 @@ def main():
         print(f"fields for {run}...")
         fig = plot_fields(run, args.out)
         if fig is not None:
-            stem = re.sub(r"^NH_Sink_Dynp[01]_", "", run)
+            stem = re.sub(r"^NH_Sink_Dynp(?:On|Off)_", "", run)
             fig.savefig(os.path.join(FIGDIR, f"fields_{stem}.png"), dpi=110)
     print(f"wrote -> {FIGDIR}/")
 
