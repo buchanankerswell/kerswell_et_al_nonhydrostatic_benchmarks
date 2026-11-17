@@ -1,7 +1,7 @@
 """Locate extrema cells in the final solution of a benchmark run.
 
 Usage (repo root):
-  conda run -n kerswell-et-al-mtz-kinetics python \
+  conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \
     python/benchmarks/locate_extrema.py simulation/results/<run>
 """
 

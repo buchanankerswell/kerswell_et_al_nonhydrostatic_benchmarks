@@ -4,7 +4,7 @@ Reads simulation/results/<run>/timeseries.csv + solution/*.pvtu files and
 writes comparison figures to figs/sink_block/. Headless-safe (Agg).
 
 Usage (repo root):
-  conda run -n kerswell-et-al-mtz-kinetics python \\
+  conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
     python/benchmarks/plot_sink_sweep.py [--out IDX] [run ...]
 
 Defaults to the 7-variant laptop sweep + undamped ref-6 when no runs given.

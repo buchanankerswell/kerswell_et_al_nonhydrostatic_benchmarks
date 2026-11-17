@@ -53,8 +53,8 @@ $(eval $(call REGISTER_UIDS,UIDS_TEST_SUITE,0,7.0e0,7.0e0,6.0e-01,5,1,1,1,1,100,
 ASPECT_DATA      := $(SIMULATION)/data
 ASPECT_TEMPLATES := $(SIMULATION)/params/templates
 ASPECT_CONFIGS   := $(SIMULATION)/configs
-ASPECT_PLUGIN    := $(SIMULATION)/plugins/libmtz-kinetics.release.so \
-                    $(SIMULATION)/plugins/libmtz-kinetics.debug.so \
+ASPECT_PLUGIN    := $(SIMULATION)/plugins/libnh-kinetics.release.so \
+                    $(SIMULATION)/plugins/libnh-kinetics.debug.so \
                     $(SIMULATION)/plugins/CMakeFiles \
                     $(SIMULATION)/plugins/Makefile \
                     $(SIMULATION)/plugins/CMakeCache.txt \

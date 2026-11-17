@@ -5,7 +5,7 @@ records per-output diagnostics sensitive to the dynamic-pressure feedback:
 nonadiabatic pressure extrema, velocity RMS, and xi bounds.
 
 Usage (run from repo root):
-  conda run -n kerswell-et-al-mtz-kinetics python \
+  conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \
     python/benchmarks/extract_timeseries.py simulation/results/<run> -o out.csv
 """
 
