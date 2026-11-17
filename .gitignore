@@ -12,8 +12,7 @@ simulation/data
 simulation/results
 simulation/plugins/CMakeFiles
 simulation/plugins/build
-simulation/benchmarks/laptop/
-simulation/benchmarks/*.run
+simulation/configs/*.run
 simulation/plugins/Makefile
 simulation/plugins/CMakeCache.txt
 simulation/plugins/aspect*

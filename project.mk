@@ -1,7 +1,6 @@
 # --------------------------------------------------
 # Paths (no edits)
 # --------------------------------------------------
-# Canonical project root (works from any subdir)
 PROJECT_ROOT := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/.)
 export PROJECT_ROOT
 
@@ -21,331 +20,231 @@ BARKLA2_SIMULATION := $(BARKLA2_ROOT)/simulation
 # --------------------------------------------------
 # Suites and outputs (can edit)
 # --------------------------------------------------
-ASPECT_RESULTS            := $(SIMULATION)/results
-POSTPROCESS_MODE          := full
-POSTPROCESS_VERBOSITY     := 0
-SAVE_CSV                  := true
-FORCE_REPROCESS           := false
-FORCE_REWRITE             := true
-RESULTS_SW_SUITE       = $(addprefix $(ASPECT_RESULTS)/slab_, $(UIDS_SW_SUITE))
-RESULTS_NC_SUITE       = $(addprefix $(ASPECT_RESULTS)/slab_, $(UIDS_NC_SUITE))
-RESULTS_TEST_SUITE     = $(addprefix $(ASPECT_RESULTS)/slab_, $(UIDS_TEST_SUITE))
-# NH benchmark suites (static prms; result dir = prm basename). Single source
-# of truth for simulation/Makefile (runs) and python/Makefile (meshes).
-NH_BOX_PRMS    := $(wildcard $(SIMULATION)/benchmarks/nh_box_1rxn_*.prm)
-NH_SINK_PRMS   := $(wildcard $(SIMULATION)/benchmarks/nh_sink_block_*.prm)
-NH_BOX_RUNS    := $(basename $(notdir $(NH_BOX_PRMS)))
-NH_SINK_RUNS   := $(basename $(notdir $(NH_SINK_PRMS)))
-RESULTS_BOX_SUITE      = $(addprefix $(ASPECT_RESULTS)/, $(NH_BOX_RUNS))
-RESULTS_SINK_SUITE     = $(addprefix $(ASPECT_RESULTS)/, $(NH_SINK_RUNS))
-TIMESTEPS_SYNC             := 000 100
-FORCE_SYNC                 := 0
-FORCE_COMPOSE              := 0
-FORCE_DOWNLOAD             := 0
-ZENODO_DATASET_DOI         := TODO-no-dataset-yet
-ZENODO_FILES               := TODO-no-files-yet
-TIMESTEPS_MESH_SW_SUITE    := 100
-TIMESTEPS_MESH_NC_SUITE    := 100
-TIMESTEPS_MESH_TEST_SUITE  := 100
-# Benchmark mesh timesteps: -1 = last output per model (runs have varying
-# output counts: box 21, sink full 21, laptop 9, test 5). The shared mesh
-# pipeline treats -1 as last; slab suites never request -1.
-TIMESTEPS_MESH_BOX_SUITE   := -1
-TIMESTEPS_MESH_SINK_SUITE  := -1
-CHUNK_SIZE                 := 32
+ASPECT_RESULTS    := $(SIMULATION)/results
+POSTPROCESS_MODE  := full
+POSTPROCESS_VERBOSITY := 0
+SAVE_CSV          := true
+FORCE_REPROCESS   := false
+FORCE_REWRITE     := true
+RESULTS_BOX_SUITE  = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_BOX_SUITE))
+RESULTS_SINK_SUITE = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_SINK_SUITE))
+# Plot sets (paper matrix + laptop check) selected from the registered UIDs.
+PLOT_BOX_RUNS    = $(filter %_Res5_CFL7e-01_End1e7,$(UIDS_BOX_SUITE))
+PLOT_SINK_RUNS   = $(filter %_Res6_CFL5e-01_End5e6,$(UIDS_SINK_SUITE))
+PLOT_LAPTOP_RUNS = $(filter %_End2e6,$(UIDS_SINK_SUITE))
+# All Barkla NH runs write 21 outputs (0-20). Sync init + crossing + peak + last.
+TIMESTEPS_SYNC   := 000 002 004 006 008 012 016 019 020
+FORCE_SYNC       := 0
+FORCE_COMPOSE    := 0
+FORCE_DOWNLOAD   := 0
+ZENODO_DATASET_DOI := TODO-no-dataset-yet
+ZENODO_FILES       := TODO-no-files-yet
+# -1 = last output per model (output counts vary: full 21, laptop 9, test 5).
+TIMESTEPS_MESH_BOX_SUITE  := -1
+TIMESTEPS_MESH_SINK_SUITE := -1
+CHUNK_SIZE := 32
 
-# Namespaces: sw (SW), nc (NC), test (T1-T4) for the legacy slab sweep;
-# box/sink for the NH benchmarks. Per-suite mesh outputs live flat
-# under simulation/data/; shared physics inputs (PerpleX profiles,
-# figs/adiabat) stay at their top-level paths.
-TAG_SW_SUITE   := sw
-TAG_NC_SUITE   := nc
-TAG_TEST_SUITE := test
 TAG_BOX_SUITE  := box
 TAG_SINK_SUITE := sink
-FIGS_SW_SUITE       := $(FIGS)/sw_suite
-FIGS_NC_SUITE       := $(FIGS)/nc_suite
-FIGS_TEST_SUITE     := $(FIGS)/test_suite
-FIGS_BOX_SUITE      := $(FIGS)/box_suite
-FIGS_SINK_SUITE     := $(FIGS)/sink_suite
-FIGS_SIM_SW_SUITE   := $(FIGS_SW_SUITE)/simulation
-FIGS_SIM_NC_SUITE   := $(FIGS_NC_SUITE)/simulation
-FIGS_SIM_TEST_SUITE := $(FIGS_TEST_SUITE)/simulation
+FIGS_BOX_SUITE     := $(FIGS)/box_suite
+FIGS_SINK_SUITE    := $(FIGS)/sink_suite
 FIGS_SIM_BOX_SUITE  := $(FIGS_BOX_SUITE)/simulation
 FIGS_SIM_SINK_SUITE := $(FIGS_SINK_SUITE)/simulation
 
-# Manuscript outputs (all suites) live directly under figs/ and simulation/data/.
-FIGS_SIMULATION       := $(FIGS)/simulation
-FIGS_STRUCTURE        := $(FIGS)/structure
-FIGS_SEISMIC          := $(FIGS)/seismic
-FIGS_SETUP            := $(FIGS)/setup
-FIGS_KUBO             := $(FIGS)/kubo
-POSTPROCESSED_CSV       := $(SIMULATION)/data/postprocessed.csv
-POSTPROCESSED_MD        := $(SIMULATION)/data/postprocessed.md
+FIGS_SIMULATION := $(FIGS)/simulation
+FIGS_STRUCTURE  := $(FIGS)/structure
+FIGS_SEISMIC    := $(FIGS)/seismic
+FIGS_SETUP      := $(FIGS)/setup
+FIGS_KUBO       := $(FIGS)/kubo
+POSTPROCESSED_CSV := $(SIMULATION)/data/postprocessed.csv
+POSTPROCESSED_MD   := $(SIMULATION)/data/postprocessed.md
 
-# Shared pipeline inputs (single source of truth)
-PERPLEX_MODELS    := $(shell find $(PERPLEX) -type f -name '*.dat' -exec basename {} .dat \;)
-MESH_CSV_SW_SUITE   := $(SIMULATION)/data/structure-summary-sw.csv
-MESH_CSV_NC_SUITE   := $(SIMULATION)/data/structure-summary-nc.csv
+PERPLEX_MODELS  := $(shell find $(PERPLEX) -type f -name '*.dat' -exec basename {} .dat \;)
+BENCH_DATA      := $(SIMULATION)/benchmark_data
 MESH_CSV_BOX_SUITE  := $(SIMULATION)/data/structure-summary-box.csv
 MESH_CSV_SINK_SUITE := $(SIMULATION)/data/structure-summary-sink.csv
-SEISMIC_SW_SUITE   := $(SIMULATION)/data/seismic_profiles_sw
-SEISMIC_NC_SUITE   := $(SIMULATION)/data/seismic_profiles_nc
-SEISMIC_BOX_SUITE  := $(SIMULATION)/data/seismic_profiles_box
-SEISMIC_SINK_SUITE := $(SIMULATION)/data/seismic_profiles_sink
+SEISMIC_BOX_SUITE   := $(SIMULATION)/data/seismic_profiles_box
+SEISMIC_SINK_SUITE  := $(SIMULATION)/data/seismic_profiles_sink
 
-# Flat per-suite mesh outputs (regenerable from simulation/results/).
-DATA_MESH_SW_SUITE   := $(addprefix $(SIMULATION)/data/,structure-summary-sw.csv structure-cache-sw.pkl seismic-profile-cache-sw.pkl seismic_profiles_sw)
-DATA_MESH_NC_SUITE   := $(addprefix $(SIMULATION)/data/,structure-summary-nc.csv structure-cache-nc.pkl seismic-profile-cache-nc.pkl seismic_profiles_nc)
-DATA_MESH_TEST_SUITE := $(addprefix $(SIMULATION)/data/,structure-summary-test.csv structure-cache-test.pkl seismic-profile-cache-test.pkl seismic_profiles_test)
-DATA_MESH_BOX_SUITE   := $(addprefix $(SIMULATION)/data/,structure-summary-box.csv structure-cache-box.pkl seismic-profile-cache-box.pkl seismic_profiles_box)
-DATA_MESH_SINK_SUITE  := $(addprefix $(SIMULATION)/data/,structure-summary-sink.csv structure-cache-sink.pkl seismic-profile-cache-sink.pkl seismic_profiles_sink)
+DATA_MESH_BOX_SUITE  := $(addprefix $(SIMULATION)/data/,structure-summary-box.csv structure-cache-box.pkl seismic-profile-cache-box.pkl seismic_profiles_box)
+DATA_MESH_SINK_SUITE := $(addprefix $(SIMULATION)/data/,structure-summary-sink.csv structure-cache-sink.pkl seismic-profile-cache-sink.pkl seismic_profiles_sink)
 
-# Composition reference models
-ID_SW1  := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri5.08e-11_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel5e-02_Temp5e+02
-ID_SW2  := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri1.90e-08_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel5e-02_Temp5e+02
-ID_SW3  := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri5.08e-05_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel5e-02_Temp5e+02
-ID_SW4  := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri5.08e-11_EtaTherm5_EtaTrans1-1-1-50_MG100_Vel5e-02_Temp5e+02
-ID_SW5  := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri1.90e-08_EtaTherm5_EtaTrans1-1-1-50_MG100_Vel5e-02_Temp5e+02
-ID_SW6  := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri5.08e-05_EtaTherm5_EtaTrans1-1-1-50_MG100_Vel5e-02_Temp5e+02
-ID_SW7  := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri5.08e-11_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel10e-02_Temp5e+02
-ID_SW8  := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri1.90e-08_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel10e-02_Temp5e+02
-ID_SW9  := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri5.08e-05_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel10e-02_Temp5e+02
-ID_SW10 := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri5.08e-11_EtaTherm10_EtaTrans1-1-1-50_MG100_Vel10e-02_Temp5e+02
-ID_SW11 := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri1.90e-08_EtaTherm10_EtaTrans1-1-1-50_MG100_Vel10e-02_Temp5e+02
-ID_SW12 := KN_Dynp0_Zol4.44e-04_Zwd4.44e-04_Zri5.08e-05_EtaTherm10_EtaTrans1-1-1-50_MG100_Vel10e-02_Temp5e+02
+# NH reference UIDs (paper matrix). NH_{Box,Sink}_Dynp{0|1}_Damp{..}[_Block{b}]
+# _Z{z}_Res{r}_CFL{c}_End{e}. Dynp0+DampNone = no-feedback equilibrium ground
+# truth; Dynp1+DampNone = undamped spurious-wave demonstrator. Kinds: none,
+# Bimpl (implicit bulk zeta), Bexpl (explicit bulk zeta), Rel (relaxation
+# time s), Cap (pressure cap Pa). Must match simulation/local.mk.
+ID_B1 := NH_Box_Dynp1_DampNone_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B2 := NH_Box_Dynp0_DampNone_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B3 := NH_Box_Dynp1_DampBimpl1e21_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B4 := NH_Box_Dynp1_DampBexpl1e20_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B5 := NH_Box_Dynp1_DampRel3.156e12_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B6 := NH_Box_Dynp1_DampCap1e7_Z4.44e-04_Res5_CFL7e-01_End1e7
 
-ID_NC1  := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri1.6e-03_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel5e-02_Temp10e+02
-ID_NC2  := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri6.0e-01_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel5e-02_Temp10e+02
-ID_NC3  := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri1.6e+03_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel5e-02_Temp10e+02
-ID_NC4  := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri1.6e-03_EtaTherm5_EtaTrans1-1-1-50_MG100_Vel5e-02_Temp10e+02
-ID_NC5  := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri6.0e-01_EtaTherm5_EtaTrans1-1-1-50_MG100_Vel5e-02_Temp10e+02
-ID_NC6  := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri1.6e+03_EtaTherm5_EtaTrans1-1-1-50_MG100_Vel5e-02_Temp10e+02
-ID_NC7  := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri1.6e-03_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel10e-02_Temp10e+02
-ID_NC8  := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri6.0e-01_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel10e-02_Temp10e+02
-ID_NC9  := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri1.6e+03_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel10e-02_Temp10e+02
-ID_NC10 := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri1.6e-03_EtaTherm10_EtaTrans1-1-1-50_MG100_Vel10e-02_Temp10e+02
-ID_NC11 := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri6.0e-01_EtaTherm10_EtaTrans1-1-1-50_MG100_Vel10e-02_Temp10e+02
-ID_NC12 := KN_Dynp0_Zol1.4e+04_Zwd1.4e+04_Zri1.6e+03_EtaTherm10_EtaTrans1-1-1-50_MG100_Vel10e-02_Temp10e+02
+ID_S1 := NH_Sink_Dynp1_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S2 := NH_Sink_Dynp0_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S3 := NH_Sink_Dynp1_DampBimpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S4 := NH_Sink_Dynp1_DampBimpl1e20_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S5 := NH_Sink_Dynp1_DampBexpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S6 := NH_Sink_Dynp1_DampRel3.156e10_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S7 := NH_Sink_Dynp1_DampRel3.156e11_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S8 := NH_Sink_Dynp1_DampCap2e8_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
 
-# TEST_SUITE: explicit sluggish-410 tests (T1-T4, scenarios 16-19), not part of
-# the cartesian sweep. Must match UIDS_TEST_SUITE in simulation/local.mk.
-ID_T1 := KN_Dynp0_Zol3.0e0_Zwd3.0e0_Zri6.0e-01_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel5e-02_Temp10e+02
-ID_T2 := KN_Dynp0_Zol7.0e0_Zwd7.0e0_Zri6.0e-01_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel5e-02_Temp10e+02
-ID_T3 := KN_Dynp0_Zol3.0e0_Zwd3.0e0_Zri6.0e-01_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel20e-02_Temp10e+02
-ID_T4 := KN_Dynp0_Zol7.0e0_Zwd7.0e0_Zri6.0e-01_EtaTherm5_EtaTrans1-1-1-1_MG100_Vel20e-02_Temp10e+02
+# Local-only smoke/config tests, not paper results. Must match local.mk.
+ID_STEST    := NH_Sink_Dynp1_DampNone_Block400_Z4.44e-04_Res4_CFL5e-01_End1e6
+ID_SNOBLOCK := NH_Sink_Dynp1_DampNone_Block0_Z4.44e-04_Res4_CFL5e-01_End1e6
 
 # Visualization scope (can edit)
 VIS_ALL            := false
-VIS_ALL_SW_SUITE   := $(VIS_ALL)
-VIS_ALL_NC_SUITE   := $(VIS_ALL)
-VIS_ALL_TEST_SUITE := $(VIS_ALL)
+VIS_ALL_BOX_SUITE  := $(VIS_ALL)
+VIS_ALL_SINK_SUITE := $(VIS_ALL)
 
 VIS_ON := true yes 1
 
-VIS_IDS_SW_SUITE      := $(ID_SW1) $(ID_SW2) $(ID_SW3) $(ID_SW4) $(ID_SW5) $(ID_SW6) $(ID_SW7) $(ID_SW8) $(ID_SW9) $(ID_SW10) $(ID_SW11) $(ID_SW12)
-VIS_IDS_NC_SUITE      := $(ID_NC1) $(ID_NC2) $(ID_NC3) $(ID_NC4) $(ID_NC5) $(ID_NC6) $(ID_NC7) $(ID_NC8) $(ID_NC9) $(ID_NC10) $(ID_NC11) $(ID_NC12)
-VIS_IDS_TEST_SUITE    := $(ID_T1) $(ID_T2) $(ID_T3) $(ID_T4)
+VIS_IDS_BOX_SUITE  := $(ID_B1) $(ID_B2) $(ID_B3) $(ID_B4) $(ID_B5) $(ID_B6)
+VIS_IDS_SINK_SUITE := $(ID_S1) $(ID_S2) $(ID_S3) $(ID_S4) $(ID_S5) $(ID_S6) $(ID_S7) $(ID_S8) $(ID_STEST) $(ID_SNOBLOCK)
 
-VIS_MODELS_SW_SUITE   = $(if $(filter $(VIS_ON),$(VIS_ALL_SW_SUITE)),$(notdir $(RESULTS_SW_SUITE)),$(foreach id,$(VIS_IDS_SW_SUITE),slab_$(id)))
-VIS_MODELS_NC_SUITE   = $(if $(filter $(VIS_ON),$(VIS_ALL_NC_SUITE)),$(notdir $(RESULTS_NC_SUITE)),$(foreach id,$(VIS_IDS_NC_SUITE),slab_$(id)))
-VIS_MODELS_TEST_SUITE = $(if $(filter $(VIS_ON),$(VIS_ALL_TEST_SUITE)),$(notdir $(RESULTS_TEST_SUITE)),$(foreach id,$(VIS_IDS_TEST_SUITE),slab_$(id)))
+VIS_MODELS_BOX_SUITE  = $(if $(filter $(VIS_ON),$(VIS_ALL_BOX_SUITE)),$(notdir $(RESULTS_BOX_SUITE)),$(VIS_IDS_BOX_SUITE))
+VIS_MODELS_SINK_SUITE = $(if $(filter $(VIS_ON),$(VIS_ALL_SINK_SUITE)),$(notdir $(RESULTS_SINK_SUITE)),$(VIS_IDS_SINK_SUITE))
 
 # --------------------------------------------------
 # Model parameters (can edit)
 # --------------------------------------------------
-END_TIME            := 150e+06
 SURFACE_TEMPERATURE := 1706
 SURFACE_PRESSURE    := 2e+09
 SOLVER_TOLERANCE    := 1e-04
 MAX_SOLVER_ITER     := 100
-MAX_SOLVER_TSTEP    := 25e+04
+MAX_SOLVER_TSTEP    := 25e+03
+CHECKPOINT_TIME     := 300
+MG_NUM              := 100
 
-VIZ_OUT_TIME    := 1e+06
-CHECKPOINT_TIME := 300
-DYNAMIC_P       := 0
-MG_NUM          := 100
+# Output cadence per benchmark (end time rides in the UID; end/viz = 21 outputs).
+VIZ_OUT_BOX_SUITE  := 5e+05
+VIZ_OUT_SINK_SUITE := 2.5e+05
+
+# Kinetic prefactors (ReactionChain N=1, SI 1/s/K). Matrix runs Z_KIN.
+# The later Z sweep spans the 660 ol pair and the pre-scaled 410 ol pair
+# (410-repo sweep ends 3.0e0/7.0e7 divided by 3.154e7 s/yr: that plugin
+# divides its rate by time_scale, ours does not). 520 values still needed.
+Z_660_SLUGGISH_OL := 4.44e-04
+Z_660_NOMINAL_OL  := 1.4e+04
+Z_410_SLUGGISH_OL := 9.51e-08
+Z_410_NOMINAL_OL  := 2.22e+00
+Z_KIN := $(Z_660_SLUGGISH_OL)
+H_KIN := 274e+03
+V_KIN := 3.3e-06
 
 ETA_REF   := 1e+21
 ETA_MIN   := 1e+19
 ETA_MAX   := 1e+24
 ETA_GIBBS := 1e+03
-ETA_THERM := 5 10
-
-ETA_PREF_OL := 1
-ETA_PREF_WD := 1
-ETA_PREF_RI := 1
-ETA_PREF_PS := 1 50
-
-# SW kinetics (sluggish Z, Temp5e+02)
-Z_OL_SW_SUITE := 4.44e-04
-Z_WD_SW_SUITE := 4.44e-04
-Z_RI_SW_SUITE := 5.08e-11 3.81e-10 2.63e-09 1.90e-08 1.37e-07 9.84e-07 6.98e-06 5.08e-05
-
-# NC kinetics (nominal Z, Temp10e+02 slabs)
-Z_OL_NC_SUITE := 1.4e+04
-Z_WD_NC_SUITE := 1.4e+04
-Z_RI_NC_SUITE := 1.6e-03 1.2e-02 8.3e-02 6.0e-01 4.3e+00 3.1e+01 2.2e+02 1.6e+03
-
-V_OL := 3.3e-06
-V_WD := 3.3e-06
-H_OL := 274e+03
-H_WD := 274e+03
-E_RI := 355e+03
 
 DEPTH_CORRECTION_OL_WD := 5e+03
 DEPTH_CORRECTION_WD_RI := 5e+03
 DEPTH_CORRECTION_RI_PS := 15e+03
 
-VELOCITY_BC               := 5e-02 10e-02
-TEMPERATURE_BC_SW_SUITE   := 5e+02
-TEMPERATURE_BC_NC_SUITE   := 10e+02
+# Init-step model-Y at the profile equilibrium (359.2 km depth); loaded front
+# measures ~375 km and mesh/R display adds +5 km (364.2 km band).
+TRANSITION_Y_OL_WD := 6.408e+05
 
-MODEL_WIDTH        := 1500e+03
-MODEL_HEIGHT       := 1000e+03
-MESH_X             := 3
-MESH_Y             := 2
-MESH_REFINE_GLOBAL := 3
-MESH_REFINE_ADAPT  := 3
-MESH_REFINE_TSTEP  := 10
+MODEL_WIDTH_BOX  := 300e+03
+MODEL_HEIGHT_BOX := 1000e+03
+MESH_X_BOX       := 1
+MESH_Y_BOX       := 4
 
-SLAB_XC  := 617e+03
-SLAB_YC  := 1050e+03
-SLAB_L   := 250e+03
-SLAB_FW  := 66e+03
-SLAB_A   := 5e+03
-SLAB_DIP := 65
+MODEL_WIDTH_SINK  := 1000e+03
+MODEL_HEIGHT_SINK := 1000e+03
+MESH_X_SINK       := 2
+MESH_Y_SINK       := 2
+BLOCK_EXCESS      := 400.0
 
 # --------------------------------------------------
-# Derived geometry (no edits)
+# Environment (no edits)
 # --------------------------------------------------
 CONDA_ENV    := kerswell-et-al-nonhydrostatic-benchmarks
 CONDA_PYTHON := $(shell conda run -n $(CONDA_ENV) which python 2>/dev/null || echo python3)
 
-_SLAB := $(shell $(CONDA_PYTHON) -u $(PYTHON)/simulation/params/geometry.py slab $(SLAB_XC) $(SLAB_YC) $(SLAB_L) $(SLAB_FW) --dip $(SLAB_DIP))
-
-X0_SLAB := $(word 1,$(_SLAB))
-Y0_SLAB := $(word 2,$(_SLAB))
-X1_SLAB := $(word 3,$(_SLAB))
-Y1_SLAB := $(word 4,$(_SLAB))
-DX_SLAB := $(word 5,$(_SLAB))
-DY_SLAB := $(word 6,$(_SLAB))
-W_SLAB  := $(word 7,$(_SLAB))
-L_SLAB  := $(SLAB_L)
-A_SLAB  := $(SLAB_A)
-
 # --------------------------------------------------
 # Macros (no edits)
 # --------------------------------------------------
-define COMPUTE_PHASES
-  $(eval _OL_WD                 := $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(1).tsv)
-  $(eval _WD_RI                 := $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(1).tsv)
-  $(eval _RI_PS                 := $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg$(1).tsv)
-  $(eval _PH_OUT                := $(shell $(CONDA_PYTHON) -u $(PYTHON)/simulation/params/transitions.py $(_OL_WD) $(_WD_RI) $(_RI_PS) $(MODEL_HEIGHT) $(SURFACE_PRESSURE)))
-  $(eval TRANS_OL_WD_Y_$(1)     := $(word 1,$(_PH_OUT)))
-  $(eval TRANS_OL_WD_DEPTH_$(1) := $(word 2,$(_PH_OUT)))
-  $(eval TRANS_OL_WD_T_$(1)     := $(word 3,$(_PH_OUT)))
-  $(eval TRANS_OL_WD_CLAP_$(1)  := $(word 4,$(_PH_OUT)))
-  $(eval TRANS_OL_WD_DRHO_$(1)  := $(word 5,$(_PH_OUT)))
-  $(eval TRANS_WD_RI_Y_$(1)     := $(word 6,$(_PH_OUT)))
-  $(eval TRANS_WD_RI_DEPTH_$(1) := $(word 7,$(_PH_OUT)))
-  $(eval TRANS_WD_RI_T_$(1)     := $(word 8,$(_PH_OUT)))
-  $(eval TRANS_WD_RI_CLAP_$(1)  := $(word 9,$(_PH_OUT)))
-  $(eval TRANS_WD_RI_DRHO_$(1)  := $(word 10,$(_PH_OUT)))
-  $(eval TRANS_RI_PS_Y_$(1)     := $(word 11,$(_PH_OUT)))
-  $(eval TRANS_RI_PS_DEPTH_$(1) := $(word 12,$(_PH_OUT)))
-  $(eval TRANS_RI_PS_T_$(1)     := $(word 13,$(_PH_OUT)))
-  $(eval TRANS_RI_PS_CLAP_$(1)  := $(word 14,$(_PH_OUT)))
-  $(eval TRANS_RI_PS_DRHO_$(1)  := $(word 15,$(_PH_OUT)))
+# NH_Box_Dynp{d}_Damp{kind+val}_Z{z}_Res{r}_CFL{c}_End{e}; sink inserts
+# _Block{b} after the damping token. DampNone has no value suffix.
+define MAKE_UID_BOX
+  NH_Box_Dynp$(1)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Z$(4)_Res$(5)_CFL$(6)_End$(7)
 endef
 
-define MAKE_UID
-  KN_Dynp$(1)_Zol$(2)_Zwd$(3)_Zri$(4)_EtaTherm$(5)_EtaTrans$(6)-$(7)-$(8)-$(9)_MG$(10)_Vel$(11)_Temp$(12)
+define MAKE_UID_SINK
+  NH_Sink_Dynp$(1)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Block$(4)_Z$(5)_Res$(6)_CFL$(7)_End$(8)
 endef
 
-define REGISTER_UIDS
-  $(eval _uid := $(strip $(call MAKE_UID,$(2),$(3),$(4),$(5),$(6),$(7),$(8),$(9),$(10),$(11),$(12),$(13))))
-  $(1)                   += $(_uid)
+define REGISTER_NH_BOX
+  $(eval _uid := $(strip $(call MAKE_UID_BOX,$(2),$(3),$(4),$(5),$(6),$(7),$(8))))
+  $(1)                       += $(_uid)
+  PARAM_suite_$(_uid)    := box
   PARAM_dynp_$(_uid)     := $(2)
-  PARAM_zol_$(_uid)      := $(3)
-  PARAM_zwd_$(_uid)      := $(4)
-  PARAM_zri_$(_uid)      := $(5)
-  PARAM_etatherm_$(_uid) := $(6)
-  PARAM_etaol_$(_uid)    := $(7)
-  PARAM_etawd_$(_uid)    := $(8)
-  PARAM_etari_$(_uid)    := $(9)
-  PARAM_etaps_$(_uid)    := $(10)
-  PARAM_mgnum_$(_uid)    := $(11)
-  PARAM_vel_$(_uid)      := $(12)
-  PARAM_dt_$(_uid)       := $(13)
+  PARAM_dampkind_$(_uid) := $(3)
+  PARAM_dampval_$(_uid)  := $(4)
+  PARAM_z_$(_uid)        := $(5)
+  PARAM_res_$(_uid)      := $(6)
+  PARAM_cfl_$(_uid)      := $(7)
+  PARAM_end_$(_uid)      := $(8)
 endef
 
-define GENERATE_PRM
-	$(eval _MG := $(PARAM_mgnum_$(2)))
-	$(call COMPUTE_PHASES,$(_MG))
+define REGISTER_NH_SINK
+  $(eval _uid := $(strip $(call MAKE_UID_SINK,$(2),$(3),$(4),$(5),$(6),$(7),$(8),$(9))))
+  $(1)                       += $(_uid)
+  PARAM_suite_$(_uid)    := sink
+  PARAM_dynp_$(_uid)     := $(2)
+  PARAM_dampkind_$(_uid) := $(3)
+  PARAM_dampval_$(_uid)  := $(4)
+  PARAM_block_$(_uid)    := $(5)
+  PARAM_z_$(_uid)        := $(6)
+  PARAM_res_$(_uid)      := $(7)
+  PARAM_cfl_$(_uid)      := $(8)
+  PARAM_end_$(_uid)      := $(9)
+endef
+
+define GENERATE_NH_PRM
 	$(call LOG_ARTIFACT,$(3))
 	@mkdir -p $(dir $(3))
 	@$(CONDA_PYTHON) $(PYTHON)/simulation/params/generator.py $(1) $(3) \
-	  "end-time=$(END_TIME)" \
+	  "end-time=$(PARAM_end_$(2))" \
 	  "surface-temperature=$(SURFACE_TEMPERATURE)" \
 	  "surface-pressure=$(SURFACE_PRESSURE)" \
 	  "solver-tolerance=$(SOLVER_TOLERANCE)" \
 	  "max-solver-iter=$(MAX_SOLVER_ITER)" \
 	  "max-solver-tstep=$(MAX_SOLVER_TSTEP)" \
-	  "viz-out-time=$(VIZ_OUT_TIME)" \
+	  "cfl=$(PARAM_cfl_$(2))" \
+	  "viz-out-time=$(if $(filter box,$(PARAM_suite_$(2))),$(VIZ_OUT_BOX_SUITE),$(VIZ_OUT_SINK_SUITE))" \
 	  "checkpoint-time=$(CHECKPOINT_TIME)" \
-	  "model-width=$(MODEL_WIDTH)" \
-	  "model-height=$(MODEL_HEIGHT)" \
-	  "mesh-x=$(MESH_X)" \
-	  "mesh-y=$(MESH_Y)" \
-	  "mesh-refine-adapt=$(MESH_REFINE_ADAPT)" \
-	  "mesh-refine-global=$(MESH_REFINE_GLOBAL)" \
-	  "mesh-refine-tstep=$(MESH_REFINE_TSTEP)" \
+	  "model-width=$(if $(filter box,$(PARAM_suite_$(2))),$(MODEL_WIDTH_BOX),$(MODEL_WIDTH_SINK))" \
+	  "model-height=$(if $(filter box,$(PARAM_suite_$(2))),$(MODEL_HEIGHT_BOX),$(MODEL_HEIGHT_SINK))" \
+	  "mesh-x=$(if $(filter box,$(PARAM_suite_$(2))),$(MESH_X_BOX),$(MESH_X_SINK))" \
+	  "mesh-y=$(if $(filter box,$(PARAM_suite_$(2))),$(MESH_Y_BOX),$(MESH_Y_SINK))" \
+	  "mesh-refine-global=$(PARAM_res_$(2))" \
+	  "dynp-density=$(if $(filter 1,$(PARAM_dynp_$(2))),true,false)" \
 	  "dynp-gibbs=$(if $(filter 1,$(PARAM_dynp_$(2))),true,false)" \
-	  "z-ol=$(PARAM_zol_$(2))" \
-	  "z-wd=$(PARAM_zwd_$(2))" \
-	  "z-ri=$(PARAM_zri_$(2))" \
-	  "h-ol=$(H_OL)" \
-	  "h-wd=$(H_WD)" \
-	  "v-ol=$(V_OL)" \
-	  "v-wd=$(V_WD)" \
-	  "e-ri=$(E_RI)" \
+	  "bulk-enable=$(if $(filter Bimpl,$(PARAM_dampkind_$(2))),true,false)" \
+	  "bulk-zeta=$(if $(filter Bimpl,$(PARAM_dampkind_$(2))),$(PARAM_dampval_$(2)),0.0)" \
+	  "addrhs-enable=$(if $(filter Bexpl,$(PARAM_dampkind_$(2))),true,false)" \
+	  "z-kin=$(PARAM_z_$(2))" \
+	  "h-kin=$(H_KIN)" \
+	  "v-kin=$(V_KIN)" \
 	  "eta-ref=$(ETA_REF)" \
 	  "eta-min=$(ETA_MIN)" \
 	  "eta-max=$(ETA_MAX)" \
 	  "eta-gibbs=$(ETA_GIBBS)" \
-	  "eta-thermal-exp=$(PARAM_etatherm_$(2))" \
-	  "eta-pref-olivine=$(PARAM_etaol_$(2))" \
-	  "eta-pref-wadsleyite=$(PARAM_etawd_$(2))" \
-	  "eta-pref-ringwoodite=$(PARAM_etari_$(2))" \
-	  "eta-pref-postspinel=$(PARAM_etaps_$(2))" \
-	  "mg-num=$(_MG)" \
-	  "velocity=$(PARAM_vel_$(2))" \
-	  "dt-anomaly=$(PARAM_dt_$(2))" \
-	  "transition-ol-wd=$(TRANS_OL_WD_Y_$(_MG))" \
-	  "transition-wd-ri=$(TRANS_WD_RI_Y_$(_MG))" \
-	  "transition-ri-ps=$(TRANS_RI_PS_Y_$(_MG))" \
-	  "trans-ol-wd-depth=$(TRANS_OL_WD_DEPTH_$(_MG))" \
-	  "trans-wd-ri-depth=$(TRANS_WD_RI_DEPTH_$(_MG))" \
-	  "trans-ri-ps-depth=$(TRANS_RI_PS_DEPTH_$(_MG))" \
-	  "trans-ol-wd-T=$(TRANS_OL_WD_T_$(_MG))" \
-	  "trans-wd-ri-T=$(TRANS_WD_RI_T_$(_MG))" \
-	  "trans-ri-ps-T=$(TRANS_RI_PS_T_$(_MG))" \
-	  "trans-ol-wd-clap=$(TRANS_OL_WD_CLAP_$(_MG))" \
-	  "trans-wd-ri-clap=$(TRANS_WD_RI_CLAP_$(_MG))" \
-	  "trans-ri-ps-clap=$(TRANS_RI_PS_CLAP_$(_MG))" \
-	  "trans-ol-wd-drho=$(TRANS_OL_WD_DRHO_$(_MG))" \
-	  "trans-wd-ri-drho=$(TRANS_WD_RI_DRHO_$(_MG))" \
-	  "trans-ri-ps-drho=$(TRANS_RI_PS_DRHO_$(_MG))" \
-	  "x0-slab=$(X0_SLAB)" \
-	  "x1-slab=$(X1_SLAB)" \
-	  "dx-slab=$(DX_SLAB)" \
-	  "y0-slab=$(Y0_SLAB)" \
-	  "y1-slab=$(Y1_SLAB)" \
-	  "dy-slab=$(DY_SLAB)" \
-	  "l-slab=$(L_SLAB)" \
-	  "w-slab=$(W_SLAB)" \
-	  "a-slab=$(A_SLAB)" \
+	  "relax-time=$(if $(filter Rel,$(PARAM_dampkind_$(2))),$(PARAM_dampval_$(2)),0.0)" \
+	  "explicit-zeta=$(if $(filter Bexpl,$(PARAM_dampkind_$(2))),$(PARAM_dampval_$(2)),0.0)" \
+	  "max-cap=$(if $(filter Cap,$(PARAM_dampkind_$(2))),$(PARAM_dampval_$(2)),0.0)" \
+	  "block-excess=$(if $(filter sink,$(PARAM_suite_$(2))),$(PARAM_block_$(2)).0,0.0)" \
+	  "block-expr=$(if $(filter sink,$(PARAM_suite_$(2))),$(if $(filter 0,$(PARAM_block_$(2))),0,(x>4.25e+05 && x<5.75e+05 && y>7.25e+05 && y<8.75e+05) ? 1 : 0),0)" \
+	  "mg-num=$(MG_NUM)" \
+	  "transition-ol-wd=$(TRANSITION_Y_OL_WD)" \
+	  "output-dir=$(ASPECT_RESULTS)/$(2)" \
+	  "config-dir=$(ASPECT_CONFIGS)" \
+	  "aspect-plugin=$(SIMULATION)/plugins/build/libnh-kinetics.release.so" \
+	  "benchmark-data-dir=$(BENCH_DATA)/" \
 	  "uid=$(2)"
 endef
 
@@ -403,7 +302,6 @@ endif
 # --------------------------------------------------
 # Logging (no edits)
 # --------------------------------------------------
-# Gutter logging for recipes (dim gutter, cyan steps, green artifacts).
 LOG_SH       := $(BASH)/utils/log.sh
 LOG_INFO     = @bash -c 'source $(LOG_SH); log_info "$(1)"'
 LOG_DETAIL   = @bash -c 'source $(LOG_SH); log_detail "$(1)"'

@@ -1,3 +1,11 @@
+subsection Gravity model
+  set Model name = vertical
+
+  subsection Vertical
+    set Magnitude = 10
+  end
+end
+
 subsection Adiabatic conditions model
   subsection Compute profile
     set Number of points = 10000

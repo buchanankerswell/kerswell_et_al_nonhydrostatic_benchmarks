@@ -10,7 +10,7 @@ subsection Geometry model
 end
 
 subsection Mesh refinement
-  set Initial adaptive refinement        = {mesh-refine-adapt}
+  set Initial adaptive refinement        = 0
   set Initial global refinement          = {mesh-refine-global}
-  set Time steps between mesh refinement = {mesh-refine-tstep}
+  set Time steps between mesh refinement = 0
 end
