@@ -52,13 +52,12 @@ $(foreach id,$(ID_S1) $(ID_S2) $(ID_S3) $(ID_S4) $(ID_S5) $(ID_S6) $(ID_S7) $(ID
 ASPECT_DATA      := $(SIMULATION)/data
 ASPECT_TEMPLATES := $(SIMULATION)/params/templates
 ASPECT_CONFIGS   := $(SIMULATION)/configs
-ASPECT_PLUGIN    := $(SIMULATION)/plugins/libnh-kinetics.release.so \
-                    $(SIMULATION)/plugins/libnh-kinetics.debug.so \
-                    $(SIMULATION)/plugins/CMakeFiles \
-                    $(SIMULATION)/plugins/Makefile \
-                    $(SIMULATION)/plugins/CMakeCache.txt \
-                    $(SIMULATION)/plugins/cmake_install.cmake \
-                    $(SIMULATION)/plugins/.cache
+ASPECT_PLUGIN    := $(SIMULATION)/plugins/build/libnh-kinetics.release.so \
+                    $(SIMULATION)/plugins/build/libnh-kinetics.debug.so \
+                    $(SIMULATION)/plugins/build/CMakeFiles \
+                    $(SIMULATION)/plugins/build/Makefile \
+                    $(SIMULATION)/plugins/build/CMakeCache.txt \
+                    $(SIMULATION)/plugins/build/cmake_install.cmake
 
 PRMS_GLOBALS_BOX     := $(foreach uid,$(UIDS_BOX_SUITE),$(ASPECT_CONFIGS)/$(uid).globals.prm)
 PRMS_SOLVER_BOX      := $(foreach uid,$(UIDS_BOX_SUITE),$(ASPECT_CONFIGS)/$(uid).solver.prm)

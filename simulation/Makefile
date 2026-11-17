@@ -41,12 +41,12 @@ $(PRMS_GLOBALS_BOX) $(PRMS_GLOBALS_SINK): | $(ASPECT_CONFIGS)
 $(ASPECT_PLUGIN): $(ASPECT_EXE) $(DEALII_ENABLE)
 	@if [ "$(OS_SYSTEM)" = "rocky" ]; then \
 	  module load $(GCC) $(OPENMPI) $(OPENBLAS) $(CMAKE); \
-	  cd $(SIMULATION)/plugins; \
-	  cmake . -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -D Aspect_DIR=$(dir $(ASPECT_EXE)) -D CMAKE_CXX_COMPILER=mpicxx -W no-dev; \
+	  mkdir -p $(SIMULATION)/plugins/build && cd $(SIMULATION)/plugins/build; \
+	  cmake .. -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -D Aspect_DIR=$(dir $(ASPECT_EXE)) -D CMAKE_CXX_COMPILER=mpicxx -W no-dev; \
 	  make; \
 	else \
-	  cd $(SIMULATION)/plugins; \
-	  cmake . -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -D Aspect_DIR=$(dir $(ASPECT_EXE)) -W no-dev 2>&1 | sed 's/^/ /'; \
+	  mkdir -p $(SIMULATION)/plugins/build && cd $(SIMULATION)/plugins/build; \
+	  cmake .. -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -D Aspect_DIR=$(dir $(ASPECT_EXE)) -W no-dev 2>&1 | sed 's/^/ /'; \
 	  make 2>&1 | sed 's/^/ -- /'; \
 	fi
 
