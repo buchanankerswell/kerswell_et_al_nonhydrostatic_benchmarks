@@ -4,7 +4,7 @@
 # Include definitions
 include project.mk
 
-.PHONY: build models sync-barkla visualize manuscript download environments clean deep-clean help
+.PHONY: build models sync-barkla visualize manuscript download environments clean deep-clean format help
 
 build: environments download visualize manuscript
 	$(call LOG_INFO,Study built successfully!)
@@ -41,6 +41,16 @@ deep-clean: clean
 	@$(MAKE) --no-print-directory -C $(SIMULATION) deep-clean
 	@$(MAKE) --no-print-directory -C $(DRAFT) deep-clean
 
+# Formatters (idiomatic style, 150-col lines; C++ matches ASPECT astyle 2.04).
+# ASTYLE falls back to the deal.II-bundled 2.04 binary used for this project.
+ASTYLE := $(shell command -v astyle 2>/dev/null || echo /opt/dealii/v9.8.0/astyle-2.04/astyle)
+
+format:
+	@conda run -n $(CONDA_ENV) ruff format python/ && conda run -n $(CONDA_ENV) ruff check --fix python/
+	@Rscript -e 'styler::style_dir("R")'
+	@shfmt -i 2 -ci -w bash/
+	@$(ASTYLE) --options=$(PROJECT_ROOT)/astyle.rc $(SIMULATION)/plugins/nh-kinetics.cc $(SIMULATION)/plugins/nh-kinetics.h
+
 help:
 	$(call LOG_INFO,Available targets:)
 	$(call LOG_DETAIL,build         Fetch data and reproduce figures and manuscript)
@@ -50,5 +60,6 @@ help:
 	$(call LOG_DETAIL,manuscript    Render manuscript + SI + response)
 	$(call LOG_DETAIL,download      Fetch archived datasets from Zenodo)
 	$(call LOG_DETAIL,environments  Create Conda environments)
+	$(call LOG_DETAIL,format         Format python/R/bash/C++ with repo formatters)
 	$(call LOG_DETAIL,clean         Remove generated files (safe))
 	$(call LOG_DETAIL,deep-clean    Remove results and data (use with caution!))

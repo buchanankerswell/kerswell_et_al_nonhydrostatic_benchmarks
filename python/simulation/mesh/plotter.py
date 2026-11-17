@@ -8,7 +8,6 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import pyvista as pv
-import vtk
 from config import MeshConfig
 from utils.logging import install_stderr_filter, log_warn
 from PIL import Image
@@ -22,6 +21,7 @@ vtkLogger.SetStderrVerbosity(vtkLogger.VERBOSITY_ERROR)
 # into the middle of the progress bar. Drop it at the descriptor level.
 if sys.platform == "darwin":
     install_stderr_filter()
+
 
 @dataclass
 class MeshPlotter:
@@ -367,7 +367,7 @@ class MeshPlotter:
         y_upper = depth_to_y(upper_depth)
 
         if y_lower is None or y_upper is None:
-            log_warn(f"could not find depth boundaries at x={x_pos/1e3:.1f}km")
+            log_warn(f"could not find depth boundaries at x={x_pos / 1e3:.1f}km")
             return
 
         tip_point_lower = np.array([x_pos, y_upper, 0.0])

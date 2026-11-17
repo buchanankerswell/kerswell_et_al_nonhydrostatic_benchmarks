@@ -59,6 +59,11 @@ pressure-waves: timeseries
 	  --plot-laptop $(PLOT_LAPTOP_RUNS) \
 	  --out-csv $(SIMULATION)/results/pressure-wave-summary.csv \
 	  --fig-dir $(FIGS)/benchmarks
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_average.py \
+	  --plot-box $(PLOT_BOX_RUNS) \
+	  --plot-sink $(PLOT_SINK_RUNS) \
+	  --plot-laptop $(PLOT_LAPTOP_RUNS) \
+	  --fig-dir $(FIGS)/benchmarks
 	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
 meshes: meshes-box-suite meshes-sink-suite
@@ -110,6 +115,6 @@ help:
 	$(call LOG_DETAIL,meshes-box-suite   Visualize NH box benchmarks)
 	$(call LOG_DETAIL,meshes-sink-suite  Visualize NH sinking-block benchmarks)
 	$(call LOG_DETAIL,postprocess         Export postprocessed table (thermal-kinetic split at 410))
-	$(call LOG_DETAIL,timeseries          Extract per-run pressure/front timeseries from solutions)
-	$(call LOG_DETAIL,pressure-waves      Quantify wave magnitude across benchmarks (table + plots))
+	$(call LOG_DETAIL,timeseries          Extract per-run pressure/front/stats timeseries from solutions)
+	$(call LOG_DETAIL,pressure-waves      Quantify waves: vtu peaks + per-step RMS/probe/depth-average plots)
 	$(call LOG_DETAIL,clean              Remove generated files (safe))

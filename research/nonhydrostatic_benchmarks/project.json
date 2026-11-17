@@ -36,6 +36,6 @@
  "phase": "analysis",
  "question": "How can dynamic (non-hydrostatic) pressure govern phase transformations in compressible mantle-convection models without generating spurious pressure oscillations, and what role can a bulk-viscosity term (viscous-relaxation timescale) play, compatibly with ASPECT's projected density approximation (PDA)?",
  "workspaces": {
-  "review": "review/nonhydrostatic-benchmarks/"
+  "review": "review/nonhydrostatic_benchmarks/"
  }
 }

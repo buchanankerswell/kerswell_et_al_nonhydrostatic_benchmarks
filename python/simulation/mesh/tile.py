@@ -7,6 +7,7 @@ from config import MeshConfig
 from utils.logging import log_warn
 from PIL import Image, ImageDraw, ImageFont
 
+
 @dataclass
 class ImageTiler:
     """Tiles per-field mesh plots side-by-side and saves the combined images.

@@ -2,7 +2,7 @@
 # (359.2 km via python/simulation/params/transitions.py) plus the 5 km
 # ASPECT depth correction used at runtime. The measured front sits a few km
 # deeper under dynamic-pressure loading; the band marks the reference only.
-NOMINAL_410_KM <- 359.2 + 5.0
+nominal_410_km <- 359.2 + 5.0
 
 read_seismic_profile <- function(filepath) {
   df <- read_csv(filepath, show_col_types = FALSE)
@@ -23,7 +23,10 @@ read_suite_profiles <- function(data_dir, suite_label) {
     return(NULL)
   }
   df <- map_df(files, read_seismic_profile) |> mutate(suite = suite_label)
-  df |> group_by(model_id) |> filter(tstep == max(tstep)) |> ungroup()
+  df |>
+    group_by(model_id) |>
+    filter(tstep == max(tstep)) |>
+    ungroup()
 }
 
 read_init_profile <- function(data_dir) {
@@ -52,14 +55,16 @@ visualize_seismic_comparison <- function(data_dir_box, data_dir_sink, out_path, 
   df_init_box <- read_init_profile(data_dir_box)
   df_init_sink <- read_init_profile(data_dir_sink)
 
-  lim_vp <- range(c(df$seismic_Vp,
-                    if (!is.null(df_init_box)) df_init_box$seismic_Vp,
-                    if (!is.null(df_init_sink)) df_init_sink$seismic_Vp), na.rm = TRUE)
+  lim_vp <- range(c(
+    df$seismic_Vp,
+    if (!is.null(df_init_box)) df_init_box$seismic_Vp,
+    if (!is.null(df_init_sink)) df_init_sink$seismic_Vp
+  ), na.rm = TRUE)
 
   p_panel <- function(suite_label, init_df) {
     d <- df |> filter(suite == suite_label)
     panel <- ggplot(d, aes(x = seismic_Vp, y = depth, group = model_id)) +
-      annotate("rect", xmin = -Inf, xmax = Inf, ymin = NOMINAL_410_KM - 10, ymax = NOMINAL_410_KM + 10, fill = "grey80", alpha = 0.7) +
+      annotate("rect", xmin = -Inf, xmax = Inf, ymin = nominal_410_km - 10, ymax = nominal_410_km + 10, fill = "grey80", alpha = 0.7) +
       geom_path(aes(color = damp), linewidth = 1.6, alpha = 0.85) +
       scale_y_reverse() +
       scale_x_continuous(limits = lim_vp, breaks = c(8, 9, 10, 11, 12)) +
@@ -69,7 +74,7 @@ visualize_seismic_comparison <- function(data_dir_box, data_dir_sink, out_path, 
     if (!is.null(init_df)) {
       panel <- panel + geom_path(data = init_df, color = "black", linewidth = 1.2, show.legend = FALSE)
     }
-    panel + annotate("text", x = 8.05, y = NOMINAL_410_KM + 30, label = "410", size = 6, hjust = 0, color = "gray30")
+    panel + annotate("text", x = 8.05, y = nominal_410_km + 30, label = "410", size = 6, hjust = 0, color = "gray30")
   }
 
   p <- p_panel("Box", df_init_box) |

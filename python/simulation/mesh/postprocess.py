@@ -4,6 +4,7 @@ import numpy as np
 import pyvista as pv
 from config import MeshConfig
 
+
 @dataclass
 class MeshPostProcessor:
     """
@@ -125,7 +126,9 @@ class MeshPostProcessor:
 
         return float(np.nanmax(np.abs(values[mask]))) if np.any(mask) else np.nan
 
-    def transition_depth_bounds(self, rxn_depth: float, displacement: float, width: float, width_threshold: float = 15e3, for_visualizing: bool = False) -> tuple[float, float]:
+    def transition_depth_bounds(
+        self, rxn_depth: float, displacement: float, width: float, width_threshold: float = 15e3, for_visualizing: bool = False
+    ) -> tuple[float, float]:
         """
         Return (lower, upper) mesh-relative depth bounds for the transition window.
 
@@ -236,9 +239,7 @@ class MeshPostProcessor:
 
         # Monotonicity repair via isotonic regression (PAVA), confined to the transition.
         repaired_values = values.copy()
-        repaired_values[lo : hi + 1] = self._repair_monotonic(
-            values[lo : hi + 1], depths[lo : hi + 1], rxn_depth, search_window, bounds=(0, hi - lo)
-        )
+        repaired_values[lo : hi + 1] = self._repair_monotonic(values[lo : hi + 1], depths[lo : hi + 1], rxn_depth, search_window, bounds=(0, hi - lo))
 
         bracket_depths = depths[lo : hi + 1]
         bracket_values = repaired_values[lo : hi + 1]

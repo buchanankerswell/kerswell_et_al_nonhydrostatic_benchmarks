@@ -126,7 +126,7 @@ namespace aspect
       std::shared_ptr<NHKineticsOutputs<dim>>       nh_kinetics_out     = out.template get_additional_output_object<NHKineticsOutputs<dim>>();
       std::shared_ptr<SeismicAdditionalOutputs<dim>> seismic_out = out.template get_additional_output_object<SeismicAdditionalOutputs<dim>>();
       std::shared_ptr<MaterialModel::AdditionalMaterialOutputsStokesRHS<dim>> stokes_rhs_out =
-        out.template get_additional_output_object<MaterialModel::AdditionalMaterialOutputsStokesRHS<dim>>();
+                                                                             out.template get_additional_output_object<MaterialModel::AdditionalMaterialOutputsStokesRHS<dim>>();
 
       const unsigned int n_reactions = reaction_chain.n_reactions();
       const unsigned int n_phases    = n_reactions + 1;
@@ -346,7 +346,7 @@ namespace aspect
                   const double dV     = profiles[r].get_data_component(profile_pos, dV_idx[r]);
 
                   const double gibbs_driving = dG_ref
-                                               + (use_dynamic_pressure_correction_for_gibbs ? dynamic_pressure * dV : 0.0)
+                                               + (use_dynamic_pressure_correction_for_gibbs ? dynamic_pressure *dV : 0.0)
                                                - (T - T_ref) * dS;
 
                   if (output_diagnostics)

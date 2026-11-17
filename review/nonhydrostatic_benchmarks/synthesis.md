@@ -173,7 +173,7 @@ benchmark material model (1–3 reactions, box geometry per
 **Retrieval summary**: 20 records at abstract/title level included as above;
 2 evidence candidates need full text (PEPI 2014 Mariana; Lithos 2016 review).
 Drop-in: place legally obtained PDFs at
-`review/nonhydrostatic-benchmarks/papers/{key}/paper.pdf` and run
+`review/nonhydrostatic_benchmarks/papers/{key}/paper.pdf` and run
 `read_paper.py --key {key}` for a re-run. Q1/Q2/Q4 excluded records: general
 convection without bulk-viscosity treatment; mineral-physics-only studies;
 astrophysical compressible convection; CFD algorithms.

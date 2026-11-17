@@ -2,10 +2,10 @@
 # One row per model comes from simulation/results/postprocessed.csv
 # (python postprocess target); damping groups parse straight from the UID.
 
-SUITE_LAB_BOX <- "Box"
-SUITE_LAB_SINK <- "Sink-block"
-SUITE_PAL <- c("Box" = "#E41A1C", "Sink-block" = "#377EB8")
-SUITE_SHAPES <- c("Box" = 21, "Sink-block" = 22)
+suite_lab_box <- "Box"
+suite_lab_sink <- "Sink-block"
+suite_pal <- c("Box" = "#E41A1C", "Sink-block" = "#377EB8")
+suite_shapes <- c("Box" = 21, "Sink-block" = 22)
 
 damp_kind <- function(damp) {
   str_extract(damp, "^[A-Za-z]+")
@@ -31,10 +31,10 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
   df <- suppressWarnings(read_csv(postprocessed_csv, show_col_types = FALSE)) |>
     mutate(
       suite = factor(case_when(
-        suite == "box" ~ SUITE_LAB_BOX,
-        suite == "sink" ~ SUITE_LAB_SINK,
+        suite == "box" ~ suite_lab_box,
+        suite == "sink" ~ suite_lab_sink,
         TRUE ~ suite
-      ), levels = c(SUITE_LAB_BOX, SUITE_LAB_SINK)),
+      ), levels = c(suite_lab_box, suite_lab_sink)),
       kind = damp_kind(damp),
       kind_ord = factor(kind, levels = c("None", "Bimpl", "Bexpl", "Rel", "Cap")),
       label = damp_label(damp, dynp)
@@ -47,8 +47,8 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
 structure_panel <- function(data, y_var, y_label, show_legend = FALSE) {
   ggplot(data, aes(x = label, y = !!sym(y_var))) +
     geom_point(aes(fill = suite, shape = suite), size = 4, color = "black", stroke = 0.5, alpha = 0.9, show.legend = show_legend) +
-    scale_fill_manual(values = SUITE_PAL, drop = FALSE) +
-    scale_shape_manual(values = SUITE_SHAPES, drop = FALSE) +
+    scale_fill_manual(values = suite_pal, drop = FALSE) +
+    scale_shape_manual(values = suite_shapes, drop = FALSE) +
     guides(fill = guide_legend(override.aes = list(size = 3.5))) +
     labs(y = y_label, x = NULL, fill = NULL, shape = NULL) +
     theme_bw(base_size = 14) +

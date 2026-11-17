@@ -4,9 +4,9 @@ from typing import Callable, ClassVar
 import pyvista as pv
 from utils.logging import log_warn
 
+
 @dataclass
 class MeshPreProcessor:
-
     verbosity: int = 0
 
     # Derived field recipes: field_name -> (required_source_fields, compute_fn)

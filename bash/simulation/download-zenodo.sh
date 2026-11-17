@@ -52,7 +52,10 @@ log_info "Verifying checksums"
 for f in ${FILES}; do
   expected="$(awk -v name="${f}" '$2 == name {print $1}' "${STAGE}/SHA256SUMS")"
   actual="$(sha256_file "${STAGE}/${f}")"
-  [ "${actual}" = "${expected}" ] || { log_error "checksum mismatch: ${f}"; exit 1; }
+  [ "${actual}" = "${expected}" ] || {
+    log_error "checksum mismatch: ${f}"
+    exit 1
+  }
 done
 
 log_info "Extracting to ${PROJECT_ROOT}"

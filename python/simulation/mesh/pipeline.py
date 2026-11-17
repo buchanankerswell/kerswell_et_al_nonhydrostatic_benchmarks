@@ -15,6 +15,7 @@ from postprocess import MeshPostProcessor
 from preprocess import MeshPreProcessor
 from simulation.params.transitions import PhaseTransition
 
+
 @dataclass
 class BasePipeline:
     """
@@ -50,23 +51,23 @@ class BasePipeline:
             }
         else:
             self.trans_info: dict = {
-            "X_wd": (
-                "reaction_rate_C0",
-                "profile_x_410",
-                "displacement_410",
-                "width_410",
-                self.trans_data["X_wd"].y,
-                self.trans_data["X_wd"].depth,
-            ),
-            "X_ps": (
-                "reaction_rate_C2",
-                "profile_x_660",
-                "displacement_660",
-                "width_660",
-                self.trans_data["X_ps"].y,
-                self.trans_data["X_ps"].depth,
-            ),
-        }
+                "X_wd": (
+                    "reaction_rate_C0",
+                    "profile_x_410",
+                    "displacement_410",
+                    "width_410",
+                    self.trans_data["X_wd"].y,
+                    self.trans_data["X_wd"].depth,
+                ),
+                "X_ps": (
+                    "reaction_rate_C2",
+                    "profile_x_660",
+                    "displacement_660",
+                    "width_660",
+                    self.trans_data["X_ps"].y,
+                    self.trans_data["X_ps"].depth,
+                ),
+            }
 
     def _iter_valid_timesteps(self, pvtu_files: list[Path], timesteps: list[int]) -> Generator[tuple[Path, int], None, None]:
         """
@@ -223,6 +224,7 @@ class BasePipeline:
             return (prefix, int(number))
         return (model_id, float("inf"))
 
+
 @dataclass
 class PostProcessingPipeline(BasePipeline):
     """
@@ -275,11 +277,7 @@ class PostProcessingPipeline(BasePipeline):
                         log_error(f"could not load cache: {e}")
 
         requested = set(self.pvtu_in_dirs)
-        if (
-            not force_reprocess
-            and requested
-            and all(transition_summary_cache.get(m) and seismic_profile_cache.get(m) for m in requested)
-        ):
+        if not force_reprocess and requested and all(transition_summary_cache.get(m) and seismic_profile_cache.get(m) for m in requested):
             return transition_summary_cache, seismic_profile_cache
 
         is_bench = self.suite_tag in ("box", "sink")
@@ -369,9 +367,7 @@ class PostProcessingPipeline(BasePipeline):
                 requested_depths = np.linspace(d_min, d_max, num=500)
                 y_max = mesh.bounds[3]
                 y_slicing_grid = y_max - requested_depths
-                representative_trace = self._extract_representative_trace(
-                    mesh, y_slicing_grid, requested_depths, x_step_limit=150e3
-                )
+                representative_trace = self._extract_representative_trace(mesh, y_slicing_grid, requested_depths, x_step_limit=150e3)
 
                 trace_depths = representative_trace["trace_x"]["depths"]
                 trace_x_vals = representative_trace["trace_x"]["values"]
@@ -737,6 +733,7 @@ class PostProcessingPipeline(BasePipeline):
         with open(path, "wb") as f:
             pickle.dump(cache, f)
 
+
 @dataclass
 class PlottingPipeline(BasePipeline):
     """
@@ -852,6 +849,7 @@ class PlottingPipeline(BasePipeline):
         with open(cache_path, "rb") as f:
             return pickle.load(f)
 
+
 @dataclass
 class FullPipeline(BasePipeline):
     """
@@ -897,6 +895,8 @@ class FullPipeline(BasePipeline):
             if fields_for_seismic_profiles:
                 post_processor.export_seismic_profiles(out_profile_dir, fields_for_seismic_profiles, seismic_profile_cache)
 
-        plotter = PlottingPipeline(self.config, self.pvtu_in_dirs, self.tsteps, self.trans_data, self.verbosity, self.suite_tag, transition_summary_cache)
+        plotter = PlottingPipeline(
+            self.config, self.pvtu_in_dirs, self.tsteps, self.trans_data, self.verbosity, self.suite_tag, transition_summary_cache
+        )
         plotter._pvtu_file_cache = post_processor._pvtu_file_cache
         plotter.run(fields_to_plot, plot_ids)

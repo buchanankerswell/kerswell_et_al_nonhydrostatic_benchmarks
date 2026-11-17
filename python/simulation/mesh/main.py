@@ -10,6 +10,7 @@ from simulation.params.transitions import PhaseTransition, find_surface_depth_of
 from utils.logging import log_artifact, log_info
 from tile import ImageTiler
 
+
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -19,6 +20,7 @@ def str2bool(v):
         return False
     else:
         raise ArgumentTypeError("Boolean value expected.")
+
 
 def parse_arguments() -> Namespace:
     """ """
@@ -55,6 +57,7 @@ def parse_arguments() -> Namespace:
     )
 
     return parser.parse_args()
+
 
 def main():
     """ """
@@ -161,6 +164,7 @@ def main():
             "viscosity",
             "xi_ol_wd",
             "density",
+            "reaction_rate_C0",
         ]
 
     fields_for_seismic_profiles = ["density", "seismic_Vp", "seismic_Vs"]
@@ -233,6 +237,7 @@ def main():
             tile_sets = {
                 "set0": {"tags": None, "fields": ["nonadiabatic_temperature", "nonadiabatic_pressure", "velocity_vertical"]},
                 "set1": {"tags": None, "fields": ["viscosity", "xi_ol_wd", "density"]},
+                "set2": {"tags": None, "fields": ["nonadiabatic_pressure", "reaction_rate_C0", "xi_ol_wd"]},
             }
         else:
             tile_sets = {
@@ -251,6 +256,7 @@ def main():
                 if fields and len(fields) == 3:
                     tiler = ImageTiler(plot_config, out_fig_dir / "meshes" / model_id_padded, fields[0], fields[1], fields[2], tags)
                     tiler.tile_images()
+
 
 if __name__ == "__main__":
     main()

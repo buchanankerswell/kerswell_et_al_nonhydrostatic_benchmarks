@@ -151,6 +151,11 @@ DEPTH_CORRECTION_RI_PS := 15e+03
 # measures ~375 km and mesh/R display adds +5 km (364.2 km band).
 TRANSITION_Y_OL_WD := 6.408e+05
 
+# Point-values probes (x, y in model m; y = 1e6 - depth). P0 sits on the 410
+# band (364.2 km); box P1 is a 200 km deeper control, sink P1 the block start.
+POINTS_BOX  := 1.5e+05, 6.358e+05; 1.5e+05, 4.358e+05
+POINTS_SINK := 5.0e+05, 6.358e+05; 5.0e+05, 8.00e+05
+
 MODEL_WIDTH_BOX  := 300e+03
 MODEL_HEIGHT_BOX := 1000e+03
 MESH_X_BOX       := 1
@@ -192,6 +197,7 @@ define REGISTER_NH_BOX
   PARAM_res_$(_uid)      := $(6)
   PARAM_cfl_$(_uid)      := $(7)
   PARAM_end_$(_uid)      := $(8)
+  PARAM_points_$(_uid)   := $(POINTS_BOX)
 endef
 
 define REGISTER_NH_SINK
@@ -206,6 +212,7 @@ define REGISTER_NH_SINK
   PARAM_res_$(_uid)      := $(7)
   PARAM_cfl_$(_uid)      := $(8)
   PARAM_end_$(_uid)      := $(9)
+  PARAM_points_$(_uid)   := $(POINTS_SINK)
 endef
 
 define GENERATE_NH_PRM
@@ -245,6 +252,7 @@ define GENERATE_NH_PRM
 	  "block-expr=$(if $(filter sink,$(PARAM_suite_$(2))),$(if $(filter 0,$(PARAM_block_$(2))),0,(x>4.25e+05 && x<5.75e+05 && y>7.25e+05 && y<8.75e+05) ? 1 : 0),0)" \
 	  "mg-num=$(MG_NUM)" \
 	  "transition-ol-wd=$(TRANSITION_Y_OL_WD)" \
+  "point-values=$(PARAM_points_$(2))" \
 	  "output-dir=$(ASPECT_RESULTS)/$(2)" \
 	  "config-dir=$(ASPECT_CONFIGS)" \
 	  "aspect-plugin=$(SIMULATION)/plugins/build/libnh-kinetics.release.so" \

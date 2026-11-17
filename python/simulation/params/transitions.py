@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+
 @dataclass
 class PhaseTransition:
     """
@@ -22,6 +23,7 @@ class PhaseTransition:
     temperature: float
     clapeyron: float
     density_jump: float
+
 
 def parse_arguments() -> argparse.Namespace:
     """
@@ -45,6 +47,7 @@ def parse_arguments() -> argparse.Namespace:
             parser.error(f"Profile file not found: {f}")
 
     return args
+
 
 def read_dG_profile(filepath: str) -> tuple[list[str], np.ndarray]:
     """
@@ -81,6 +84,7 @@ def read_dG_profile(filepath: str) -> tuple[list[str], np.ndarray]:
 
     return headers, np.array(data)
 
+
 def find_surface_depth_offset(headers: list[str], data: np.ndarray, surface_pressure: float) -> float:
     """
     Finds the depth at which the profile matches the model's surface pressure.
@@ -98,6 +102,7 @@ def find_surface_depth_offset(headers: list[str], data: np.ndarray, surface_pres
     # Linear interpolation
     t = (surface_pressure - pressures[idx]) / (pressures[idx + 1] - pressures[idx])
     return float(depths[idx] + t * (depths[idx + 1] - depths[idx]))
+
 
 def find_transition(headers: list[str], data: np.ndarray, model_height: float, surface_depth_offset: float) -> PhaseTransition:
     """
@@ -140,6 +145,7 @@ def find_transition(headers: list[str], data: np.ndarray, model_height: float, s
 
     raise ValueError(" XX Error: no zero crossing found in delta_molar_gibbs")
 
+
 def main() -> None:
     """
     Main execution logic: extracts transition data for all three mantle phases.
@@ -171,6 +177,7 @@ def main() -> None:
         return f"{v:.1f}"
 
     print(" ".join(fmt(v, i) for i, v in enumerate(output_values)))
+
 
 if __name__ == "__main__":
     main()

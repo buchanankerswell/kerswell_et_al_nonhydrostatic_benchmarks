@@ -78,9 +78,7 @@ def main():
 
     ref_headers, ref_data = read_dG_profile(args.profile_ol_wd)
     surface_offset = find_surface_depth_offset(ref_headers, ref_data, args.surface_pressure)
-    rxn410, gamma410 = nominal_transition(
-        args.profile_ol_wd, args.model_height, surface_offset, args.depth_corr_ol_wd
-    )
+    rxn410, gamma410 = nominal_transition(args.profile_ol_wd, args.model_height, surface_offset, args.depth_corr_ol_wd)
     log_info(f"nominal 410={rxn410 / 1e3:.1f} km gamma={gamma410:.3e}")
 
     rows = []
@@ -111,23 +109,25 @@ def main():
             therm410 = gamma410 * hatT410 / (RHO * GRAV)
             dampkind = m.group("dampkind")
             dampval = m.group("dampval") or "0"
-            rows.append({
-                "suite": tag,
-                "model_id": mid,
-                "timestep": ts,
-                "damp": f"{dampkind}{dampval}" if dampkind != "None" else "None",
-                "dynp": int(m.group("dynp")),
-                "res": int(m.group("res")),
-                "cfl": m.group("cfl"),
-                "end": m.group("end"),
-                "disp410_km": disp410 / 1e3,
-                "width410_km": abs(float(r["width_410"])) / 1e3,
-                "rate410": float(r[rate_col]),
-                "vmax410": float(r[vmax_col]),
-                "kin410_km": (disp410 - therm410) / 1e3,
-                "therm410_km": therm410 / 1e3,
-                "hatT410": hatT410,
-            })
+            rows.append(
+                {
+                    "suite": tag,
+                    "model_id": mid,
+                    "timestep": ts,
+                    "damp": f"{dampkind}{dampval}" if dampkind != "None" else "None",
+                    "dynp": int(m.group("dynp")),
+                    "res": int(m.group("res")),
+                    "cfl": m.group("cfl"),
+                    "end": m.group("end"),
+                    "disp410_km": disp410 / 1e3,
+                    "width410_km": abs(float(r["width_410"])) / 1e3,
+                    "rate410": float(r[rate_col]),
+                    "vmax410": float(r[vmax_col]),
+                    "kin410_km": (disp410 - therm410) / 1e3,
+                    "therm410_km": therm410 / 1e3,
+                    "hatT410": hatT410,
+                }
+            )
 
     df = pd.DataFrame(rows)
     out_path.parent.mkdir(parents=True, exist_ok=True)

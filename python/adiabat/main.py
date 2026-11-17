@@ -4,6 +4,7 @@ from pathlib import Path
 from burnman import Composite, minerals
 from profiles import AdiabaticProfile, DrivingForceProfile
 
+
 def parse_arguments() -> Namespace:
     """Parse command line arguments."""
     parser = ArgumentParser(description="Generate an isentropic adiabat using BurnMan")
@@ -20,6 +21,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument("--surface-gravity", type=float, default=9.81, help="Surface gravity in m/s² (default: 9.81)")
 
     return parser.parse_args()
+
 
 def main() -> None:
     """Main function to generate ASPECT profiles."""
@@ -96,6 +98,7 @@ def main() -> None:
             out_fig_dir=out_fig_dir,
         )
         reaction_660.visualize()
+
 
 if __name__ == "__main__":
     main()

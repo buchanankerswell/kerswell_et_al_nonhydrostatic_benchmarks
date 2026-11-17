@@ -95,10 +95,7 @@ def stack_with_titles(tile_paths: list[str], titles: list[str], out_path: str, c
         rows.append(img.crop((0, 0, w, h - crop)))
 
     width = rows[0].size[0]
-    rows = [
-        r if r.size[0] == width else r.resize((width, int(r.size[1] * width / r.size[0])), Image.LANCZOS)
-        for r in rows
-    ]
+    rows = [r if r.size[0] == width else r.resize((width, int(r.size[1] * width / r.size[0])), Image.LANCZOS) for r in rows]
 
     title_h = max(20, int(width * 0.045))
     title_imgs = [render_title(t, width, title_h) for t in titles]

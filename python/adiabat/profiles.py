@@ -19,6 +19,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 EARTH_RADIUS: float = 6370e3  # m
 SURFACE_GRAVITY: float = 9.81  # m/s/s
 
+
 class LiveIndenter:
     def __init__(self, original_stdout, indent="    "):
         self.terminal = original_stdout
@@ -47,6 +48,7 @@ class LiveIndenter:
     def flush(self):
         # Keeps the output synchronized
         self.terminal.flush()
+
 
 @dataclass
 class AdiabaticProfile:
@@ -347,6 +349,7 @@ class AdiabaticProfile:
         )
 
         log_artifact(self.out_profile)
+
 
 @dataclass
 class DrivingForceProfile:

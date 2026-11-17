@@ -10,5 +10,6 @@ dependencies:
   - matplotlib
   - pillow
   - pyvista
+  - ruff
   - pip:
       - burnman
