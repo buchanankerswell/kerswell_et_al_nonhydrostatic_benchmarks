@@ -51,7 +51,7 @@ $(ASPECT_PLUGIN): $(ASPECT_EXE) $(DEALII_ENABLE)
 
 clean:
 	@$(call SAFE_RM_LIST,$(CLEAN))
-	@find $(PROJECT_ROOT)/simulation -type l -path '*/plugins/aspect*' | while read -r item; do \
+	@find $(PROJECT_ROOT)/simulation -type l -path '*/plugins*/aspect*' | while read -r item; do \
 	  if [[ "$$item" == $(PROJECT_ROOT)* ]]; then \
 	    . "$(BASH)/utils/log.sh"; log_delete "$$item"; \
 	    rm "$$item"; \

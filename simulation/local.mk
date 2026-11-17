@@ -57,7 +57,8 @@ ASPECT_PLUGIN    := $(SIMULATION)/plugins/build/libnh-kinetics.release.so \
                     $(SIMULATION)/plugins/build/CMakeFiles \
                     $(SIMULATION)/plugins/build/Makefile \
                     $(SIMULATION)/plugins/build/CMakeCache.txt \
-                    $(SIMULATION)/plugins/build/cmake_install.cmake
+                    $(SIMULATION)/plugins/build/cmake_install.cmake \
+                    $(SIMULATION)/plugins/build/compile_commands.json
 
 PRMS_GLOBALS_BOX     := $(foreach uid,$(UIDS_BOX_SUITE),$(ASPECT_CONFIGS)/$(uid).globals.prm)
 PRMS_SOLVER_BOX      := $(foreach uid,$(UIDS_BOX_SUITE),$(ASPECT_CONFIGS)/$(uid).solver.prm)
