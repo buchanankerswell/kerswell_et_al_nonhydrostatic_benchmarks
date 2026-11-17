@@ -5,45 +5,29 @@
 include $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../project.mk)
 include $(SIMULATION)/local.mk
 
-PROFILES           := $(foreach g,$(MG_NUM),$(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(g).tsv)
-MODELS_SW_SUITE    := $(notdir $(RESULTS_SW_SUITE))
-MODELS_NC_SUITE    := $(notdir $(RESULTS_NC_SUITE))
-MODELS_TEST_SUITE  := $(notdir $(RESULTS_TEST_SUITE))
-# NH benchmark run lists come from project.mk (NH_BOX/SINK_RUNS).
+PROFILES        := $(foreach g,$(MG_NUM),$(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(g).tsv)
+MODELS_BOX_SUITE  := $(notdir $(RESULTS_BOX_SUITE))
+MODELS_SINK_SUITE := $(notdir $(RESULTS_SINK_SUITE))
 
 CLEAN := $(PYTHON)/**/__pycache__ \
 	 $(PYTHON)/simulation/**/__pycache__ \
 	 $(FIGS)/adiabat \
-	 $(FIGS_SW_SUITE) \
-	 $(FIGS_NC_SUITE) \
-	 $(FIGS_TEST_SUITE) \
 	 $(FIGS_BOX_SUITE) \
 	 $(FIGS_SINK_SUITE) \
 	 $(FIGS_SIMULATION) \
-	 $(FIGS_SETUP) \
-	 $(FIGS_KUBO) \
-	 $(DATA_MESH_SW_SUITE) \
-	 $(DATA_MESH_NC_SUITE) \
-	 $(DATA_MESH_TEST_SUITE) \
 	 $(DATA_MESH_BOX_SUITE) \
 	 $(DATA_MESH_SINK_SUITE) \
 	 $(POSTPROCESSED_CSV)
 
-.PHONY: all visualize visualize-benchmarks sync-barkla postprocess compositions-si setup kubo adiabat meshes meshes-sw-suite meshes-nc-suite meshes-test-suite meshes-benchmarks meshes-box-suite meshes-sink-suite clean help
+.PHONY: all visualize sync-barkla postprocess timeseries pressure-waves adiabat meshes meshes-box-suite meshes-sink-suite clean help
 
 all: visualize
-visualize: setup kubo meshes compositions-si
+visualize: meshes
 
-visualize-benchmarks: meshes-benchmarks
-
-# Delegates to bash/Makefile so each .sh is invoked once.
 sync-barkla:
 	@$(MAKE) --no-print-directory -C $(BASH) sync-barkla
 
-compositions-si:
-	@$(MAKE) --no-print-directory -C $(BASH) compositions-si
-
-postprocess: meshes-sw-suite meshes-nc-suite meshes-test-suite $(POSTPROCESSED_CSV)
+postprocess: meshes-box-suite meshes-sink-suite $(POSTPROCESSED_CSV)
 
 .PHONY: $(POSTPROCESSED_CSV)
 $(POSTPROCESSED_CSV):
@@ -51,10 +35,10 @@ $(POSTPROCESSED_CSV):
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/export-postprocessed.py \
 	  --data-dir $(SIMULATION)/data \
 	  --out-csv $@ \
-	  --profile-ol-wd $(SIMULATION)/data/olivine-wadsleyite-profile-Mg100.tsv \
-	  --profile-wd-ri $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg100.tsv \
-	  --profile-ri-ps $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg100.tsv \
-	  --model-height $(MODEL_HEIGHT) \
+	  --profile-ol-wd $(BENCH_DATA)/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
+	  --profile-wd-ri $(BENCH_DATA)/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
+	  --profile-ri-ps $(BENCH_DATA)/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
+	  --model-height $(MODEL_HEIGHT_BOX) \
 	  --surface-pressure $(SURFACE_PRESSURE) \
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
 	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
@@ -62,75 +46,34 @@ $(POSTPROCESSED_CSV):
 	  --force
 	$(call LOG_ARTIFACT,$@)
 
-setup:
-	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/misc/setup.py \
-	  --out-fig-dir $(FIGS_SETUP) \
-	  --width $(MODEL_WIDTH) \
-	  --height $(MODEL_HEIGHT) \
-	  --x0-slab $(X0_SLAB) \
-	  --y0-slab $(Y0_SLAB) \
-	  --x1-slab $(X1_SLAB) \
-	  --y1-slab $(Y1_SLAB) \
-	  --dx-slab $(DX_SLAB) \
-	  --dy-slab $(DY_SLAB) \
-	  --w-slab $(W_SLAB) \
-	  --l-slab $(L_SLAB) \
-	  --a-slab $(A_SLAB)
+timeseries:
+	@for run in $(UIDS_BOX_SUITE) $(UIDS_SINK_SUITE); do \
+	  PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/extract_timeseries.py $(SIMULATION)/results/$$run; \
+	done
 
-kubo:
-	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/misc/kubo.py --out-fig-dir $(FIGS_KUBO)
+pressure-waves: timeseries
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/quantify_pressure_waves.py \
+	  --runs $(UIDS_BOX_SUITE) $(UIDS_SINK_SUITE) \
+	  --plot-box $(PLOT_BOX_RUNS) \
+	  --plot-sink $(PLOT_SINK_RUNS) \
+	  --plot-laptop $(PLOT_LAPTOP_RUNS) \
+	  --out-csv $(SIMULATION)/data/pressure-wave-summary.csv \
+	  --fig-dir $(FIGS)/benchmarks
+	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
-meshes: meshes-sw-suite meshes-nc-suite
+meshes: meshes-box-suite meshes-sink-suite
 
-meshes-benchmarks: meshes-box-suite meshes-sink-suite
-
-meshes-box-suite: MODELS_BENCH := $(NH_BOX_RUNS)
-meshes-box-suite: DIRS_BENCH := $(addprefix $(SIMULATION)/results/, $(NH_BOX_RUNS))
-meshes-box-suite: OUT_BENCH := $(FIGS_SIM_BOX_SUITE)
-meshes-box-suite: TAG_BENCH := $(TAG_BOX_SUITE)
-meshes-box-suite: STEPS_BENCH := $(TIMESTEPS_MESH_BOX_SUITE)
-meshes-sink-suite: MODELS_BENCH := $(NH_SINK_RUNS)
-meshes-sink-suite: DIRS_BENCH := $(addprefix $(SIMULATION)/results/, $(NH_SINK_RUNS))
-meshes-sink-suite: OUT_BENCH := $(FIGS_SIM_SINK_SUITE)
-meshes-sink-suite: TAG_BENCH := $(TAG_SINK_SUITE)
-meshes-sink-suite: STEPS_BENCH := $(TIMESTEPS_MESH_SINK_SUITE)
-# Benchmark profiles live in simulation/benchmark_data/ (versioned inputs the
-# prms actually ran with), not the generated simulation/data/ slab profiles.
+meshes-box-suite: SUITE := BOX_SUITE
+meshes-sink-suite: SUITE := SINK_SUITE
 meshes-box-suite meshes-sink-suite:
-	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/main.py \
-	  $(SIMULATION)/benchmark_data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
-	  $(SIMULATION)/benchmark_data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
-	  $(SIMULATION)/benchmark_data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
-	  $(MODEL_HEIGHT) \
-	  $(SURFACE_PRESSURE) \
-	  $(OUT_BENCH) \
-	  $(SIMULATION)/data \
-	  --model-ids $(MODELS_BENCH) \
-	  --timesteps $(STEPS_BENCH) \
-	  --suite-tag $(TAG_BENCH) \
-	  --in-dirs $(DIRS_BENCH) \
-	  --visualize-ids $(MODELS_BENCH) \
-	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
-	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
-	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
-	  --mode=$(POSTPROCESS_MODE) \
-	  --save-csv=$(SAVE_CSV) \
-	  --force-reprocess=$(FORCE_REPROCESS) \
-	  --verbosity=$(POSTPROCESS_VERBOSITY) \
-	  --chunk-size=$(CHUNK_SIZE)
-
-meshes-sw-suite: SUITE := SW_SUITE
-meshes-nc-suite: SUITE := NC_SUITE
-meshes-test-suite: SUITE := TEST_SUITE
-meshes-sw-suite meshes-nc-suite meshes-test-suite: $(PROFILES)
 	@$(eval MODELS := $(MODELS_$(SUITE)))
 	@$(eval DIRS := $(addprefix $(SIMULATION)/results/, $(MODELS)))
 	@$(eval VIS := $(VIS_MODELS_$(SUITE)))
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/main.py \
-	  $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
-	  $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
-	  $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
-	  $(MODEL_HEIGHT) \
+	  $(BENCH_DATA)/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
+	  $(BENCH_DATA)/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
+	  $(BENCH_DATA)/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
+	  $(MODEL_HEIGHT_BOX) \
 	  $(SURFACE_PRESSURE) \
 	  $(FIGS_SIM_$(SUITE)) \
 	  $(SIMULATION)/data \
@@ -160,16 +103,13 @@ clean:
 
 help:
 	$(call LOG_INFO,Available targets:)
-	$(call LOG_DETAIL,visualize            Visualize slab results (setup + kubo + SW/NC meshes))
-	$(call LOG_DETAIL,visualize-benchmarks Visualize NH benchmarks (box + sink meshes))
-	$(call LOG_DETAIL,sync-barkla          Fetch simulation results from Barkla2 (delegates to bash))
-	$(call LOG_DETAIL,setup                Visualize initial numerical setup (slab-only))
-	$(call LOG_DETAIL,adiabat              Build PerpleX phase profiles + adiabat figures)
-	$(call LOG_DETAIL,kubo                 Visualize Kubo 2022 regression + parameter ranges)
-	$(call LOG_DETAIL,meshes               Visualize ASPECT models (SW + NC))
-	$(call LOG_DETAIL,meshes-test-suite    Visualize TEST-suite meshes)
-	$(call LOG_DETAIL,meshes-benchmarks    Visualize NH benchmarks (box + sink, shared plotter))
-	$(call LOG_DETAIL,meshes-box-suite     Visualize NH box benchmarks)
-	$(call LOG_DETAIL,meshes-sink-suite    Visualize NH sinking-block benchmarks)
-	$(call LOG_DETAIL,postprocess           Export postprocessed table (thermal-kinetic split))
-	$(call LOG_DETAIL,clean                Remove generated files (safe))
+	$(call LOG_DETAIL,visualize          Visualize all results (box + sink meshes))
+	$(call LOG_DETAIL,sync-barkla        Fetch simulation results from Barkla2 (delegates to bash))
+	$(call LOG_DETAIL,adiabat            Build PerpleX phase profiles + adiabat figures)
+	$(call LOG_DETAIL,meshes             Visualize ASPECT models (box + sink))
+	$(call LOG_DETAIL,meshes-box-suite   Visualize NH box benchmarks)
+	$(call LOG_DETAIL,meshes-sink-suite  Visualize NH sinking-block benchmarks)
+	$(call LOG_DETAIL,postprocess         Export postprocessed table (thermal-kinetic split at 410))
+	$(call LOG_DETAIL,timeseries          Extract per-run pressure/front timeseries from solutions)
+	$(call LOG_DETAIL,pressure-waves      Quantify wave magnitude across benchmarks (table + plots))
+	$(call LOG_DETAIL,clean              Remove generated files (safe))

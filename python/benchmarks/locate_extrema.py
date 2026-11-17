@@ -15,6 +15,9 @@ def main(run_dir):
   import pyvista as pv
 
   sol_dir = os.path.join(run_dir, "solution")
+  if not os.path.isdir(sol_dir):
+    print(f"no solution dir: {sol_dir}")
+    return
   pvtu = sorted(f for f in os.listdir(sol_dir) if f.endswith(".pvtu"))
   mesh = pv.read(os.path.join(sol_dir, pvtu[-1]))
   print(f"file: {pvtu[-1]}  bounds: {mesh.bounds}")
@@ -29,4 +32,7 @@ def main(run_dir):
 
 
 if __name__ == "__main__":
-  main(sys.argv[1])
+  if len(sys.argv) < 2:
+    print("usage: locate_extrema.py simulation/results/<run>")
+  else:
+    main(sys.argv[1])

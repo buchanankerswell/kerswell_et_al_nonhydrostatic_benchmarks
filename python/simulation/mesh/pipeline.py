@@ -316,8 +316,8 @@ class PostProcessingPipeline(BasePipeline):
                 continue
 
             if is_bench:
-                # NH benchmark IDs (nh_box_1rxn_*, nh_sink_block_*) carry the
-                # variant in the name; no slab sweep params to parse.
+                # NH benchmark UIDs (NH_Box_*/NH_Sink_*) carry the variant in
+                # the name; no slab sweep params to parse.
                 z_ol_wd = z_wd_ri = z_ri_ps = np.nan
                 eta_therm = eta_trans_ol_wd = eta_trans_wd_ri = eta_trans_ri_ps = np.nan
                 velocity = temperature = mg_num = np.nan

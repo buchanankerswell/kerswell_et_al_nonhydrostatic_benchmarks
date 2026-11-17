@@ -30,11 +30,11 @@ sha256_file() {
 
 complete() {
   [ -f "${PROJECT_ROOT}/simulation/data/postprocessed.csv" ] &&
-    [ "$(find "${PROJECT_ROOT}/simulation/results" -maxdepth 1 -name 'slab_*' 2>/dev/null | wc -l)" -ge 132 ]
+    [ "$(find "${PROJECT_ROOT}/simulation/results" -maxdepth 1 -name 'NH_*' 2>/dev/null | wc -l)" -ge 42 ]
 }
 
 if [ "${FORCE}" != "1" ] && complete; then
-  log_info "Found local data (132 models + postprocessed.csv), skipping download"
+  log_info "Found local data (42 models + postprocessed.csv), skipping download"
   exit 0
 fi
 

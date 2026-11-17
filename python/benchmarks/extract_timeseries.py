@@ -49,7 +49,15 @@ def main():
   import pyvista as pv
 
   sol_dir = os.path.join(args.run_dir, "solution")
-  mapping = parse_statistics(os.path.join(args.run_dir, "statistics"))
+  if not os.path.isdir(sol_dir):
+    print(f"skip {args.run_dir}: no solution dir (run it or sync it first)")
+    return
+  stats_path = os.path.join(args.run_dir, "statistics")
+  try:
+    mapping = parse_statistics(stats_path)
+  except OSError:
+    print(f"warn {args.run_dir}: no statistics file, times are NaN")
+    mapping = {}
 
   pvtu = sorted(f for f in os.listdir(sol_dir) if f.endswith(".pvtu"))
   rows = []

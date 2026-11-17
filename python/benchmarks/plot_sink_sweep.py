@@ -1,20 +1,18 @@
 """Compare sink-block sweep runs: timeseries, front warp, halo profiles, fields.
 
 Reads simulation/results/<run>/timeseries.csv + solution/*.pvtu files and
-writes comparison figures to figs/sink_block/. Headless-safe (Agg).
+writes comparison figures to figs/sink_block/. Runs are positional UIDs.
 
 Usage (repo root):
   conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/benchmarks/plot_sink_sweep.py [--out IDX] [run ...]
-
-Defaults to the 7-variant laptop sweep + undamped ref-6 when no runs given.
---out selects which visualization output index to snapshot (default: last).
+    python/benchmarks/plot_sink_sweep.py <run> [run ...] [--out IDX]
 """
 
 import argparse
 import csv
 import glob
 import os
+import re
 import sys
 
 import matplotlib
@@ -26,37 +24,18 @@ import numpy as np
 RESULTS = "simulation/results"
 FIGDIR = "figs/sink_block"
 
-DEFAULT_RUNS = [
-    "nh_sink_block_undamped_laptop",
-    "nh_sink_block_implicit_bulk_laptop",
-    "nh_sink_block_implicit_bulk_hi_laptop",
-    "nh_sink_block_explicit_bulk_laptop",
-    "nh_sink_block_relaxed_pressure_1kyr_laptop",
-    "nh_sink_block_relaxed_pressure_10kyr_laptop",
-    "nh_sink_block_capped_pressure_laptop",
-    "nh_sink_block_undamped",
-]
-
-SHORT = {
-    "undamped": "undamped",
-    "implicit_bulk": "implicit ζ=1e19",
-    "implicit_bulk_hi": "implicit ζ=1e20",
-    "explicit_bulk": "explicit ζ=1e19",
-    "relaxed_pressure_1kyr": "relaxed τ=1kyr",
-    "relaxed_pressure_10kyr": "relaxed τ=10kyr",
-    "capped_pressure": "capped 200MPa",
-}
+DAMP_KIND_LABEL = {"None": "undamped", "Bimpl": "implicit", "Bexpl": "explicit",
+                   "Rel": "relaxed", "Cap": "capped"}
 
 
 def short_name(run):
-  stem = run.replace("nh_sink_block_", "")
-  if stem.endswith("_laptop"):
-    tag, stem = "ref5", stem[:-len("_laptop")]
-  elif stem.endswith("_test"):
-    tag, stem = "ref4", stem[:-len("_test")]
-  else:
-    tag = "ref6"
-  return f"{SHORT.get(stem, stem)} [{tag}]"
+  m = re.search(r"_Damp([A-Za-z]+)([\d.e]*)", run)
+  kind, val = (m.group(1), m.group(2)) if m else (run, "")
+  mres = re.search(r"_Res(\d+)", run)
+  res = f"res{mres.group(1)}" if mres else ""
+  mend = re.search(r"_End([\d.e]+)", run)
+  tag = {"1e6": "test", "2e6": "laptop"}.get(mend.group(1), "") if mend else ""
+  return f"{DAMP_KIND_LABEL.get(kind, kind)} {val} [{res}{tag}]".strip()
 
 
 def load_timeseries(run):
@@ -65,6 +44,8 @@ def load_timeseries(run):
     return None
   with open(path) as f:
     rows = list(csv.DictReader(f))
+  if not rows:
+    return None
   out = {}
   for key in rows[0]:
     try:
@@ -209,12 +190,12 @@ def plot_fields(run, idx):
 
 def main():
   ap = argparse.ArgumentParser()
-  ap.add_argument("runs", nargs="*", default=DEFAULT_RUNS)
+  ap.add_argument("runs", nargs="+", help="benchmark result dirs (UIDs)")
   ap.add_argument("--out", type=int, default=-1,
                   help="visualization output index to snapshot (-1 = last)")
   ap.add_argument("--time", type=float, default=None,
                   help="model time in Myr to snapshot (closest output; overrides --out)")
-  ap.add_argument("--fields", default="nh_sink_block_undamped_laptop,nh_sink_block_implicit_bulk_laptop",
+  ap.add_argument("--fields", default="",
                   help="comma-separated runs for 2D field figures")
   args = ap.parse_args()
 
@@ -228,7 +209,7 @@ def main():
     print(f"fields for {run}...")
     fig = plot_fields(run, args.out)
     if fig is not None:
-      stem = run.replace("nh_sink_block_", "").removesuffix("_laptop")
+      stem = re.sub(r"^NH_Sink_Dynp[01]_", "", run)
       fig.savefig(os.path.join(FIGDIR, f"fields_{stem}.png"), dpi=110)
   print(f"wrote -> {FIGDIR}/")
 

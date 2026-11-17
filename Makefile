@@ -4,24 +4,13 @@
 # Include definitions
 include project.mk
 
-.PHONY: build models slab-models benchmarks visualize-benchmarks sync-barkla visualize manuscript download environments clean deep-clean help
+.PHONY: build models sync-barkla visualize manuscript download environments clean deep-clean help
 
 build: environments download visualize manuscript
 	$(call LOG_INFO,Study built successfully!)
 
 models:
 	@$(MAKE) --no-print-directory -C $(SIMULATION) all-models
-
-slab-models:
-	@$(MAKE) --no-print-directory -C $(SIMULATION) slab-models-sw-suite
-	@$(MAKE) --no-print-directory -C $(SIMULATION) slab-models-nc-suite
-	@$(MAKE) --no-print-directory -C $(SIMULATION) slab-models-test-suite
-
-benchmarks:
-	@$(MAKE) --no-print-directory -C $(SIMULATION) benchmarks
-
-visualize-benchmarks:
-	@$(MAKE) --no-print-directory -C $(PYTHON) meshes-benchmarks
 
 sync-barkla:
 	@$(MAKE) --no-print-directory -C $(BASH) sync-barkla
@@ -54,15 +43,12 @@ deep-clean: clean
 
 help:
 	$(call LOG_INFO,Available targets:)
-	$(call LOG_DETAIL,build                Fetch data and reproduce figures and manuscript)
-	$(call LOG_DETAIL,models               Run all slab ASPECT models (SW + NC + TEST))
-	$(call LOG_DETAIL,slab-models          Run ASPECT slab models (SW + NC + TEST))
-	$(call LOG_DETAIL,benchmarks           Run NH benchmarks (box + sink-block))
-	$(call LOG_DETAIL,sync-barkla          Sync slab data from Barkla2 (NH sync TBD))
-	$(call LOG_DETAIL,visualize            Visualize slab results (SW + NC))
-	$(call LOG_DETAIL,visualize-benchmarks Visualize NH benchmarks (box + sink meshes))
-	$(call LOG_DETAIL,manuscript           Render manuscript + SI + response)
-	$(call LOG_DETAIL,download             Fetch archived datasets from Zenodo)
-	$(call LOG_DETAIL,environments         Create Conda environments)
-	$(call LOG_DETAIL,clean                Remove generated files (safe))
-	$(call LOG_DETAIL,deep-clean           Remove results and data (use with caution!))
+	$(call LOG_DETAIL,build         Fetch data and reproduce figures and manuscript)
+	$(call LOG_DETAIL,models        Run all NH benchmark models (needs aspect/dealii links))
+	$(call LOG_DETAIL,sync-barkla   Sync data from Barkla2 (box + sink suites))
+	$(call LOG_DETAIL,visualize     Visualize all results (meshes + postprocess + R))
+	$(call LOG_DETAIL,manuscript    Render manuscript + SI + response)
+	$(call LOG_DETAIL,download      Fetch archived datasets from Zenodo)
+	$(call LOG_DETAIL,environments  Create Conda environments)
+	$(call LOG_DETAIL,clean         Remove generated files (safe))
+	$(call LOG_DETAIL,deep-clean    Remove results and data (use with caution!))
