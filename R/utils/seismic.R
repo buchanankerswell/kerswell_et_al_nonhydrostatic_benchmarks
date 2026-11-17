@@ -1,8 +1,10 @@
-# Nominal 410 depth (km): Mg100 versioned profile equilibrium
-# (359.2 km via python/simulation/params/transitions.py) plus the 5 km
-# ASPECT depth correction used at runtime. The measured front sits a few km
-# deeper under dynamic-pressure loading; the band marks the reference only.
-nominal_410_km <- 359.2 + 5.0
+# Nominal 410 depth (km): runtime-adiabat equilibrium per suite, where ASPECT
+# P_ad equals the profile P_eq. Box and sink-Block0 share the block-free
+# adiabat (B2 dG = 0 at 373.1 km); sink Block400 carries the block weight
+# (S2 dG = 0 at 355.7 km). The band marks the no-feedback reference each
+# dynamic-feedback shift is measured against.
+nominal_410_box_km <- 373.1
+nominal_410_sink_km <- 355.7
 
 read_seismic_profile <- function(filepath) {
   df <- read_csv(filepath, show_col_types = FALSE)
@@ -61,10 +63,10 @@ visualize_seismic_comparison <- function(data_dir_box, data_dir_sink, out_path, 
     if (!is.null(df_init_sink)) df_init_sink$seismic_Vp
   ), na.rm = TRUE)
 
-  p_panel <- function(suite_label, init_df) {
+  p_panel <- function(suite_label, init_df, nominal_km) {
     d <- df |> filter(suite == suite_label)
     panel <- ggplot(d, aes(x = seismic_Vp, y = depth, group = model_id)) +
-      annotate("rect", xmin = -Inf, xmax = Inf, ymin = nominal_410_km - 10, ymax = nominal_410_km + 10, fill = "grey80", alpha = 0.7) +
+      annotate("rect", xmin = -Inf, xmax = Inf, ymin = nominal_km - 10, ymax = nominal_km + 10, fill = "grey80", alpha = 0.7) +
       geom_path(aes(color = damp), linewidth = 1.6, alpha = 0.85) +
       scale_y_reverse() +
       scale_x_continuous(limits = lim_vp, breaks = c(8, 9, 10, 11, 12)) +
@@ -74,11 +76,13 @@ visualize_seismic_comparison <- function(data_dir_box, data_dir_sink, out_path, 
     if (!is.null(init_df)) {
       panel <- panel + geom_path(data = init_df, color = "black", linewidth = 1.2, show.legend = FALSE)
     }
-    panel + annotate("text", x = 8.05, y = nominal_410_km + 30, label = "410", size = 6, hjust = 0, color = "gray30")
+    panel + annotate("text", x = 8.05, y = nominal_km + 30, label = "410", size = 6, hjust = 0, color = "gray30")
   }
 
-  p <- p_panel("Box", df_init_box) |
-    (p_panel("Sink-block", df_init_sink) + theme(axis.text.y = element_blank(), axis.title.y = element_blank()))
+  box_nominal <- if (length(args) >= 6) as.numeric(args[6]) / 1e3 else nominal_410_box_km
+  sink_nominal <- if (length(args) >= 7) as.numeric(args[7]) / 1e3 else nominal_410_sink_km
+  p <- p_panel("Box", df_init_box, box_nominal) |
+    (p_panel("Sink-block", df_init_sink, sink_nominal) + theme(axis.text.y = element_blank(), axis.title.y = element_blank()))
   ggsave(out_path, plot = p, width = 10, height = 6, dpi = 300, bg = "white", create.dir = TRUE)
   log_artifact(out_path)
 }
@@ -93,10 +97,10 @@ theme_profile_comparison <- function() {
     plot.margin = margin(5, 5, 5, 5),
     plot.title = element_text(hjust = 0.5, size = 22, face = "bold", margin = margin(0, 0, 10, 0)),
     axis.ticks = element_blank(),
-    legend.justification = "right",
     legend.position = "inside",
-    legend.position.inside = c(0.93, 0.90),
-    legend.direction = "horizontal",
+    legend.position.inside = c(0.02, 0.02),
+    legend.justification = c(0, 0),
+    legend.direction = "vertical",
     legend.key.height = unit(0.8, "lines"),
     legend.key.width = unit(1.2, "lines"),
     legend.box.margin = margin(2, 2, 2, 2),

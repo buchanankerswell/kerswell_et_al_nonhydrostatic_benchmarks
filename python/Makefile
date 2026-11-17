@@ -43,6 +43,9 @@ $(POSTPROCESSED_CSV):
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
 	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
 	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
+	  --nominal-410-box=$(NOMINAL_410_BOX) \
+	  --nominal-410-sink400=$(NOMINAL_410_SINK400) \
+	  --nominal-410-sink0=$(NOMINAL_410_SINK0) \
 	  --force
 	$(call LOG_ARTIFACT,$@)
 
@@ -68,28 +71,79 @@ pressure-waves: timeseries
 
 meshes: meshes-box-suite meshes-sink-suite
 
-meshes-box-suite: SUITE := BOX_SUITE
-meshes-sink-suite: SUITE := SINK_SUITE
-meshes-box-suite meshes-sink-suite:
-	@$(eval MODELS := $(MODELS_$(SUITE)))
+meshes-box-suite:
+	@$(eval MODELS := $(MODELS_BOX_SUITE))
 	@$(eval DIRS := $(addprefix $(SIMULATION)/results/, $(MODELS)))
-	@$(eval VIS := $(VIS_MODELS_$(SUITE)))
+	@$(eval VIS := $(VIS_MODELS_BOX_SUITE))
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/main.py \
 	  $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
 	  $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
 	  $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
 	  $(MODEL_HEIGHT_BOX) \
 	  $(SURFACE_PRESSURE) \
-	  $(FIGS_SIM_$(SUITE)) \
+	  $(FIGS_SIM_BOX_SUITE) \
 	  $(SIMULATION)/results \
 	  --model-ids $(MODELS) \
-	  --timesteps $(TIMESTEPS_MESH_$(SUITE)) \
-	  --suite-tag $(TAG_$(SUITE)) \
+	  --timesteps $(TIMESTEPS_MESH_BOX_SUITE) \
+	  --suite-tag $(TAG_BOX_SUITE) \
 	  --in-dirs $(DIRS) \
 	  --visualize-ids $(VIS) \
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
 	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
 	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
+	  --nominal-410=$(NOMINAL_410_BOX) \
+	  --mode=$(POSTPROCESS_MODE) \
+	  --save-csv=$(SAVE_CSV) \
+	  --force-reprocess=$(FORCE_REPROCESS) \
+	  --verbosity=$(POSTPROCESS_VERBOSITY) \
+	  --chunk-size=$(CHUNK_SIZE)
+
+meshes-sink-suite:
+	@$(eval MODELS400 := $(foreach m,$(MODELS_SINK_SUITE),$(if $(findstring _Block400_,$(m)),$(m))))
+	@$(eval DIRS400 := $(addprefix $(SIMULATION)/results/, $(MODELS400)))
+	@$(eval VIS400 := $(foreach m,$(VIS_MODELS_SINK_SUITE),$(if $(findstring _Block400_,$(m)),$(m))))
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/main.py \
+	  $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
+	  $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
+	  $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
+	  $(MODEL_HEIGHT_BOX) \
+	  $(SURFACE_PRESSURE) \
+	  $(FIGS_SIM_SINK_SUITE) \
+	  $(SIMULATION)/results \
+	  --model-ids $(MODELS400) \
+	  --timesteps $(TIMESTEPS_MESH_SINK_SUITE) \
+	  --suite-tag $(TAG_SINK_SUITE) \
+	  --in-dirs $(DIRS400) \
+	  --visualize-ids $(VIS400) \
+	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
+	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
+	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
+	  --nominal-410=$(NOMINAL_410_SINK400) \
+	  --mode=$(POSTPROCESS_MODE) \
+	  --save-csv=$(SAVE_CSV) \
+	  --force-reprocess=$(FORCE_REPROCESS) \
+	  --verbosity=$(POSTPROCESS_VERBOSITY) \
+	  --chunk-size=$(CHUNK_SIZE)
+	@$(eval MODELS0 := $(foreach m,$(MODELS_SINK_SUITE),$(if $(findstring _Block0_,$(m)),$(m))))
+	@$(eval DIRS0 := $(addprefix $(SIMULATION)/results/, $(MODELS0)))
+	@$(eval VIS0 := $(foreach m,$(VIS_MODELS_SINK_SUITE),$(if $(findstring _Block0_,$(m)),$(m))))
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/main.py \
+	  $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
+	  $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
+	  $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
+	  $(MODEL_HEIGHT_BOX) \
+	  $(SURFACE_PRESSURE) \
+	  $(FIGS_SIM_SINK_SUITE) \
+	  $(SIMULATION)/results \
+	  --model-ids $(MODELS0) \
+	  --timesteps $(TIMESTEPS_MESH_SINK_SUITE) \
+	  --suite-tag $(TAG_SINK_SUITE) \
+	  --in-dirs $(DIRS0) \
+	  --visualize-ids $(VIS0) \
+	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
+	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
+	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
+	  --nominal-410=$(NOMINAL_410_SINK0) \
 	  --mode=$(POSTPROCESS_MODE) \
 	  --save-csv=$(SAVE_CSV) \
 	  --force-reprocess=$(FORCE_REPROCESS) \

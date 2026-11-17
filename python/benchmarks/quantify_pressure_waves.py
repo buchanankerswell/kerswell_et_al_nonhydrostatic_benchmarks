@@ -32,14 +32,16 @@ UID_DAMP_RE = re.compile(r"_Damp[A-Za-z]+[\d.e]*")
 
 
 def short(run):
-    """Compact label from a UID: damping + refinement + resolution tag."""
+    """Compact label from a UID: damping + dynp state + refinement tag."""
     m = re.search(r"_Damp([A-Za-z]+)([\d.e]*)", run)
     damp = (m.group(1) + m.group(2)) if m else run
+    mo = re.search(r"_Dynp(On|Off)_", run)
+    dyn = f" {mo.group(1)}" if mo else ""
     mref = re.search(r"_Res(\d+)", run)
     ref = f"r{mref.group(1)}" if mref else ""
     mend = re.search(r"_End([\d.e]+)", run)
     tag = {"1e6": "test", "2e6": "laptop"}.get(mend.group(1), "") if mend else ""
-    return f"{damp} [{ref}{tag}]"
+    return f"{damp}{dyn} [{ref}{tag}]"
 
 
 def control_twin(run):
@@ -166,6 +168,10 @@ def summarize(run, peaks):
 
 
 def plot_suite(runs, title, out_path, control, reference=None):
+    runs = [r for r in runs if load_series(r) is not None]
+    if not runs:
+        print(f"skip {out_path.name}: no timeseries.csv found", file=sys.stderr)
+        return
     fig, ax = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
     for run in runs:
         s = load_series(run)

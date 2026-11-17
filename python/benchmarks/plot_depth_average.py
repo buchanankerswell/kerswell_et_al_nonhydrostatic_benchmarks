@@ -28,8 +28,10 @@ RESULTS = Path("simulation/results")
 def short(run):
     m = re.search(r"_Damp([A-Za-z]+)([\d.e]*)", run)
     damp = (m.group(1) + m.group(2)) if m else run
+    mo = re.search(r"_Dynp(On|Off)_", run)
+    dyn = f" {mo.group(1)}" if mo else ""
     mref = re.search(r"_Res(\d+)", run)
-    return f"{damp}[r{mref.group(1)}]" if mref else damp
+    return f"{damp}{dyn}[r{mref.group(1)}]" if mref else f"{damp}{dyn}"
 
 
 def load_depth_average(run):
@@ -62,13 +64,14 @@ def load_depth_average(run):
 
 
 def plot_set(runs, title, out_path):
-    fig, ax = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
-    plotted = 0
+    fig, ax = plt.subplots(2, 1, figsize=(8, 8), sharey=True)
+    plotted, temps = 0, []
     for run in runs:
         profile = load_depth_average(run)
         if profile is None:
             continue
         plotted += 1
+        temps.append(profile["temperature"])
         ax[0].plot(profile["temperature"], profile["depth_km"], label=short(run), lw=1.2, alpha=0.85)
         ax[1].plot(profile["xi"], profile["depth_km"], label=short(run), lw=1.2, alpha=0.85)
     if plotted == 0:
@@ -77,12 +80,16 @@ def plot_set(runs, title, out_path):
         return
     ax[0].set_ylabel("depth [km]")
     ax[0].set_xlabel("temperature [K]")
+    t = np.concatenate(temps)
+    if np.nanmax(t) - np.nanmin(t) < 1e-6 * max(abs(np.nanmean(t)), 1.0):
+        mid = float(np.nanmean(t))
+        ax[0].set_xlim(mid - 5, mid + 5)
     ax[1].set_ylabel("depth [km]")
     ax[1].set_xlabel("xi_ol_wd [-]")
     ax[1].set_xlim(-0.05, 1.05)
     for a in ax:
-        a.invert_yaxis()
         a.grid(True, alpha=0.3)
+    ax[0].invert_yaxis()
     ax[0].legend(fontsize=8, loc="best")
     fig.suptitle(title)
     fig.tight_layout()

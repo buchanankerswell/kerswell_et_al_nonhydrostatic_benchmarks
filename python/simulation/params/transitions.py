@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 from dataclasses import dataclass
 
 import numpy as np
@@ -23,6 +24,17 @@ class PhaseTransition:
     temperature: float
     clapeyron: float
     density_jump: float
+
+
+def nominal_410_for_uid(model_id: str, nominal_box: float, nominal_sink400: float, nominal_sink0: float) -> float:
+    """Runtime-adiabat 410 nominal (m) for a UID: box and sink-Block0 share
+    the block-free adiabat; sink Block400 carries the block weight."""
+    if model_id.startswith("NH_Box_"):
+        return nominal_box
+    block = re.search(r"_Block(\d+)", model_id)
+    if block is not None and block.group(1) == "0":
+        return nominal_sink0
+    return nominal_sink400
 
 
 def parse_arguments() -> argparse.Namespace:

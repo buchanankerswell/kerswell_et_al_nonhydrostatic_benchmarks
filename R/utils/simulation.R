@@ -53,7 +53,10 @@ structure_panel <- function(data, y_var, y_label, show_legend = FALSE) {
     labs(y = y_label, x = NULL, fill = NULL, shape = NULL) +
     theme_bw(base_size = 14) +
     theme_bench() +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1, size = 10))
+    theme(
+      axis.text.x = element_text(angle = 30, hjust = 1, size = 10),
+      plot.margin = margin(5, 10, 5, 60)
+    )
 }
 
 visualize_benchmark_structure <- function(df, out_path, force_rewrite = FALSE) {
@@ -63,7 +66,7 @@ visualize_benchmark_structure <- function(df, out_path, force_rewrite = FALSE) {
   ensure_output_dir(out_path)
   p_disp <- structure_panel(df, "disp410_km", "410 displacement (km)")
   p_width <- structure_panel(df, "width410_km", "410 width (km)")
-  p_rate <- structure_panel(df, "rate410", "Max reaction rate (1/s)")
+  p_rate <- structure_panel(df, "rate410", "Max reaction rate (1/Ma)")
   p_kin <- structure_panel(df, "kin410_km", "Kinetic contribution (km)", show_legend = TRUE)
   p <- (p_disp | p_width) / (p_rate | p_kin) +
     plot_layout(guides = "collect") &

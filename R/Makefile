@@ -18,7 +18,7 @@ adiabat:
 	@for model in $(PERPLEX_MODELS); do Rscript $(R)/adiabat.R $(R)/utils $$model $(SIMULATION)/data $(FIGS)/adiabat; done
 
 seismic: $(MESH_CSV_BOX_SUITE) $(MESH_CSV_SINK_SUITE)
-	@Rscript $(R)/seismic.R $(R)/utils $(SEISMIC_BOX_SUITE) $(SEISMIC_SINK_SUITE) $(FIGS_SEISMIC) $(FORCE_REWRITE)
+	@Rscript $(R)/seismic.R $(R)/utils $(SEISMIC_BOX_SUITE) $(SEISMIC_SINK_SUITE) $(FIGS_SEISMIC) $(FORCE_REWRITE) $(NOMINAL_410_BOX) $(NOMINAL_410_SINK400)
 
 simulation: $(POSTPROCESSED_CSV)
 	@mkdir -p $(SIMULATION)/results

@@ -147,12 +147,28 @@ DEPTH_CORRECTION_OL_WD := 5e+03
 DEPTH_CORRECTION_WD_RI := 5e+03
 DEPTH_CORRECTION_RI_PS := 15e+03
 
-# Init-step model-Y at the profile equilibrium (359.2 km depth); loaded front
-# measures ~375 km and mesh/R display adds +5 km (364.2 km band).
+# Init-step model-Y at the profile equilibrium (359.2 km depth). The runtime
+# adiabat puts the same equilibrium pressure ~14 km deeper (373.1 km box,
+# 355.7 km sink Block400: BurnMan depth scale vs g=9.81 hydrostatics), so the
+# loaded front relaxes from the init step within ~0.1 Myr; final states are
+# unaffected. Mesh/R nominals below already account for this frame shift.
 TRANSITION_Y_OL_WD := 6.408e+05
 
-# Point-values probes (x, y in model m; y = 1e6 - depth). P0 sits on the 410
-# band (364.2 km); box P1 is a 200 km deeper control, sink P1 the block start.
+# Runtime-adiabat 410 nominal per suite (m, model depth where ASPECT P_ad
+# equals the profile P_eq = 14.324 GPa). Measured as dG = 0 on no-feedback
+# twins: B2 -> 373.1 km, S2 -> 355.7 km. The sink adiabat carries the block
+# weight (+0.6 GPa); sink Block0 shares the box adiabat. Equilibrium runs
+# read ~0 (plus X0.9-vs-midpoint convention); DynpOn sink reads the +18 km
+# dynamic-pressure shift. Postprocessing and mesh/R bands key on these, not
+# on the profile depth.
+NOMINAL_410_BOX     := 373100
+NOMINAL_410_SINK400 := 355700
+NOMINAL_410_SINK0   := 373100
+
+# Point-values probes (x, y in model m; y = 1e6 - depth). P0 at 364.2 km
+# depth samples the pre-front olivine just above the runtime equilibrium
+# (box 373.1 km, sink Block400 355.7 km); box P1 is a 200 km deeper control,
+# sink P1 the block start. Coords are baked into finished runs; do not move.
 POINTS_BOX  := 1.5e+05, 6.358e+05; 1.5e+05, 4.358e+05
 POINTS_SINK := 5.0e+05, 6.358e+05; 5.0e+05, 8.00e+05
 

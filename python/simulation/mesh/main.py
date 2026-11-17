@@ -45,6 +45,12 @@ def parse_arguments() -> Namespace:
     parser.add_argument("--depth-corr-ol-wd", type=float, default=0.0, help="Depth correction for the olivine -> wadsleyite transition [m].")
     parser.add_argument("--depth-corr-wd-ri", type=float, default=0.0, help="Depth correction for the wadsleyite -> ringwoodite transition [m].")
     parser.add_argument("--depth-corr-ri-ps", type=float, default=0.0, help="Depth correction for the ringwoodite -> bridgmanite transition [m].")
+    parser.add_argument(
+        "--nominal-410",
+        type=float,
+        default=None,
+        help="Runtime-adiabat 410 nominal depth [m]; supersedes profile + depth-corr for X_wd when given.",
+    )
     parser.add_argument("--mode", type=str, choices=["postprocess", "visualize", "full"], default="full", help="Pipeline mode.")
     parser.add_argument("--save-csv", type=str2bool, default=True, help="Save structure data to csv.")
     parser.add_argument("--force-reprocess", type=str2bool, default=False, help="Force reprocessing and overwriting of cache.")
@@ -105,6 +111,8 @@ def main():
             ]
             if args.visualize_ids:
                 cmd += ["--visualize-ids", *args.visualize_ids]
+            if args.nominal_410 is not None:
+                cmd += [f"--nominal-410={args.nominal_410}"]
             cmd += ["--suppress-artifact=true", f"--chunk={idx + 1}/{n_chunks}"]
             subprocess.run(cmd, check=True)
         if args.mode in ("postprocess", "full"):
@@ -132,6 +140,11 @@ def main():
         transition.y -= correction
 
         trans_data[phase_key] = transition
+
+    if args.nominal_410 is not None and args.suite_tag in ("box", "sink"):
+        trans_data["X_wd"].depth = args.nominal_410
+        trans_data["X_wd"].y = model_height - args.nominal_410
+        log_info(f"410 nominal overridden to runtime adiabat: {args.nominal_410 / 1e3:.1f} km")
 
     tsteps = args.timesteps or []
     in_dirs = [Path(p) for p in args.in_dirs] if args.in_dirs else []

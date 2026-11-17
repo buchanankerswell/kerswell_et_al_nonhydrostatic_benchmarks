@@ -18,6 +18,7 @@ import pandas as pd
 from simulation.params.transitions import (
     find_surface_depth_offset,
     find_transition,
+    nominal_410_for_uid,
     read_dG_profile,
 )
 from utils.logging import log_artifact, log_info
@@ -43,6 +44,9 @@ def parse_arguments():
     parser.add_argument("--depth-corr-ol-wd", type=float, default=0.0)
     parser.add_argument("--depth-corr-wd-ri", type=float, default=0.0)
     parser.add_argument("--depth-corr-ri-ps", type=float, default=0.0)
+    parser.add_argument("--nominal-410-box", type=float, default=None, help="Runtime-adiabat 410 nominal [m], box")
+    parser.add_argument("--nominal-410-sink400", type=float, default=None, help="Runtime-adiabat 410 nominal [m], sink Block400")
+    parser.add_argument("--nominal-410-sink0", type=float, default=None, help="Runtime-adiabat 410 nominal [m], sink Block0")
     parser.add_argument("--force", action="store_true", help="Overwrite output.")
     return parser.parse_args()
 
@@ -79,6 +83,8 @@ def main():
     ref_headers, ref_data = read_dG_profile(args.profile_ol_wd)
     surface_offset = find_surface_depth_offset(ref_headers, ref_data, args.surface_pressure)
     rxn410, gamma410 = nominal_transition(args.profile_ol_wd, args.model_height, surface_offset, args.depth_corr_ol_wd)
+    nominals = (args.nominal_410_box, args.nominal_410_sink400, args.nominal_410_sink0)
+    use_runtime_nominal = all(n is not None for n in nominals)
     log_info(f"nominal 410={rxn410 / 1e3:.1f} km gamma={gamma410:.3e}")
 
     rows = []
@@ -105,7 +111,8 @@ def main():
             except KeyError:
                 continue
             disp410 = float(r["displacement_410"])
-            hatT410 = interp_at(rep, "nonadiabatic_temperature", rxn410 + disp410)
+            rxn = nominal_410_for_uid(mid, *nominals) if use_runtime_nominal else rxn410
+            hatT410 = interp_at(rep, "nonadiabatic_temperature", rxn + disp410)
             therm410 = gamma410 * hatT410 / (RHO * GRAV)
             dampkind = m.group("dampkind")
             dampval = m.group("dampval") or "0"
