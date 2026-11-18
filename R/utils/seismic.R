@@ -5,6 +5,16 @@
 nominal_410_box_km <- 373.1
 nominal_410_sink_km <- 355.7
 
+# Shared damping palette (family-grouped hues; same families as the
+# structure panels). Per-value shades keep twin Bimpl/Rel values distinct.
+damp_pal <- c(
+  "None" = "#000000",
+  "Bimpl1e21" = "#E41A1C", "Bimpl1e19" = "#EF3B2C", "Bimpl1e20" = "#A50F15",
+  "Bexpl1e20" = "#377EB8", "Bexpl1e19" = "#74ADD1",
+  "Rel3.156e12" = "#4DAF4A", "Rel3.156e10" = "#A6D96A", "Rel3.156e11" = "#1B7837",
+  "Cap1e7" = "#984EA3", "Cap2e8" = "#C51B7D"
+)
+
 read_seismic_profile <- function(filepath) {
   df <- read_csv(filepath, show_col_types = FALSE)
   fname <- basename(filepath)
@@ -53,8 +63,7 @@ visualize_seismic_comparison <- function(data_dir_box, data_dir_sink, out_path, 
   df <- df |> mutate(
     suite = factor(suite, levels = c("Box", "Sink")),
     damp = str_extract(model_id, "(?<=_Damp)[A-Za-z]+[\\d.e+-]*"),
-    dynp = str_extract(model_id, "(?<=_Dynp)(On|Off)"),
-    damp_dynp = paste(damp, dynp)
+    dynp = factor(str_extract(model_id, "(?<=_Dynp)(On|Off)"), levels = c("On", "Off"))
   )
   df_init_box <- read_init_profile(data_dir_box)
   df_init_sink <- read_init_profile(data_dir_sink)
@@ -69,10 +78,12 @@ visualize_seismic_comparison <- function(data_dir_box, data_dir_sink, out_path, 
     d <- df |> filter(suite == suite_label)
     panel <- ggplot(d, aes(x = seismic_Vp, y = depth, group = model_id)) +
       annotate("rect", xmin = -Inf, xmax = Inf, ymin = nominal_km - 10, ymax = nominal_km + 10, fill = "grey80", alpha = 0.7) +
-      geom_path(aes(color = damp_dynp), linewidth = 1.6, alpha = 0.85) +
+      geom_path(aes(color = damp, linetype = dynp), linewidth = 1.6, alpha = 0.85) +
       scale_y_reverse() +
       scale_x_continuous(limits = lim_vp, breaks = c(8, 9, 10, 11, 12)) +
-      labs(title = suite_label, x = expression(V[p] ~ (km / s)), y = "Depth (km)", color = "Damping") +
+      scale_color_manual(values = damp_pal, drop = TRUE, na.value = "grey50", name = "Damping") +
+      scale_linetype_manual(values = c("On" = "solid", "Off" = "dashed"), drop = FALSE, name = "Feedback") +
+      labs(title = suite_label, x = expression(V[p] ~ (km / s)), y = "Depth (km)") +
       theme_bw(base_size = 20) +
       theme_profile_comparison()
     if (!is.null(init_df)) {
