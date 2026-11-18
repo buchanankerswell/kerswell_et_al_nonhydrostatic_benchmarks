@@ -10,6 +10,7 @@ Usage (repo root):
 """
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
@@ -22,17 +23,24 @@ import pandas as pd
 
 from common import apply_bench_style
 
-RESULTS = Path("simulation/results")
+RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
 apply_bench_style()
 
 
 def load(suite):
     path = RESULTS / f"structure-summary-{suite}.csv"
-    if not path.exists():
+    if not path.exists() or path.stat().st_size < 2:
         print(f"skip {suite}: {path} not found", file=sys.stderr)
         return None
-    df = pd.read_csv(path)
+    try:
+        df = pd.read_csv(path)
+    except pd.errors.EmptyDataError:
+        print(f"skip {suite}: {path} empty", file=sys.stderr)
+        return None
+    if df.empty:
+        print(f"skip {suite}: {path} empty", file=sys.stderr)
+        return None
     df["res"] = df["model_id"].str.extract(r"_Res(\d+)").astype(int)
     df["damp"] = df["model_id"].str.extract(r"_Damp([A-Za-z]+[\d.e+-]*)")
     df["z"] = df["model_id"].str.extract(r"_Z([\d.e+-]+)")

@@ -13,6 +13,7 @@ Usage (repo root):
 """
 
 import argparse
+import os
 import pickle
 import sys
 from pathlib import Path
@@ -30,7 +31,7 @@ from simulation.params.transitions import (
     read_dG_profile,
 )
 
-RESULTS = Path("simulation/results")
+RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
 apply_bench_style()
 

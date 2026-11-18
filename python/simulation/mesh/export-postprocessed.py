@@ -86,10 +86,16 @@ def main():
     data_dir = Path(args.data_dir)
     for tag in ("box", "sink"):
         summary_csv = data_dir / f"structure-summary-{tag}.csv"
-        if not summary_csv.exists():
+        seis_cache = data_dir / f"seismic-profile-cache-{tag}.pkl"
+        if not summary_csv.exists() or not seis_cache.exists():
             continue
-        loc = pd.read_csv(summary_csv)
-        with open(data_dir / f"seismic-profile-cache-{tag}.pkl", "rb") as f:
+        try:
+            loc = pd.read_csv(summary_csv)
+        except pd.errors.EmptyDataError:
+            continue
+        if loc.empty:
+            continue
+        with open(seis_cache, "rb") as f:
             seis = pickle.load(f)
         models = loc[loc["model_id"].str.startswith("NH_")]
         rate_col = col_like(loc, "reaction_rate", "410")

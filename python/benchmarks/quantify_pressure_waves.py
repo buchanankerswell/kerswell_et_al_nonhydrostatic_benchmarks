@@ -16,6 +16,7 @@ Usage (repo root):
 
 import argparse
 import csv
+import os
 import sys
 from pathlib import Path
 
@@ -27,7 +28,7 @@ import numpy as np
 
 from common import UID_DAMP_RE, apply_bench_style, load_probe_series, load_stats_series, load_vtu_series, parse_uid_columns, uid_label
 
-RESULTS = Path("simulation/results")
+RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
 apply_bench_style()
 

@@ -52,6 +52,14 @@ for prm_path in "${CONFIG_LIST[@]}"; do
   LOCAL_SOLUTION_DIR="${LOCAL_RESULTS_DIR}/solution"
   mkdir -p "$LOCAL_SOLUTION_DIR"
 
+  # Always refresh cheap per-run sidecars needed by the analyze/vis
+  # pipeline: statistics (viz->time mapping + RMS series), point_values.txt
+  # (probe pressures), slurm logs (triage). Tiny text files; refresh even
+  # for solution-complete models so re-runs pick up final versions and
+  # already-synced models backfill without FORCE_SYNC=1.
+  rsync "${RSYNC_OPTS[@]}" --include="statistics" --include="point_values.txt" --include="*.log" --exclude="restart/" --exclude="checkpoint-*/" --include="*/" --exclude="*" \
+    "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_RESULTS_DIR}/" "$LOCAL_RESULTS_DIR/" 2>/dev/null | log_pipe || true
+
   # Skip models whose target timesteps are already present locally.
   # Set FORCE_SYNC=1 to re-sync everything.
   if [[ "${FORCE_SYNC:-0}" != "1" ]]; then

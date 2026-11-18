@@ -1,13 +1,14 @@
 """Shared UID labels and run-data loaders for the benchmark figure scripts."""
 
 import csv
+import os
 import re
 import sys
 from pathlib import Path
 
 import numpy as np
 
-RESULTS = Path("simulation/results")
+RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
 BENCH_FACECOLOR = "0.92"
 BENCH_DPI = 300

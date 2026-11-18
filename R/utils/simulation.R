@@ -41,7 +41,18 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
         TRUE ~ suite
       ), levels = c(suite_lab_box, suite_lab_sink)),
       res = factor(res, levels = c(4, 5, 6, 7)),
-      z = factor(z, levels = z_levels, labels = c("frozen", "matrix", "instant")),
+      # z round-trips through the CSV as a number, and as.character() on a
+      # numeric vector formats 4.44e-04 as "0.000444" / 1.4e+04 as "14000",
+      # so level matching must happen in numeric space, not on strings.
+      z = factor(
+        case_when(
+          abs(as.numeric(z) - 9.51e-08) < 1e-14 ~ "frozen",
+          abs(as.numeric(z) - 4.44e-04) < 1e-10 ~ "matrix",
+          abs(as.numeric(z) - 1.4e+04) < 1 ~ "instant",
+          TRUE ~ NA_character_
+        ),
+        levels = c("frozen", "matrix", "instant")
+      ),
       damp_family = damp_family(damp),
       damp_num = damp_value(damp),
       damp_family_ord = factor(damp_family, levels = c("None", "Bimpl", "Bexpl", "Rel", "Cap")),
