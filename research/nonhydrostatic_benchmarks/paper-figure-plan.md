@@ -4,8 +4,9 @@
 > static `simulation/benchmarks/nh_*.prm` are GONE. All benchmarks are now
 > generated configs (`simulation/configs/{uid}.prm` from
 > `simulation/params/templates/NH/`) with UIDs
-> `NH_{Box,Sink}_Dynp{d}_Damp{kind+val}[_Block{b}]_Z{z}_Res{r}_CFL{c}`
-> (no End token; end times are suite constants `END_BOX`/`END_SINK`)
+> `NH_{Box,Sink}_Dynp{d}_Damp{kind+val}[_Block{b}]_Z{z}_Res{r}`
+> (no End/CFL tokens; end times are suite constants `END_BOX`/`END_SINK`,
+> CFL fixed per suite `CFL_BOX`/`CFL_SINK`)
 > registered in `simulation/local.mk` (168 total: damping x Res4-7 x
 > Z_LO/MID/HI; paper sets `ID_B1..B6`/`ID_S1..S8` + Res7 twins
 > `ID_B7..B12`/`ID_S9..S16`).

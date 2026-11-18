@@ -28,9 +28,9 @@ FORCE_REPROCESS   := false
 FORCE_REWRITE     := true
 RESULTS_BOX_SUITE  = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_BOX_SUITE))
 RESULTS_SINK_SUITE = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_SINK_SUITE))
-# Plot sets (paper matrix) selected from the registered UIDs.
-PLOT_BOX_RUNS    = $(filter %_Res5_CFL7e-01,$(UIDS_BOX_SUITE))
-PLOT_SINK_RUNS   = $(filter %_Res6_CFL5e-01,$(UIDS_SINK_SUITE))
+# Plot sets (paper matrix at Z_MID) selected from the registered UIDs.
+PLOT_BOX_RUNS    = $(filter %_Z$(Z_MID)_Res5,$(UIDS_BOX_SUITE))
+PLOT_SINK_RUNS   = $(filter %_Z$(Z_MID)_Res6,$(UIDS_SINK_SUITE))
 # All Barkla NH runs write 21 outputs (0-20). Sync init + crossing + peak + last.
 TIMESTEPS_SYNC   := 000 002 004 006 008 012 016 019 020
 FORCE_SYNC       := 0
@@ -73,43 +73,43 @@ DATA_MESH_BOX_SUITE  := $(addprefix $(ASPECT_RESULTS)/,structure-summary-box.csv
 DATA_MESH_SINK_SUITE := $(addprefix $(ASPECT_RESULTS)/,structure-summary-sink.csv structure-cache-sink.pkl seismic-profile-cache-sink.pkl seismic_profiles_sink)
 
 # NH reference UIDs (paper matrix). NH_{Box,Sink}_Dynp{On|Off}_Damp{..}[_Block{b}]
-# _Z{z}_Res{r}_CFL{c}. DynpOff+DampNone = no-feedback equilibrium ground
+# _Z{z}_Res{r}. DynpOff+DampNone = no-feedback equilibrium ground
 # truth; DynpOn+DampNone = undamped spurious-wave demonstrator. Kinds: none,
 # Bimpl (implicit bulk zeta), Bexpl (explicit bulk zeta), Rel (relaxation
 # time s), Cap (pressure cap Pa). Must match simulation/local.mk.
-ID_B1 := NH_Box_DynpOn_DampNone_Z4.44e-04_Res5_CFL7e-01
-ID_B2 := NH_Box_DynpOff_DampNone_Z4.44e-04_Res5_CFL7e-01
-ID_B3 := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res5_CFL7e-01
-ID_B4 := NH_Box_DynpOn_DampBexpl1e20_Z4.44e-04_Res5_CFL7e-01
-ID_B5 := NH_Box_DynpOn_DampRel3.156e12_Z4.44e-04_Res5_CFL7e-01
-ID_B6 := NH_Box_DynpOn_DampCap1e7_Z4.44e-04_Res5_CFL7e-01
+ID_B1 := NH_Box_DynpOn_DampNone_Z4.44e-04_Res5
+ID_B2 := NH_Box_DynpOff_DampNone_Z4.44e-04_Res5
+ID_B3 := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res5
+ID_B4 := NH_Box_DynpOn_DampBexpl1e20_Z4.44e-04_Res5
+ID_B5 := NH_Box_DynpOn_DampRel3.156e12_Z4.44e-04_Res5
+ID_B6 := NH_Box_DynpOn_DampCap1e7_Z4.44e-04_Res5
 
 # Box high-res twins (Res7, Barkla2): same damping matrix as B1..B6.
-ID_B7  := NH_Box_DynpOn_DampNone_Z4.44e-04_Res7_CFL7e-01
-ID_B8  := NH_Box_DynpOff_DampNone_Z4.44e-04_Res7_CFL7e-01
-ID_B9  := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res7_CFL7e-01
-ID_B10 := NH_Box_DynpOn_DampBexpl1e20_Z4.44e-04_Res7_CFL7e-01
-ID_B11 := NH_Box_DynpOn_DampRel3.156e12_Z4.44e-04_Res7_CFL7e-01
-ID_B12 := NH_Box_DynpOn_DampCap1e7_Z4.44e-04_Res7_CFL7e-01
+ID_B7  := NH_Box_DynpOn_DampNone_Z4.44e-04_Res7
+ID_B8  := NH_Box_DynpOff_DampNone_Z4.44e-04_Res7
+ID_B9  := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res7
+ID_B10 := NH_Box_DynpOn_DampBexpl1e20_Z4.44e-04_Res7
+ID_B11 := NH_Box_DynpOn_DampRel3.156e12_Z4.44e-04_Res7
+ID_B12 := NH_Box_DynpOn_DampCap1e7_Z4.44e-04_Res7
 
-ID_S1 := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01
-ID_S2 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01
-ID_S3 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01
-ID_S4 := NH_Sink_DynpOn_DampBimpl1e20_Block400_Z4.44e-04_Res6_CFL5e-01
-ID_S5 := NH_Sink_DynpOn_DampBexpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01
-ID_S6 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res6_CFL5e-01
-ID_S7 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res6_CFL5e-01
-ID_S8 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res6_CFL5e-01
+ID_S1 := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6
+ID_S2 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6
+ID_S3 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res6
+ID_S4 := NH_Sink_DynpOn_DampBimpl1e20_Block400_Z4.44e-04_Res6
+ID_S5 := NH_Sink_DynpOn_DampBexpl1e19_Block400_Z4.44e-04_Res6
+ID_S6 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res6
+ID_S7 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res6
+ID_S8 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res6
 
 # Sink high-res twins (Res7, Barkla2): same damping matrix as S1..S8.
-ID_S9  := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res7_CFL5e-01
-ID_S10 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res7_CFL5e-01
-ID_S11 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res7_CFL5e-01
-ID_S12 := NH_Sink_DynpOn_DampBimpl1e20_Block400_Z4.44e-04_Res7_CFL5e-01
-ID_S13 := NH_Sink_DynpOn_DampBexpl1e19_Block400_Z4.44e-04_Res7_CFL5e-01
-ID_S14 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res7_CFL5e-01
-ID_S15 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res7_CFL5e-01
-ID_S16 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res7_CFL5e-01
+ID_S9  := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res7
+ID_S10 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res7
+ID_S11 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res7
+ID_S12 := NH_Sink_DynpOn_DampBimpl1e20_Block400_Z4.44e-04_Res7
+ID_S13 := NH_Sink_DynpOn_DampBexpl1e19_Block400_Z4.44e-04_Res7
+ID_S14 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res7
+ID_S15 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res7
+ID_S16 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res7
 
 # Visualization scope (can edit)
 VIS_ALL            := false
@@ -138,6 +138,11 @@ MG_NUM              := 100
 # Output cadence per benchmark (21 outputs each: end / viz-out = 20).
 VIZ_OUT_BOX_SUITE  := 5e+05
 VIZ_OUT_SINK_SUITE := 2.5e+05
+
+# Fixed solver settings (outside the parameter sweep, so absent from UIDs).
+# CFL 0.7 box / 0.5 sink proved low-sensitivity (box flat, sink timing-only).
+CFL_BOX  := 7e-01
+CFL_SINK := 5e-01
 
 # End times per suite (s, model time; UIDs carry no End token). Box 10 Myr:
 # undamped front/p2p steady from 0.5 Myr, but Bimpl-Res6 goes unstable at
@@ -226,18 +231,18 @@ CONDA_PYTHON := $(shell conda run -n $(CONDA_ENV) which python 2>/dev/null || ec
 # --------------------------------------------------
 # Macros (no edits)
 # --------------------------------------------------
-# NH_Box_Dynp{d}_Damp{kind+val}_Z{z}_Res{r}_CFL{c} with d = On|Off;
+# NH_Box_Dynp{d}_Damp{kind+val}_Z{z}_Res{r} with d = On|Off;
 # sink inserts _Block{b} after the damping token. DampNone has no value suffix.
 define MAKE_UID_BOX
-  NH_Box_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Z$(4)_Res$(5)_CFL$(6)
+  NH_Box_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Z$(4)_Res$(5)
 endef
 
 define MAKE_UID_SINK
-  NH_Sink_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Block$(4)_Z$(5)_Res$(6)_CFL$(7)
+  NH_Sink_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Block$(4)_Z$(5)_Res$(6)
 endef
 
 define REGISTER_NH_BOX
-  $(eval _uid := $(strip $(call MAKE_UID_BOX,$(2),$(3),$(4),$(5),$(6),$(7))))
+  $(eval _uid := $(strip $(call MAKE_UID_BOX,$(2),$(3),$(4),$(5),$(6))))
   $(1)                       += $(_uid)
   PARAM_suite_$(_uid)    := box
   PARAM_dynp_$(_uid)     := $(2)
@@ -245,12 +250,11 @@ define REGISTER_NH_BOX
   PARAM_dampval_$(_uid)  := $(4)
   PARAM_z_$(_uid)        := $(5)
   PARAM_res_$(_uid)      := $(6)
-  PARAM_cfl_$(_uid)      := $(7)
   PARAM_points_$(_uid)   := $(POINTS_BOX)
 endef
 
 define REGISTER_NH_SINK
-  $(eval _uid := $(strip $(call MAKE_UID_SINK,$(2),$(3),$(4),$(5),$(6),$(7),$(8))))
+  $(eval _uid := $(strip $(call MAKE_UID_SINK,$(2),$(3),$(4),$(5),$(6),$(7))))
   $(1)                       += $(_uid)
   PARAM_suite_$(_uid)    := sink
   PARAM_dynp_$(_uid)     := $(2)
@@ -259,7 +263,6 @@ define REGISTER_NH_SINK
   PARAM_block_$(_uid)    := $(5)
   PARAM_z_$(_uid)        := $(6)
   PARAM_res_$(_uid)      := $(7)
-  PARAM_cfl_$(_uid)      := $(8)
   PARAM_points_$(_uid)   := $(POINTS_SINK)
 endef
 
@@ -273,7 +276,7 @@ define GENERATE_NH_PRM
 	  "solver-tolerance=$(SOLVER_TOLERANCE)" \
 	  "max-solver-iter=$(MAX_SOLVER_ITER)" \
 	  "max-solver-tstep=$(MAX_SOLVER_TSTEP)" \
-	  "cfl=$(PARAM_cfl_$(2))" \
+	  "cfl=$(if $(filter box,$(PARAM_suite_$(2))),$(CFL_BOX),$(CFL_SINK))" \
 	  "viz-out-time=$(if $(filter box,$(PARAM_suite_$(2))),$(VIZ_OUT_BOX_SUITE),$(VIZ_OUT_SINK_SUITE))" \
 	  "checkpoint-time=$(CHECKPOINT_TIME)" \
 	  "model-width=$(if $(filter box,$(PARAM_suite_$(2))),$(MODEL_WIDTH_BOX),$(MODEL_WIDTH_SINK))" \

@@ -28,7 +28,7 @@ GRAV = 9.81
 
 UID_RE = re.compile(
     r"^NH_(?P<suite>Box|Sink)_Dynp(?P<dynp>On|Off)_Damp(?P<dampkind>[A-Za-z]+)(?P<dampval>[\d.e]*)"
-    r"(?:_Block(?P<block>\d+))?_Z(?P<z>[\d.e+-]+)_Res(?P<res>\d+)_CFL(?P<cfl>[\d.e+-]+)$"
+    r"(?:_Block(?P<block>\d+))?_Z(?P<z>[\d.e+-]+)_Res(?P<res>\d+)$"
 )
 
 
@@ -124,7 +124,7 @@ def main():
                     "damp": f"{dampkind}{dampval}" if dampkind != "None" else "None",
                     "dynp": 1 if m.group("dynp") == "On" else 0,
                     "res": int(m.group("res")),
-                    "cfl": m.group("cfl"),
+                    "z": m.group("z"),
                     "disp410_km": disp410 / 1e3,
                     "width410_km": abs(float(r["width_410"])) / 1e3,
                     "rate410": float(r[rate_col]),
