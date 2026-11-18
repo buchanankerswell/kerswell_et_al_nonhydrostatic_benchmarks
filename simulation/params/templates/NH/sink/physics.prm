@@ -2,7 +2,7 @@ subsection Gravity model
   set Model name = vertical
 
   subsection Vertical
-    set Magnitude = 10
+    set Magnitude = {gravity}
   end
 end
 

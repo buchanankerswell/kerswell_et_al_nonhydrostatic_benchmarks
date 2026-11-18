@@ -141,8 +141,11 @@ VIZ_OUT_SINK_SUITE := 2.5e+05
 
 # Fixed solver settings (outside the parameter sweep, so absent from UIDs).
 # CFL 0.7 box / 0.5 sink proved low-sensitivity (box flat, sink timing-only).
+# Gravity 9.81 everywhere: matches the PerpleX profile construction, the
+# postprocessing thermal split (GRAV), and the ASPECT default.
 CFL_BOX  := 7e-01
 CFL_SINK := 5e-01
+GRAVITY  := 9.81
 
 # End times per suite (s, model time; UIDs carry no End token). Box 10 Myr:
 # undamped front/p2p steady from 0.5 Myr, but Bimpl-Res6 goes unstable at
@@ -187,12 +190,13 @@ DEPTH_CORRECTION_RI_PS := 15e+03
 TRANSITION_Y_OL_WD := 6.408e+05
 
 # Runtime-adiabat 410 nominal per suite (m, model depth where ASPECT P_ad
-# equals the profile P_eq = 14.324 GPa). Measured as dG = 0 on no-feedback
-# twins: B2 -> 373.1 km, S2 -> 355.7 km. The sink adiabat carries the block
-# weight (+0.6 GPa); sink Block0 shares the box adiabat. Equilibrium runs
-# read ~0 (plus X0.9-vs-midpoint convention); DynpOn sink reads the +18 km
-# dynamic-pressure shift. Postprocessing and mesh/R bands key on these, not
-# on the profile depth.
+# equals the profile P_eq = 14.324 GPa). STALE under g = 9.81: measured as
+# dG = 0 on no-feedback twins under g = 10 (box B2 -> 373.1 km, sink S2 ->
+# 355.7 km); re-derive from the Barkla2 no-feedback twins before use. The
+# sink adiabat carries the block weight (+0.6 GPa); sink Block0 shares the
+# box adiabat. Equilibrium runs read ~0 (plus X0.9-vs-midpoint convention);
+# DynpOn sink reads the +18 km dynamic-pressure shift. Postprocessing and
+# mesh/R bands key on these, not on the profile depth.
 NOMINAL_410_BOX     := 373100
 NOMINAL_410_SINK400 := 355700
 NOMINAL_410_SINK0   := 373100
@@ -277,6 +281,7 @@ define GENERATE_NH_PRM
 	  "max-solver-iter=$(MAX_SOLVER_ITER)" \
 	  "max-solver-tstep=$(MAX_SOLVER_TSTEP)" \
 	  "cfl=$(if $(filter box,$(PARAM_suite_$(2))),$(CFL_BOX),$(CFL_SINK))" \
+  "gravity=$(GRAVITY)" \
 	  "viz-out-time=$(if $(filter box,$(PARAM_suite_$(2))),$(VIZ_OUT_BOX_SUITE),$(VIZ_OUT_SINK_SUITE))" \
 	  "checkpoint-time=$(CHECKPOINT_TIME)" \
 	  "model-width=$(if $(filter box,$(PARAM_suite_$(2))),$(MODEL_WIDTH_BOX),$(MODEL_WIDTH_SINK))" \
