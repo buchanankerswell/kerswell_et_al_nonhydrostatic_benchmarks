@@ -25,7 +25,7 @@ write_postprocessed_summary_table <- function(postprocessed_csv, out_dir, quiet 
       ),
       damp_ord = factor(damp, levels = unique(damp[order(dynp, damp)]))
     ) |>
-    arrange(suite_abbr, dynp, damp_ord, res, desc(end)) |>
+    arrange(suite_abbr, dynp, damp_ord, res) |>
     select(
       Suite = suite_abbr,
       Model = model_id,

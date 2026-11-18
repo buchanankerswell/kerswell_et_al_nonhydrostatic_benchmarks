@@ -29,8 +29,8 @@ FORCE_REWRITE     := true
 RESULTS_BOX_SUITE  = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_BOX_SUITE))
 RESULTS_SINK_SUITE = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_SINK_SUITE))
 # Plot sets (paper matrix) selected from the registered UIDs.
-PLOT_BOX_RUNS    = $(filter %_Res5_CFL7e-01_End1e7,$(UIDS_BOX_SUITE))
-PLOT_SINK_RUNS   = $(filter %_Res6_CFL5e-01_End5e6,$(UIDS_SINK_SUITE))
+PLOT_BOX_RUNS    = $(filter %_Res5_CFL7e-01,$(UIDS_BOX_SUITE))
+PLOT_SINK_RUNS   = $(filter %_Res6_CFL5e-01,$(UIDS_SINK_SUITE))
 # All Barkla NH runs write 21 outputs (0-20). Sync init + crossing + peak + last.
 TIMESTEPS_SYNC   := 000 002 004 006 008 012 016 019 020
 FORCE_SYNC       := 0
@@ -73,43 +73,43 @@ DATA_MESH_BOX_SUITE  := $(addprefix $(ASPECT_RESULTS)/,structure-summary-box.csv
 DATA_MESH_SINK_SUITE := $(addprefix $(ASPECT_RESULTS)/,structure-summary-sink.csv structure-cache-sink.pkl seismic-profile-cache-sink.pkl seismic_profiles_sink)
 
 # NH reference UIDs (paper matrix). NH_{Box,Sink}_Dynp{On|Off}_Damp{..}[_Block{b}]
-# _Z{z}_Res{r}_CFL{c}_End{e}. DynpOff+DampNone = no-feedback equilibrium ground
+# _Z{z}_Res{r}_CFL{c}. DynpOff+DampNone = no-feedback equilibrium ground
 # truth; DynpOn+DampNone = undamped spurious-wave demonstrator. Kinds: none,
 # Bimpl (implicit bulk zeta), Bexpl (explicit bulk zeta), Rel (relaxation
 # time s), Cap (pressure cap Pa). Must match simulation/local.mk.
-ID_B1 := NH_Box_DynpOn_DampNone_Z4.44e-04_Res5_CFL7e-01_End1e7
-ID_B2 := NH_Box_DynpOff_DampNone_Z4.44e-04_Res5_CFL7e-01_End1e7
-ID_B3 := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res5_CFL7e-01_End1e7
-ID_B4 := NH_Box_DynpOn_DampBexpl1e20_Z4.44e-04_Res5_CFL7e-01_End1e7
-ID_B5 := NH_Box_DynpOn_DampRel3.156e12_Z4.44e-04_Res5_CFL7e-01_End1e7
-ID_B6 := NH_Box_DynpOn_DampCap1e7_Z4.44e-04_Res5_CFL7e-01_End1e7
+ID_B1 := NH_Box_DynpOn_DampNone_Z4.44e-04_Res5_CFL7e-01
+ID_B2 := NH_Box_DynpOff_DampNone_Z4.44e-04_Res5_CFL7e-01
+ID_B3 := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res5_CFL7e-01
+ID_B4 := NH_Box_DynpOn_DampBexpl1e20_Z4.44e-04_Res5_CFL7e-01
+ID_B5 := NH_Box_DynpOn_DampRel3.156e12_Z4.44e-04_Res5_CFL7e-01
+ID_B6 := NH_Box_DynpOn_DampCap1e7_Z4.44e-04_Res5_CFL7e-01
 
 # Box high-res twins (Res7, Barkla2): same damping matrix as B1..B6.
-ID_B7  := NH_Box_DynpOn_DampNone_Z4.44e-04_Res7_CFL7e-01_End1e7
-ID_B8  := NH_Box_DynpOff_DampNone_Z4.44e-04_Res7_CFL7e-01_End1e7
-ID_B9  := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res7_CFL7e-01_End1e7
-ID_B10 := NH_Box_DynpOn_DampBexpl1e20_Z4.44e-04_Res7_CFL7e-01_End1e7
-ID_B11 := NH_Box_DynpOn_DampRel3.156e12_Z4.44e-04_Res7_CFL7e-01_End1e7
-ID_B12 := NH_Box_DynpOn_DampCap1e7_Z4.44e-04_Res7_CFL7e-01_End1e7
+ID_B7  := NH_Box_DynpOn_DampNone_Z4.44e-04_Res7_CFL7e-01
+ID_B8  := NH_Box_DynpOff_DampNone_Z4.44e-04_Res7_CFL7e-01
+ID_B9  := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res7_CFL7e-01
+ID_B10 := NH_Box_DynpOn_DampBexpl1e20_Z4.44e-04_Res7_CFL7e-01
+ID_B11 := NH_Box_DynpOn_DampRel3.156e12_Z4.44e-04_Res7_CFL7e-01
+ID_B12 := NH_Box_DynpOn_DampCap1e7_Z4.44e-04_Res7_CFL7e-01
 
-ID_S1 := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S2 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S3 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S4 := NH_Sink_DynpOn_DampBimpl1e20_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S5 := NH_Sink_DynpOn_DampBexpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S6 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S7 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
-ID_S8 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
+ID_S1 := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01
+ID_S2 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01
+ID_S3 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01
+ID_S4 := NH_Sink_DynpOn_DampBimpl1e20_Block400_Z4.44e-04_Res6_CFL5e-01
+ID_S5 := NH_Sink_DynpOn_DampBexpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01
+ID_S6 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res6_CFL5e-01
+ID_S7 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res6_CFL5e-01
+ID_S8 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res6_CFL5e-01
 
 # Sink high-res twins (Res7, Barkla2): same damping matrix as S1..S8.
-ID_S9  := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
-ID_S10 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
-ID_S11 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
-ID_S12 := NH_Sink_DynpOn_DampBimpl1e20_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
-ID_S13 := NH_Sink_DynpOn_DampBexpl1e19_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
-ID_S14 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
-ID_S15 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
-ID_S16 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
+ID_S9  := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res7_CFL5e-01
+ID_S10 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res7_CFL5e-01
+ID_S11 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res7_CFL5e-01
+ID_S12 := NH_Sink_DynpOn_DampBimpl1e20_Block400_Z4.44e-04_Res7_CFL5e-01
+ID_S13 := NH_Sink_DynpOn_DampBexpl1e19_Block400_Z4.44e-04_Res7_CFL5e-01
+ID_S14 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res7_CFL5e-01
+ID_S15 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res7_CFL5e-01
+ID_S16 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res7_CFL5e-01
 
 # Visualization scope (can edit)
 VIS_ALL            := false
@@ -135,9 +135,16 @@ MAX_SOLVER_TSTEP    := 25e+03
 CHECKPOINT_TIME     := 300
 MG_NUM              := 100
 
-# Output cadence per benchmark (end time rides in the UID; end/viz = 21 outputs).
+# Output cadence per benchmark (21 outputs each: end / viz-out = 20).
 VIZ_OUT_BOX_SUITE  := 5e+05
 VIZ_OUT_SINK_SUITE := 2.5e+05
+
+# End times per suite (s, model time; UIDs carry no End token). Box 10 Myr:
+# undamped front/p2p steady from 0.5 Myr, but Bimpl-Res6 goes unstable at
+# 4-5 Myr, so the end must cover onset plus saturation. Sink 5 Myr: block
+# leading edge reaches the bottom ~4 Myr, p2p nearly flat at 5 Myr.
+END_BOX  := 1e7
+END_SINK := 5e6
 
 # Kinetic prefactors (ReactionChain N=1, SI 1/s/K). Matrix runs Z_KIN.
 # The later Z sweep spans the 660 ol pair and the pre-scaled 410 ol pair
@@ -150,6 +157,13 @@ Z_410_NOMINAL_OL  := 2.22e+00
 Z_KIN := $(Z_660_SLUGGISH_OL)
 H_KIN := 274e+03
 V_KIN := 3.3e-06
+
+# Three-Z sweep anchors (full damping x Res ladder at each): frozen-reaction
+# limit (410-sluggish), matrix midpoint (current Z_KIN), near-instantaneous
+# limit (660-nominal). Z_HI at Res7 may be very stiff; watch Barkla2 costs.
+Z_LO  := $(Z_410_SLUGGISH_OL)
+Z_MID := $(Z_KIN)
+Z_HI  := $(Z_660_NOMINAL_OL)
 
 ETA_REF   := 1e+21
 ETA_MIN   := 1e+19
@@ -212,18 +226,18 @@ CONDA_PYTHON := $(shell conda run -n $(CONDA_ENV) which python 2>/dev/null || ec
 # --------------------------------------------------
 # Macros (no edits)
 # --------------------------------------------------
-# NH_Box_Dynp{d}_Damp{kind+val}_Z{z}_Res{r}_CFL{c}_End{e} with d = On|Off;
+# NH_Box_Dynp{d}_Damp{kind+val}_Z{z}_Res{r}_CFL{c} with d = On|Off;
 # sink inserts _Block{b} after the damping token. DampNone has no value suffix.
 define MAKE_UID_BOX
-  NH_Box_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Z$(4)_Res$(5)_CFL$(6)_End$(7)
+  NH_Box_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Z$(4)_Res$(5)_CFL$(6)
 endef
 
 define MAKE_UID_SINK
-  NH_Sink_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Block$(4)_Z$(5)_Res$(6)_CFL$(7)_End$(8)
+  NH_Sink_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Block$(4)_Z$(5)_Res$(6)_CFL$(7)
 endef
 
 define REGISTER_NH_BOX
-  $(eval _uid := $(strip $(call MAKE_UID_BOX,$(2),$(3),$(4),$(5),$(6),$(7),$(8))))
+  $(eval _uid := $(strip $(call MAKE_UID_BOX,$(2),$(3),$(4),$(5),$(6),$(7))))
   $(1)                       += $(_uid)
   PARAM_suite_$(_uid)    := box
   PARAM_dynp_$(_uid)     := $(2)
@@ -232,12 +246,11 @@ define REGISTER_NH_BOX
   PARAM_z_$(_uid)        := $(5)
   PARAM_res_$(_uid)      := $(6)
   PARAM_cfl_$(_uid)      := $(7)
-  PARAM_end_$(_uid)      := $(8)
   PARAM_points_$(_uid)   := $(POINTS_BOX)
 endef
 
 define REGISTER_NH_SINK
-  $(eval _uid := $(strip $(call MAKE_UID_SINK,$(2),$(3),$(4),$(5),$(6),$(7),$(8),$(9))))
+  $(eval _uid := $(strip $(call MAKE_UID_SINK,$(2),$(3),$(4),$(5),$(6),$(7),$(8))))
   $(1)                       += $(_uid)
   PARAM_suite_$(_uid)    := sink
   PARAM_dynp_$(_uid)     := $(2)
@@ -247,7 +260,6 @@ define REGISTER_NH_SINK
   PARAM_z_$(_uid)        := $(6)
   PARAM_res_$(_uid)      := $(7)
   PARAM_cfl_$(_uid)      := $(8)
-  PARAM_end_$(_uid)      := $(9)
   PARAM_points_$(_uid)   := $(POINTS_SINK)
 endef
 
@@ -255,7 +267,7 @@ define GENERATE_NH_PRM
 	$(call LOG_ARTIFACT,$(3))
 	@mkdir -p $(dir $(3))
 	@$(CONDA_PYTHON) $(PYTHON)/simulation/params/generator.py $(1) $(3) \
-	  "end-time=$(PARAM_end_$(2))" \
+	  "end-time=$(if $(filter box,$(PARAM_suite_$(2))),$(END_BOX),$(END_SINK))" \
 	  "surface-temperature=$(SURFACE_TEMPERATURE)" \
 	  "surface-pressure=$(SURFACE_PRESSURE)" \
 	  "solver-tolerance=$(SOLVER_TOLERANCE)" \

@@ -257,8 +257,8 @@ def plot_probe_suite(runs, title, out_path, control, reference=None, field="rela
     plt.close(fig)
 
 
-def paper_set(runs, ref, end):
-    return sorted(r for r in runs if f"_Res{ref}_" in r and r.endswith(f"_End{end}"))
+def paper_set(runs, ref):
+    return sorted(r for r in runs if f"_Res{ref}_" in r)
 
 
 def main():
@@ -301,8 +301,8 @@ def main():
     print(f"wrote {len(rows)} rows -> {out_csv}")
 
     figdir = Path(args.fig_dir)
-    box_paper = args.plot_box if args.plot_box is not None else paper_set(box, 5, "1e7")
-    sink_paper = args.plot_sink if args.plot_sink is not None else paper_set(sink, 6, "5e6")
+    box_paper = args.plot_box if args.plot_box is not None else paper_set(box, 5)
+    sink_paper = args.plot_sink if args.plot_sink is not None else paper_set(sink, 6)
     und = next((r for r in box_paper if "_DynpOn_DampNone_" in r), None)
     nod = next((r for r in box_paper if "_DynpOff_DampNone_" in r), None)
     plot_suite(box_paper, "Box 1-reaction: pressure-wave magnitude", figdir / "pressure_waves_box.png", und, reference=nod)

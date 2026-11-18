@@ -1,13 +1,14 @@
 # Paper figure + pipeline plan (2026-11-17; decisions locked)
 
-> UID cutover (2026-11-18, uncommitted work on `agent/initial-benchmark`,
-> updated 2026-11-18: Res4 + End2e6/End1e6 removed, Res7 paper twins added):
+> UID cutover (2026-11-18, `agent/initial-benchmark`):
 > static `simulation/benchmarks/nh_*.prm` are GONE. All benchmarks are now
 > generated configs (`simulation/configs/{uid}.prm` from
 > `simulation/params/templates/NH/`) with UIDs
-> `NH_{Box,Sink}_Dynp{d}_Damp{kind+val}[_Block{b}]_Z{z}_Res{r}_CFL{c}_End{e}`
-> registered in `simulation/local.mk` (40 total: 20 box, 20 sink; paper sets
-> `ID_B1..B6`/`ID_S1..S8` + Res7 twins `ID_B7..B12`/`ID_S9..S16` + scaling).
+> `NH_{Box,Sink}_Dynp{d}_Damp{kind+val}[_Block{b}]_Z{z}_Res{r}_CFL{c}`
+> (no End token; end times are suite constants `END_BOX`/`END_SINK`)
+> registered in `simulation/local.mk` (168 total: damping x Res4-7 x
+> Z_LO/MID/HI; paper sets `ID_B1..B6`/`ID_S1..S8` + Res7 twins
+> `ID_B7..B12`/`ID_S9..S16`).
 > `make benchmarks`/`visualize-benchmarks` and the old derived-prm generators
 > are deleted; use `make models` / `make visualize`.
 > `quantify_pressure_waves.py` is UID-native (per-UID control/nodynp twins).
