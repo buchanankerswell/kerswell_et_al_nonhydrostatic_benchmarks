@@ -28,10 +28,9 @@ FORCE_REPROCESS   := false
 FORCE_REWRITE     := true
 RESULTS_BOX_SUITE  = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_BOX_SUITE))
 RESULTS_SINK_SUITE = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_SINK_SUITE))
-# Plot sets (paper matrix + laptop check) selected from the registered UIDs.
+# Plot sets (paper matrix) selected from the registered UIDs.
 PLOT_BOX_RUNS    = $(filter %_Res5_CFL7e-01_End1e7,$(UIDS_BOX_SUITE))
 PLOT_SINK_RUNS   = $(filter %_Res6_CFL5e-01_End5e6,$(UIDS_SINK_SUITE))
-PLOT_LAPTOP_RUNS = $(filter %_End2e6,$(UIDS_SINK_SUITE))
 # All Barkla NH runs write 21 outputs (0-20). Sync init + crossing + peak + last.
 TIMESTEPS_SYNC   := 000 002 004 006 008 012 016 019 020
 FORCE_SYNC       := 0
@@ -39,9 +38,9 @@ FORCE_COMPOSE    := 0
 FORCE_DOWNLOAD   := 0
 ZENODO_DATASET_DOI := TODO-no-dataset-yet
 ZENODO_FILES       := TODO-no-files-yet
-# -1 = last output per model (output counts vary: full 21, laptop 9, test 5).
-TIMESTEPS_MESH_BOX_SUITE  := -1
-TIMESTEPS_MESH_SINK_SUITE := -1
+# Mesh timesteps (init + crossing + peak + last).
+TIMESTEPS_MESH_BOX_SUITE  := 000 002 004 006 008 012 016 019 020
+TIMESTEPS_MESH_SINK_SUITE := 000 002 004 006 008 012 016 019 020
 CHUNK_SIZE := 32
 
 TAG_BOX_SUITE  := box
@@ -85,6 +84,14 @@ ID_B4 := NH_Box_DynpOn_DampBexpl1e20_Z4.44e-04_Res5_CFL7e-01_End1e7
 ID_B5 := NH_Box_DynpOn_DampRel3.156e12_Z4.44e-04_Res5_CFL7e-01_End1e7
 ID_B6 := NH_Box_DynpOn_DampCap1e7_Z4.44e-04_Res5_CFL7e-01_End1e7
 
+# Box high-res twins (Res7, Barkla2): same damping matrix as B1..B6.
+ID_B7  := NH_Box_DynpOn_DampNone_Z4.44e-04_Res7_CFL7e-01_End1e7
+ID_B8  := NH_Box_DynpOff_DampNone_Z4.44e-04_Res7_CFL7e-01_End1e7
+ID_B9  := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res7_CFL7e-01_End1e7
+ID_B10 := NH_Box_DynpOn_DampBexpl1e20_Z4.44e-04_Res7_CFL7e-01_End1e7
+ID_B11 := NH_Box_DynpOn_DampRel3.156e12_Z4.44e-04_Res7_CFL7e-01_End1e7
+ID_B12 := NH_Box_DynpOn_DampCap1e7_Z4.44e-04_Res7_CFL7e-01_End1e7
+
 ID_S1 := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
 ID_S2 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
 ID_S3 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
@@ -94,9 +101,15 @@ ID_S6 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
 ID_S7 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
 ID_S8 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res6_CFL5e-01_End5e6
 
-# Local-only smoke/config tests, not paper results. Must match local.mk.
-ID_STEST    := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res4_CFL5e-01_End1e6
-ID_SNOBLOCK := NH_Sink_DynpOn_DampNone_Block0_Z4.44e-04_Res4_CFL5e-01_End1e6
+# Sink high-res twins (Res7, Barkla2): same damping matrix as S1..S8.
+ID_S9  := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
+ID_S10 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
+ID_S11 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
+ID_S12 := NH_Sink_DynpOn_DampBimpl1e20_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
+ID_S13 := NH_Sink_DynpOn_DampBexpl1e19_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
+ID_S14 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
+ID_S15 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
+ID_S16 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res7_CFL5e-01_End5e6
 
 # Visualization scope (can edit)
 VIS_ALL            := false
@@ -105,8 +118,8 @@ VIS_ALL_SINK_SUITE := $(VIS_ALL)
 
 VIS_ON := true yes 1
 
-VIS_IDS_BOX_SUITE  := $(ID_B1) $(ID_B2) $(ID_B3) $(ID_B4) $(ID_B5) $(ID_B6)
-VIS_IDS_SINK_SUITE := $(ID_S1) $(ID_S2) $(ID_S3) $(ID_S4) $(ID_S5) $(ID_S6) $(ID_S7) $(ID_S8) $(ID_STEST) $(ID_SNOBLOCK)
+VIS_IDS_BOX_SUITE  := $(ID_B1) $(ID_B2) $(ID_B3) $(ID_B4) $(ID_B5) $(ID_B6) $(ID_B7) $(ID_B8) $(ID_B9) $(ID_B10) $(ID_B11) $(ID_B12)
+VIS_IDS_SINK_SUITE := $(ID_S1) $(ID_S2) $(ID_S3) $(ID_S4) $(ID_S5) $(ID_S6) $(ID_S7) $(ID_S8) $(ID_S9) $(ID_S10) $(ID_S11) $(ID_S12) $(ID_S13) $(ID_S14) $(ID_S15) $(ID_S16)
 
 VIS_MODELS_BOX_SUITE  = $(if $(filter $(VIS_ON),$(VIS_ALL_BOX_SUITE)),$(notdir $(RESULTS_BOX_SUITE)),$(VIS_IDS_BOX_SUITE))
 VIS_MODELS_SINK_SUITE = $(if $(filter $(VIS_ON),$(VIS_ALL_SINK_SUITE)),$(notdir $(RESULTS_SINK_SUITE)),$(VIS_IDS_SINK_SUITE))
@@ -164,6 +177,13 @@ TRANSITION_Y_OL_WD := 6.408e+05
 NOMINAL_410_BOX     := 373100
 NOMINAL_410_SINK400 := 355700
 NOMINAL_410_SINK0   := 373100
+
+# Representative-trace x per suite (m, model coords). Both suites are
+# isothermal, so anomaly-following degenerates to the far field; use fixed
+# vertical traces instead: box domain centre, sink block centre (150 km wide
+# block at x in [425, 575] km, centre 500 km; also the domain centre).
+TRACE_X_BOX  := 150000
+TRACE_X_SINK := 500000
 
 # Point-values probes (x, y in model m; y = 1e6 - depth). P0 at 364.2 km
 # depth samples the pre-front olivine just above the runtime equilibrium

@@ -51,6 +51,12 @@ def parse_arguments() -> Namespace:
         default=None,
         help="Runtime-adiabat 410 nominal depth [m]; supersedes profile + depth-corr for X_wd when given.",
     )
+    parser.add_argument(
+        "--trace-x",
+        type=float,
+        default=None,
+        help="Fixed representative-trace x [m]; vertical trace for isothermal suites. Overrides anomaly following.",
+    )
     parser.add_argument("--mode", type=str, choices=["postprocess", "visualize", "full"], default="full", help="Pipeline mode.")
     parser.add_argument("--save-csv", type=str2bool, default=True, help="Save structure data to csv.")
     parser.add_argument("--force-reprocess", type=str2bool, default=False, help="Force reprocessing and overwriting of cache.")
@@ -113,6 +119,8 @@ def main():
                 cmd += ["--visualize-ids", *args.visualize_ids]
             if args.nominal_410 is not None:
                 cmd += [f"--nominal-410={args.nominal_410}"]
+            if args.trace_x is not None:
+                cmd += [f"--trace-x={args.trace_x}"]
             cmd += ["--suppress-artifact=true", f"--chunk={idx + 1}/{n_chunks}"]
             subprocess.run(cmd, check=True)
         if args.mode in ("postprocess", "full"):
@@ -208,7 +216,15 @@ def main():
     chunk_tag = f"Chunk {args.chunk}: " if args.chunk else ""
     if mode == "postprocess":
         log_info(f"{chunk_tag}{len(pvtu_in_dirs)} models")
-        pipeline = PostProcessingPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity, args.suite_tag)
+        pipeline = PostProcessingPipeline(
+            config=plot_config,
+            pvtu_in_dirs=pvtu_in_dirs,
+            tsteps=tsteps,
+            trans_data=trans_data,
+            verbosity=verbosity,
+            suite_tag=args.suite_tag,
+            trace_x=args.trace_x,
+        )
 
         transition_summary, seismic_profile_cache = pipeline.run(transition_summary_path, seismic_profile_cache_path, force_reprocess)
         pipeline.export_transition_summary(csv_path, transition_summary)
@@ -220,17 +236,42 @@ def main():
     elif mode == "visualize":
         if not transition_summary_path.exists() or force_reprocess:
             log_info(f"{chunk_tag}{len(pvtu_in_dirs)} models")
-            post_pipeline = PostProcessingPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity, args.suite_tag)
+            post_pipeline = PostProcessingPipeline(
+                config=plot_config,
+                pvtu_in_dirs=pvtu_in_dirs,
+                tsteps=tsteps,
+                trans_data=trans_data,
+                verbosity=verbosity,
+                suite_tag=args.suite_tag,
+                trace_x=args.trace_x,
+            )
             transition_summary, seismic_profile_cache = post_pipeline.run(transition_summary_path, seismic_profile_cache_path, force_reprocess)
         else:
             transition_summary = PlottingPipeline.load_cache(transition_summary_path)
 
-        plot_pipeline = PlottingPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity, args.suite_tag, transition_summary)
+        plot_pipeline = PlottingPipeline(
+            config=plot_config,
+            pvtu_in_dirs=pvtu_in_dirs,
+            tsteps=tsteps,
+            trans_data=trans_data,
+            verbosity=verbosity,
+            suite_tag=args.suite_tag,
+            trace_x=args.trace_x,
+            cache=transition_summary,
+        )
         plot_pipeline.run(fields_to_plot, chunk_vis_ids)
 
     else:
         log_info(f"{chunk_tag}{len(pvtu_in_dirs)} models")
-        pipeline = FullPipeline(plot_config, pvtu_in_dirs, tsteps, trans_data, verbosity, args.suite_tag)
+        pipeline = FullPipeline(
+            config=plot_config,
+            pvtu_in_dirs=pvtu_in_dirs,
+            tsteps=tsteps,
+            trans_data=trans_data,
+            verbosity=verbosity,
+            suite_tag=args.suite_tag,
+            trace_x=args.trace_x,
+        )
         pipeline.run(
             fields_to_plot,
             fields_for_seismic_profiles,

@@ -32,9 +32,7 @@ def short_name(run):
     kind, val = (m.group(1), m.group(2)) if m else (run, "")
     mres = re.search(r"_Res(\d+)", run)
     res = f"res{mres.group(1)}" if mres else ""
-    mend = re.search(r"_End([\d.e]+)", run)
-    tag = {"1e6": "test", "2e6": "laptop"}.get(mend.group(1), "") if mend else ""
-    return f"{DAMP_KIND_LABEL.get(kind, kind)} {val} [{res}{tag}]".strip()
+    return f"{DAMP_KIND_LABEL.get(kind, kind)} {val} [{res}]".strip()
 
 
 def load_timeseries(run):

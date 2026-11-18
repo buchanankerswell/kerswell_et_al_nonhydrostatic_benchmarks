@@ -103,13 +103,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--plot-box", nargs="*", default=[])
     ap.add_argument("--plot-sink", nargs="*", default=[])
-    ap.add_argument("--plot-laptop", nargs="*", default=[])
     ap.add_argument("--fig-dir", default="figs/benchmarks")
     args = ap.parse_args()
     figdir = Path(args.fig_dir)
     plot_set(args.plot_box, "Box 1-reaction: depth-average final profiles", figdir / "depth_average_box.png")
     plot_set(args.plot_sink, "Sink block (full-res): depth-average final profiles", figdir / "depth_average_sink.png")
-    plot_set(args.plot_laptop, "Sink block (laptop): depth-average final profiles", figdir / "depth_average_sink_laptop.png")
 
 
 if __name__ == "__main__":

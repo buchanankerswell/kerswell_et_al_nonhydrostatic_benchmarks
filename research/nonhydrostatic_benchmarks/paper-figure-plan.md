@@ -1,19 +1,18 @@
 # Paper figure + pipeline plan (2026-11-17; decisions locked)
 
-> UID cutover (2026-11-18, uncommitted work on `agent/initial-benchmark`):
+> UID cutover (2026-11-18, uncommitted work on `agent/initial-benchmark`,
+> updated 2026-11-18: Res4 + End2e6/End1e6 removed, Res7 paper twins added):
 > static `simulation/benchmarks/nh_*.prm` are GONE. All benchmarks are now
 > generated configs (`simulation/configs/{uid}.prm` from
 > `simulation/params/templates/NH/`) with UIDs
 > `NH_{Box,Sink}_Dynp{d}_Damp{kind+val}[_Block{b}]_Z{z}_Res{r}_CFL{c}_End{e}`
-> registered in `simulation/local.mk` (42 total: 20 box, 22 sink; paper sets
-> `ID_B1..B6`/`ID_S1..S8` + test/noblock + laptop + scaling). Old names map:
-> `nh_box_1rxn_undamped` → `NH_Box_DynpOn_DampNone_Z4.44e-04_Res5_CFL7e-01_End1e7`,
-> `nh_sink_block_undamped_laptop` → `..._Res5_CFL5e-01_End2e6`, etc.
-> (damping token in UID). `make benchmarks`/`visualize-benchmarks` and the
-> laptop/scaling generators are deleted; use `make models` / `make visualize`.
+> registered in `simulation/local.mk` (40 total: 20 box, 20 sink; paper sets
+> `ID_B1..B6`/`ID_S1..S8` + Res7 twins `ID_B7..B12`/`ID_S9..S16` + scaling).
+> `make benchmarks`/`visualize-benchmarks` and the old derived-prm generators
+> are deleted; use `make models` / `make visualize`.
 > `quantify_pressure_waves.py` is UID-native (per-UID control/nodynp twins).
-> Object dirs `simulation/results/NH_*` do not exist yet — rerun/rename needed
-> before figures regenerate.
+> Fixed-x representative traces per suite (`TRACE_X_*`); runtime-adiabat
+> nominals (`NOMINAL_410_*`). R structure panels color by Res.
 
 ## Scientific questions
 1. How does nonadiabatic (dynamic) pressure affect phase transformations and

@@ -10,7 +10,7 @@ DynpOff). Positive reduction = damped; positive error = overshoot vs equilibrium
 Usage (repo root):
   PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
     python/benchmarks/quantify_pressure_waves.py --runs <uid ...> \\
-      --plot-box <uid ...> --plot-sink <uid ...> --plot-laptop <uid ...> \\
+      --plot-box <uid ...> --plot-sink <uid ...> \\
       --out-csv simulation/results/pressure-wave-summary.csv --fig-dir figs/benchmarks
 """
 
@@ -39,9 +39,7 @@ def short(run):
     dyn = f" {mo.group(1)}" if mo else ""
     mref = re.search(r"_Res(\d+)", run)
     ref = f"r{mref.group(1)}" if mref else ""
-    mend = re.search(r"_End([\d.e]+)", run)
-    tag = {"1e6": "test", "2e6": "laptop"}.get(mend.group(1), "") if mend else ""
-    return f"{damp}{dyn} [{ref}{tag}]"
+    return f"{damp}{dyn} [{ref}]"
 
 
 def control_twin(run):
@@ -268,7 +266,6 @@ def main():
     ap.add_argument("--runs", nargs="*", default=None, help="UIDs to include in the CSV (default: discover NH_* runs)")
     ap.add_argument("--plot-box", nargs="*", default=None)
     ap.add_argument("--plot-sink", nargs="*", default=None)
-    ap.add_argument("--plot-laptop", nargs="*", default=None)
     ap.add_argument("--out-csv", default="simulation/results/pressure-wave-summary.csv")
     ap.add_argument("--fig-dir", default="figs/benchmarks")
     args = ap.parse_args()
@@ -306,19 +303,15 @@ def main():
     figdir = Path(args.fig_dir)
     box_paper = args.plot_box if args.plot_box is not None else paper_set(box, 5, "1e7")
     sink_paper = args.plot_sink if args.plot_sink is not None else paper_set(sink, 6, "5e6")
-    sink_laptop = args.plot_laptop if args.plot_laptop is not None else paper_set(sink, 5, "2e6")
     und = next((r for r in box_paper if "_DynpOn_DampNone_" in r), None)
     nod = next((r for r in box_paper if "_DynpOff_DampNone_" in r), None)
     plot_suite(box_paper, "Box 1-reaction: pressure-wave magnitude", figdir / "pressure_waves_box.png", und, reference=nod)
     und = next((r for r in sink_paper if "_DynpOn_DampNone_" in r), None)
     nod = next((r for r in sink_paper if "_DynpOff_DampNone_" in r), None)
     plot_suite(sink_paper, "Sink block (full-res): pressure-wave magnitude", figdir / "pressure_waves_sink.png", und, reference=nod)
-    und = next((r for r in sink_laptop if "_DynpOn_DampNone_" in r), None)
-    plot_suite(sink_laptop, "Sink block (laptop): pressure-wave magnitude", figdir / "pressure_waves_sink_laptop.png", und)
     for runs, tag, title in (
         (box_paper, "box", "Box 1-reaction"),
         (sink_paper, "sink", "Sink block (full-res)"),
-        (sink_laptop, "sink_laptop", "Sink block (laptop)"),
     ):
         und = next((r for r in runs if "_DynpOn_DampNone_" in r), None)
         nod = next((r for r in runs if "_DynpOff_DampNone_" in r), None)

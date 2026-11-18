@@ -59,13 +59,11 @@ pressure-waves: timeseries
 	  --runs $(UIDS_BOX_SUITE) $(UIDS_SINK_SUITE) \
 	  --plot-box $(PLOT_BOX_RUNS) \
 	  --plot-sink $(PLOT_SINK_RUNS) \
-	  --plot-laptop $(PLOT_LAPTOP_RUNS) \
 	  --out-csv $(SIMULATION)/results/pressure-wave-summary.csv \
 	  --fig-dir $(FIGS)/benchmarks
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_average.py \
 	  --plot-box $(PLOT_BOX_RUNS) \
 	  --plot-sink $(PLOT_SINK_RUNS) \
-	  --plot-laptop $(PLOT_LAPTOP_RUNS) \
 	  --fig-dir $(FIGS)/benchmarks
 	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
@@ -92,6 +90,7 @@ meshes-box-suite:
 	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
 	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
 	  --nominal-410=$(NOMINAL_410_BOX) \
+	  --trace-x=$(TRACE_X_BOX) \
 	  --mode=$(POSTPROCESS_MODE) \
 	  --save-csv=$(SAVE_CSV) \
 	  --force-reprocess=$(FORCE_REPROCESS) \
@@ -99,9 +98,9 @@ meshes-box-suite:
 	  --chunk-size=$(CHUNK_SIZE)
 
 meshes-sink-suite:
-	@$(eval MODELS400 := $(foreach m,$(MODELS_SINK_SUITE),$(if $(findstring _Block400_,$(m)),$(m))))
-	@$(eval DIRS400 := $(addprefix $(SIMULATION)/results/, $(MODELS400)))
-	@$(eval VIS400 := $(foreach m,$(VIS_MODELS_SINK_SUITE),$(if $(findstring _Block400_,$(m)),$(m))))
+	@$(eval MODELS := $(MODELS_SINK_SUITE))
+	@$(eval DIRS := $(addprefix $(SIMULATION)/results/, $(MODELS)))
+	@$(eval VIS := $(VIS_MODELS_SINK_SUITE))
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/main.py \
 	  $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
 	  $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
@@ -110,40 +109,16 @@ meshes-sink-suite:
 	  $(SURFACE_PRESSURE) \
 	  $(FIGS_SIM_SINK_SUITE) \
 	  $(SIMULATION)/results \
-	  --model-ids $(MODELS400) \
+	  --model-ids $(MODELS) \
 	  --timesteps $(TIMESTEPS_MESH_SINK_SUITE) \
 	  --suite-tag $(TAG_SINK_SUITE) \
-	  --in-dirs $(DIRS400) \
-	  --visualize-ids $(VIS400) \
+	  --in-dirs $(DIRS) \
+	  --visualize-ids $(VIS) \
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
 	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
 	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
 	  --nominal-410=$(NOMINAL_410_SINK400) \
-	  --mode=$(POSTPROCESS_MODE) \
-	  --save-csv=$(SAVE_CSV) \
-	  --force-reprocess=$(FORCE_REPROCESS) \
-	  --verbosity=$(POSTPROCESS_VERBOSITY) \
-	  --chunk-size=$(CHUNK_SIZE)
-	@$(eval MODELS0 := $(foreach m,$(MODELS_SINK_SUITE),$(if $(findstring _Block0_,$(m)),$(m))))
-	@$(eval DIRS0 := $(addprefix $(SIMULATION)/results/, $(MODELS0)))
-	@$(eval VIS0 := $(foreach m,$(VIS_MODELS_SINK_SUITE),$(if $(findstring _Block0_,$(m)),$(m))))
-	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/main.py \
-	  $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
-	  $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
-	  $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
-	  $(MODEL_HEIGHT_BOX) \
-	  $(SURFACE_PRESSURE) \
-	  $(FIGS_SIM_SINK_SUITE) \
-	  $(SIMULATION)/results \
-	  --model-ids $(MODELS0) \
-	  --timesteps $(TIMESTEPS_MESH_SINK_SUITE) \
-	  --suite-tag $(TAG_SINK_SUITE) \
-	  --in-dirs $(DIRS0) \
-	  --visualize-ids $(VIS0) \
-	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
-	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
-	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
-	  --nominal-410=$(NOMINAL_410_SINK0) \
+	  --trace-x=$(TRACE_X_SINK) \
 	  --mode=$(POSTPROCESS_MODE) \
 	  --save-csv=$(SAVE_CSV) \
 	  --force-reprocess=$(FORCE_REPROCESS) \

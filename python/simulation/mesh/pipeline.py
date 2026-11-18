@@ -34,6 +34,7 @@ class BasePipeline:
     trans_data: dict[str, PhaseTransition]
     verbosity: int = 0
     suite_tag: str = ""
+    trace_x: float | None = None
 
     def __post_init__(self) -> None:
         self.preprocessor = MeshPreProcessor(self.verbosity)
@@ -635,7 +636,28 @@ class PostProcessingPipeline(BasePipeline):
         The trace follows the coldest slab material. At each slice the search is confined to a neighbourhood of
         the previous position, so the trace slides laterally with the feature (by at most
         ``x_step_limit`` per slice) instead of hopping onto an unrelated one.
+
+        Isothermal suites (box/sink) pass a fixed ``trace_x`` instead: the trace is the
+        vertical line nearest that x at every depth, ignoring the anomaly fields.
         """
+
+        all_fields = list(mesh.point_data.keys())
+        representative_trace = {f: {"depths": depth_grid.copy(), "values": np.full(depth_grid.shape, np.nan)} for f in all_fields + ["trace_x"]}
+
+        if self.trace_x is not None:
+            for idx, y_val in enumerate(y_grid):
+                slice_poly = mesh.slice(normal="y", origin=(0, y_val, 0))
+                if slice_poly.n_points == 0:
+                    continue
+                slice_x = slice_poly.points[:, 0]
+                active_idx = int(np.argmin(np.abs(slice_x - self.trace_x)))
+                representative_trace["trace_x"]["values"][idx] = slice_x[active_idx]
+                for f in all_fields:
+                    val = slice_poly.point_data[f][active_idx]
+                    scalar = np.linalg.norm(val) if np.ndim(val) > 0 else float(val)
+                    scale = self.config.scaling_map.get(f, 1.0)
+                    representative_trace[f]["values"][idx] = scalar * scale
+            return representative_trace
 
         anomaly_full = mesh.point_data[target_field]
         idx_sig = np.where(np.abs(anomaly_full) > anomaly_threshold)[0]
@@ -883,7 +905,15 @@ class FullPipeline(BasePipeline):
         """
         out_profile_dir = out_profile_dir or Path("postprocess_data")
 
-        post_processor = PostProcessingPipeline(self.config, self.pvtu_in_dirs, self.tsteps, self.trans_data, self.verbosity, self.suite_tag)
+        post_processor = PostProcessingPipeline(
+            config=self.config,
+            pvtu_in_dirs=self.pvtu_in_dirs,
+            tsteps=self.tsteps,
+            trans_data=self.trans_data,
+            verbosity=self.verbosity,
+            suite_tag=self.suite_tag,
+            trace_x=self.trace_x,
+        )
         transition_summary_cache, seismic_profile_cache = post_processor.run(
             transition_summary_cache_path, seismic_profile_cache_path, force_reprocess
         )
@@ -896,7 +926,14 @@ class FullPipeline(BasePipeline):
                 post_processor.export_seismic_profiles(out_profile_dir, fields_for_seismic_profiles, seismic_profile_cache)
 
         plotter = PlottingPipeline(
-            self.config, self.pvtu_in_dirs, self.tsteps, self.trans_data, self.verbosity, self.suite_tag, transition_summary_cache
+            config=self.config,
+            pvtu_in_dirs=self.pvtu_in_dirs,
+            tsteps=self.tsteps,
+            trans_data=self.trans_data,
+            verbosity=self.verbosity,
+            suite_tag=self.suite_tag,
+            trace_x=self.trace_x,
+            cache=transition_summary_cache,
         )
         plotter._pvtu_file_cache = post_processor._pvtu_file_cache
         plotter.run(fields_to_plot, plot_ids)

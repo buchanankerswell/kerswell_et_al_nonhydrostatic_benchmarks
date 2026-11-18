@@ -6,6 +6,7 @@ suite_lab_box <- "Box"
 suite_lab_sink <- "Sink-block"
 suite_pal <- c("Box" = "#E41A1C", "Sink-block" = "#377EB8")
 suite_shapes <- c("Box" = 21, "Sink-block" = 22)
+res_pal <- c("4" = "#999999", "5" = "#FDB462", "6" = "#E41A1C", "7" = "#984EA3")
 
 damp_kind <- function(damp) {
   str_extract(damp, "^[A-Za-z]+")
@@ -35,6 +36,7 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
         suite == "sink" ~ suite_lab_sink,
         TRUE ~ suite
       ), levels = c(suite_lab_box, suite_lab_sink)),
+      res = factor(res, levels = c(4, 5, 6, 7)),
       kind = damp_kind(damp),
       kind_ord = factor(kind, levels = c("None", "Bimpl", "Bexpl", "Rel", "Cap")),
       label = damp_label(damp, dynp)
@@ -46,11 +48,11 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
 
 structure_panel <- function(data, y_var, y_label, show_legend = FALSE) {
   ggplot(data, aes(x = label, y = !!sym(y_var))) +
-    geom_point(aes(fill = suite, shape = suite), size = 4, color = "black", stroke = 0.5, alpha = 0.9, show.legend = show_legend) +
-    scale_fill_manual(values = suite_pal, drop = FALSE) +
-    scale_shape_manual(values = suite_shapes, drop = FALSE) +
-    guides(fill = guide_legend(override.aes = list(size = 3.5))) +
-    labs(y = y_label, x = NULL, fill = NULL, shape = NULL) +
+    geom_point(aes(fill = res, shape = suite), size = 4, color = "black", stroke = 0.5, alpha = 0.9, show.legend = show_legend) +
+    scale_fill_manual(values = res_pal, drop = FALSE, name = "Res") +
+    scale_shape_manual(values = suite_shapes, drop = FALSE, name = "Suite") +
+    guides(fill = guide_legend(override.aes = list(size = 3.5, shape = 21))) +
+    labs(y = y_label, x = NULL, fill = "Res", shape = "Suite") +
     theme_bw(base_size = 14) +
     theme_bench() +
     theme(
