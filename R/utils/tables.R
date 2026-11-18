@@ -23,15 +23,17 @@ write_postprocessed_summary_table <- function(postprocessed_csv, out_dir, quiet 
         suite == "sink" ~ "Sink",
         TRUE ~ suite
       ),
-      damp_ord = factor(damp, levels = unique(damp[order(dynp, damp)]))
+      damp_num = suppressWarnings(as.numeric(str_extract(damp, "[\\d.e+-]+$"))),
+      damp_ord = factor(damp, levels = unique(damp[order(dynp, damp, damp_num, res, z)]))
     ) |>
-    arrange(suite_abbr, dynp, damp_ord, res) |>
+    arrange(suite_abbr, dynp, damp_ord, damp_num, res, z) |>
     select(
       Suite = suite_abbr,
       Model = model_id,
       Damping = damp,
       `Dynp on` = dynp,
       Res = res,
+      Z = z,
       `$\\delta z_{410}$` = disp410_km,
       `$\\delta w_{410}$` = width410_km,
       `$\\dot{X}_\\mathrm{max}$` = rate410,

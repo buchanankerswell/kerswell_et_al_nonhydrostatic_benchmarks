@@ -52,17 +52,17 @@ for prm_path in "${CONFIG_LIST[@]}"; do
   LOCAL_SOLUTION_DIR="${LOCAL_RESULTS_DIR}/solution"
   mkdir -p "$LOCAL_SOLUTION_DIR"
 
-  # Slabs sync at 000 and 100 Ma.
   # Skip models whose target timesteps are already present locally.
   # Set FORCE_SYNC=1 to re-sync everything.
   if [[ "${FORCE_SYNC:-0}" != "1" ]]; then
     model_complete=true
     for tstep in "${MODEL_TIMESTEPS[@]}"; do
-      if ! compgen -G "$LOCAL_SOLUTION_DIR/solution-00*${tstep}.pvtu" >/dev/null; then
+      padded="$(printf '%05d' "$((10#$tstep))")"
+      if ! compgen -G "$LOCAL_SOLUTION_DIR/solution-${padded}.pvtu" >/dev/null; then
         model_complete=false
         break
       fi
-      if ! compgen -G "$LOCAL_SOLUTION_DIR/solution-00*${tstep}.*.vtu" >/dev/null; then
+      if ! compgen -G "$LOCAL_SOLUTION_DIR/solution-${padded}.*.vtu" >/dev/null; then
         model_complete=false
         break
       fi
@@ -77,8 +77,9 @@ for prm_path in "${CONFIG_LIST[@]}"; do
   log_info "[$COUNT/$TOTAL] Syncing $model_name"
   RSYNC_FILTERS=()
   for tstep in "${MODEL_TIMESTEPS[@]}"; do
-    RSYNC_FILTERS+=(--include="solution-00*${tstep}.*.vtu")
-    RSYNC_FILTERS+=(--include="solution-00*${tstep}.pvtu")
+    padded="$(printf '%05d' "$((10#$tstep))")"
+    RSYNC_FILTERS+=(--include="solution-${padded}.*.vtu")
+    RSYNC_FILTERS+=(--include="solution-${padded}.pvtu")
   done
   RSYNC_FILTERS+=(--include="*/" --exclude="*") # include dirs, exclude everything else
 

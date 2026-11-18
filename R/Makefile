@@ -4,7 +4,7 @@
 # Include definitions
 include $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../project.mk)
 
-CLEAN := $(FIGS_STRUCTURE) $(FIGS_SEISMIC) $(POSTPROCESSED_CSV) $(POSTPROCESSED_MD)
+CLEAN := $(FIGS_STRUCTURE) $(FIGS_SEISMIC) $(POSTPROCESSED_MD)
 
 .PHONY: all visualize tables adiabat simulation seismic clean help
 

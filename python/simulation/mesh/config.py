@@ -129,72 +129,6 @@ _FIELD_DEFAULTS: dict[str, tuple] = {
         True,
         True,
     ),
-    "stress_second_invariant": (
-        "sigma-ii",
-        "Reds",
-        "auto",
-        "$\\sigma_{II}$ (MPa)",
-        "%.0f",
-        1e-6,
-        False,
-        False,
-        False,
-    ),
-    "strain_rate": (
-        "strain-rate",
-        "BuPu_r",
-        "auto",
-        "Log $\\dot{\\epsilon}_{II}$ (1/s)",
-        "%.1f",
-        3.154e13,
-        False,
-        False,
-        False,
-    ),
-    "X_ol": (
-        "X-ol",
-        "GnBu",
-        (0.0, 1.0),
-        "X ol",
-        "%.1f",
-        1,
-        True,
-        True,
-        True,
-    ),
-    "X_wd": (
-        "X-wd",
-        "GnBu",
-        (0.0, 1.0),
-        "X wd",
-        "%.1f",
-        1,
-        True,
-        True,
-        True,
-    ),
-    "X_ri": (
-        "X-ri",
-        "GnBu",
-        (0.0, 1.0),
-        "X ri",
-        "%.1f",
-        1,
-        True,
-        True,
-        True,
-    ),
-    "X_ps": (
-        "X-ps",
-        "GnBu",
-        (0.0, 1.0),
-        "X ps",
-        "%.1f",
-        1,
-        True,
-        True,
-        True,
-    ),
     "xi_ol_wd": (
         "xi-ol-wd",
         "GnBu",
@@ -206,121 +140,11 @@ _FIELD_DEFAULTS: dict[str, tuple] = {
         True,
         True,
     ),
-    "xi_wd_ri": (
-        "xi-wd-ri",
-        "GnBu",
-        (0.0, 1.0),
-        "$\\xi$ wd-ri",
-        "%.1f",
-        1,
-        False,
-        True,
-        True,
-    ),
-    "xi_ri_ps": (
-        "xi-ri-ps",
-        "GnBu",
-        (0.0, 1.0),
-        "$\\xi$ ri-ps",
-        "%.1f",
-        1,
-        False,
-        True,
-        True,
-    ),
-    "arrhenius_ol_wd": (
-        "arrhenius-ol-wd",
-        "bone_r",
-        "auto",
-        "Log Arrhenius term ol-wd",
-        "%.1f",
-        1,
-        False,
-        False,
-        False,
-    ),
-    "arrhenius_wd_ri": (
-        "arrhenius-wd-ri",
-        "bone_r",
-        "auto",
-        "Log Arrhenius term wd-ri",
-        "%.1f",
-        1,
-        False,
-        False,
-        False,
-    ),
-    "arrhenius_ri_ps": (
-        "arrhenius-ri-ps",
-        "bone_r",
-        "auto",
-        "Log Arrhenius term ri-ps",
-        "%.1f",
-        1,
-        False,
-        False,
-        False,
-    ),
-    "thermodynamic_ol_wd": (
-        "thermodynamic-ol-wd",
-        "PRGn_r",
-        (-1.0, 1.0),
-        "Thermodynamic term ol-wd",
-        "%.1f",
-        1,
-        False,
-        False,
-        False,
-    ),
-    "thermodynamic_wd_ri": (
-        "thermodynamic-wd-ri",
-        "PRGn_r",
-        (-1.0, 1.0),
-        "Thermodynamic term wd-ri",
-        "%.1f",
-        1,
-        False,
-        False,
-        False,
-    ),
-    "thermodynamic_ri_ps": (
-        "thermodynamic-ri-ps",
-        "PRGn_r",
-        "auto",
-        "Thermodynamic term ri-ps",
-        "%.0e",
-        1,
-        False,
-        False,
-        False,
-    ),
     "reaction_rate_C0": (
         "reaction-rate-ol-wd",
         "RdGy_r",
         "auto",
         "Log $\\dot{X}$ ol-wd (1/Ma)",
-        "%.2f",
-        3.154e13,
-        True,
-        True,
-        True,
-    ),
-    "reaction_rate_C1": (
-        "reaction-rate-wd-ri",
-        "RdGy_r",
-        "auto",
-        "Log $\\dot{X}$ wd-ri (1/Ma)",
-        "%.2f",
-        3.154e13,
-        True,
-        True,
-        True,
-    ),
-    "reaction_rate_C2": (
-        "reaction-rate-ri-ps",
-        "RdGy_r",
-        "auto",
-        "Log $\\dot{X}$ ri-ps (1/Ma)",
         "%.2f",
         3.154e13,
         True,
@@ -340,19 +164,15 @@ class MeshConfig:
     construction time. All six field maps share identical keys, derived from
     the same source table.
 
-    Plotting flags (draw_X_*_contours) are read by MeshPlotter via
-    _PHASE_CONTOUR_MAP. The scale_bar_enabled flag is checked by plot_mesh
-    before calling _add_scale_bar.
+    Plotting flags (transition_contours_map per field) are read by MeshPlotter.
+    The scale_bar_enabled flag is checked by plot_mesh before calling
+    _add_scale_bar.
 
     plot_rcParams is applied to matplotlib.rcParams in __post_init__ so all
     figures produced in the session inherit the configured style.
     """
 
-    # Phase contour toggles (read by MeshPlotter._PHASE_CONTOUR_MAP)
-    draw_X_ol_contours: bool = True
-    draw_X_wd_contours: bool = False
-    draw_X_ri_contours: bool = False
-    draw_X_ps_contours: bool = True
+    # Phase contour color for the measured-transition overlays
     transition_contour_color: str = "black"
 
     # Per-field display maps (populated from _FIELD_DEFAULTS if empty)
@@ -377,13 +197,13 @@ class MeshConfig:
     cbar_position: list[float] = field(default_factory=lambda: [0.20, 0.12])
 
     # Output / render settings
-    default_fig_dir: Path = Path("figs/simulation")
+    default_fig_dir: Path = Path("figs")
     plotter_window_size: list[int] = field(default_factory=lambda: [1920, 1920])
     screenshot_dpi: tuple[int, int] = field(default_factory=lambda: (330, 330))  # passed to PIL Image.save
 
-    # Camera settings
-    camera_y_shift_factor: float = -0.15
-    camera_zoom_factor: float = 1.95
+    # Camera settings (framing tuned for the narrow/square bench domains)
+    camera_y_shift_factor: float = -0.225
+    camera_zoom_factor: float = 2.925
 
     # Scale bar settings
     scale_bar_enabled: bool = True

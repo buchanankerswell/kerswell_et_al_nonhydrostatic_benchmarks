@@ -3,7 +3,7 @@ import pickle
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Generator
+from typing import Generator, NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -16,16 +16,25 @@ from preprocess import MeshPreProcessor
 from simulation.params.transitions import PhaseTransition
 
 
+class TransInfo(NamedTuple):
+    """One measured phase transition: rate field, cache keys, and runtime geometry."""
+
+    rate_field: str
+    x_key: str
+    disp_key: str
+    width_key: str
+    trans_y: float
+    rxn_depth: float
+
+
 @dataclass
 class BasePipeline:
     """
     Shared infrastructure for all pipeline variants.
 
-    Provides file discovery, mesh loading, timestep filtering, and the phase-transition metadata tables used by both post-processing and plotting.
+    Provides file discovery, mesh loading, timestep filtering, and the phase-transition metadata table used by both post-processing and plotting.
 
-    suite_tag dispatches benchmark geometry: 'box'/'sink' use the single
-    NH reaction (xi_ol_wd at 410 geometry); all other tags keep the slab
-    X_wd (410) + X_ps (660) transitions. Slab behavior is unchanged.
+    Covers the single NH reaction (xi_ol_wd at 410 geometry).
     """
 
     config: MeshConfig
@@ -39,36 +48,16 @@ class BasePipeline:
     def __post_init__(self) -> None:
         self.preprocessor = MeshPreProcessor(self.verbosity)
         self._pvtu_file_cache: dict | None = None
-        if self.suite_tag in ("box", "sink"):
-            self.trans_info: dict = {
-                "xi_ol_wd": (
-                    "reaction_rate_C0",
-                    "profile_x_410",
-                    "displacement_410",
-                    "width_410",
-                    self.trans_data["X_wd"].y,
-                    self.trans_data["X_wd"].depth,
-                ),
-            }
-        else:
-            self.trans_info: dict = {
-                "X_wd": (
-                    "reaction_rate_C0",
-                    "profile_x_410",
-                    "displacement_410",
-                    "width_410",
-                    self.trans_data["X_wd"].y,
-                    self.trans_data["X_wd"].depth,
-                ),
-                "X_ps": (
-                    "reaction_rate_C2",
-                    "profile_x_660",
-                    "displacement_660",
-                    "width_660",
-                    self.trans_data["X_ps"].y,
-                    self.trans_data["X_ps"].depth,
-                ),
-            }
+        self.trans_info: dict = {
+            "xi_ol_wd": TransInfo(
+                "reaction_rate_C0",
+                "profile_x_410",
+                "displacement_410",
+                "width_410",
+                self.trans_data["X_wd"].y,
+                self.trans_data["X_wd"].depth,
+            ),
+        }
 
     def _iter_valid_timesteps(self, pvtu_files: list[Path], timesteps: list[int]) -> Generator[tuple[Path, int], None, None]:
         """
@@ -77,7 +66,6 @@ class BasePipeline:
         Skips sentinel value -1, which marks files whose timestep could not be parsed from the filename.
         A requested -1 means the last output per model (benchmark suites use
         varying output counts, so no single fixed number fits all runs).
-        Slab suites never request -1, so their behavior is unchanged.
         """
         if -1 in self.tsteps and pvtu_files:
             yield pvtu_files[-1], timesteps[-1]
@@ -147,76 +135,6 @@ class BasePipeline:
         model_entries.sort(key=lambda x: self._extract_sort_key(x[0]))
         return dict(model_entries)
 
-    def _get_prams_from_model_uid(self, model_id_str: str) -> tuple[float, float, float, float, float, float, float, float, float, float]:
-        """
-        Parse z_ol_wd, z_wd_ri, z_ri_ps, eta_therm, prescribed_velocity, and prescribed_temperature_anomaly from a model ID string.
-
-        Searches the string for tokens of the form:
-            Zol<val>, Zwd<val>, Zri<val>, EtaTherm<val>, Vel<val>, Temp<Val>
-        where <val> may be in standard or scientific notation (e.g., 1.4e+04).
-
-        The order of parameters and presence of additional fields are ignored.
-        Returns (nan, nan, nan, nan, nan, nan) and warns if any parameter cannot be found or parsed.
-        """
-
-        def extract_float(pattern: str) -> float:
-            match = re.search(pattern, model_id_str)
-            return float(match.group(1)) if match else np.nan
-
-        def extract_str(pattern: str) -> str | None:
-            match = re.search(pattern, model_id_str)
-            return match.group(1) if match else None
-
-        try:
-            z_ol_wd = extract_float(r"Zol([0-9.+\-eE]+)")
-            z_wd_ri = extract_float(r"Zwd([0-9.+\-eE]+)")
-            z_ri_ps = extract_float(r"Zri([0-9.+\-eE]+)")
-            eta_therm = extract_float(r"EtaTherm([0-9.+\-eE]+)")
-            prescribed_velocity = extract_float(r"Vel([0-9.+\-eE]+)")
-            prescribed_temperature_anomaly = extract_float(r"Temp([0-9.+\-eE]+)")
-            eta_phases_raw = extract_str(r"EtaTrans([0-9.+\-eE]+(?:-[0-9.+\-eE]+)*)")
-            eta_phases_values = [float(x) for x in eta_phases_raw.split("-")] if eta_phases_raw else [np.nan] * 4
-            eta_trans_ol_wd = eta_phases_values[1] / eta_phases_values[0]
-            eta_trans_wd_ri = eta_phases_values[2] / eta_phases_values[1]
-            eta_trans_ri_ps = eta_phases_values[3] / eta_phases_values[2]
-            mg_num = extract_float(r"MG([0-9.+\-eE]+)")
-
-            if any(
-                np.isnan(
-                    [
-                        z_ol_wd,
-                        z_wd_ri,
-                        z_ri_ps,
-                        eta_therm,
-                        eta_trans_ol_wd,
-                        eta_trans_wd_ri,
-                        eta_trans_ri_ps,
-                        prescribed_velocity,
-                        prescribed_temperature_anomaly,
-                        mg_num,
-                    ]
-                )
-            ):
-                raise ValueError("Missing one or more parameters")
-
-            return (
-                z_ol_wd,
-                z_wd_ri,
-                z_ri_ps,
-                eta_therm,
-                eta_trans_ol_wd,
-                eta_trans_wd_ri,
-                eta_trans_ri_ps,
-                prescribed_velocity,
-                prescribed_temperature_anomaly,
-                mg_num,
-            )
-
-        except Exception as e:
-            if self.verbosity >= 1:
-                log_warn(f"could not extract parameters from model_id '{model_id_str}': {e}")
-            return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
-
     def _extract_sort_key(self, model_id: str) -> tuple:
         """Return a (prefix, number) sort key so model IDs sort numerically by trailing integer."""
         match = re.match(r"(.*?)(\d+)$", model_id)
@@ -281,31 +199,6 @@ class PostProcessingPipeline(BasePipeline):
         if not force_reprocess and requested and all(transition_summary_cache.get(m) and seismic_profile_cache.get(m) for m in requested):
             return transition_summary_cache, seismic_profile_cache
 
-        is_bench = self.suite_tag in ("box", "sink")
-
-        eta_therm_vals = set()
-        velocity_vals = set()
-        eta_trans_vals = set()
-
-        if not is_bench:
-            for model_id, _ in self._get_ordered_pvtu_files().items():
-                _, _, _, eta_therm, _, _, eta_trans_ri_ps, velocity, _, _ = self._get_prams_from_model_uid(model_id)
-
-                if not np.isnan(eta_therm):
-                    eta_therm_vals.add(eta_therm)
-                if not np.isnan(velocity):
-                    velocity_vals.add(velocity)
-                if not np.isnan(eta_trans_ri_ps):
-                    eta_trans_vals.add(eta_trans_ri_ps)
-
-        velocity_vals = sorted(velocity_vals)
-        eta_therm_vals = sorted(eta_therm_vals)
-        eta_trans_vals = sorted(eta_trans_vals, reverse=True)
-
-        velocity_idx = {v: j for j, v in enumerate(velocity_vals)}
-        eta_therm_idx = {v: i for i, v in enumerate(eta_therm_vals)}
-        eta_trans_idx = {v: k for k, v in enumerate(eta_trans_vals)}
-
         model_items = self._get_ordered_pvtu_files().items()
         pbar = gutter_tqdm(model_items, desc="Postprocessing", unit="model")
         for model_id, (pvtu_files, timesteps) in pbar:
@@ -313,29 +206,6 @@ class PostProcessingPipeline(BasePipeline):
                 if self.verbosity >= 1:
                     log_warn(f"no result files for model: {model_id}")
                 continue
-
-            if is_bench:
-                # NH benchmark UIDs (NH_Box_*/NH_Sink_*) carry the variant in
-                # the name; no slab sweep params to parse.
-                z_ol_wd = z_wd_ri = z_ri_ps = np.nan
-                eta_therm = eta_trans_ol_wd = eta_trans_wd_ri = eta_trans_ri_ps = np.nan
-                velocity = temperature = mg_num = np.nan
-                scenario = 0
-            else:
-                z_ol_wd, z_wd_ri, z_ri_ps, eta_therm, eta_trans_ol_wd, eta_trans_wd_ri, eta_trans_ri_ps, velocity, temperature, mg_num = (
-                    self._get_prams_from_model_uid(model_id)
-                )
-
-                try:
-                    i = velocity_idx[velocity]
-                    j = eta_therm_idx[eta_therm]
-                    k = eta_trans_idx[eta_trans_ri_ps]
-                except Exception as e:
-                    if self.verbosity >= 1:
-                        log_warn(f"could not compute scenario for {model_id}: {e}")
-                    continue
-
-                scenario = k * (len(velocity_vals) * len(eta_therm_vals)) + i * len(eta_therm_vals) + j
 
             transition_summary_cache[model_id] = {}
             seismic_profile_cache[model_id] = {}
@@ -348,20 +218,7 @@ class PostProcessingPipeline(BasePipeline):
                 for field_name in self.config.file_map:
                     self.preprocessor.prepare_mesh(mesh, field_name)
 
-                entry = {
-                    "time": self.preprocessor.get_mesh_time_myr(mesh, model_id, tstep),
-                    "z_ol_wd": z_ol_wd,
-                    "z_wd_ri": z_wd_ri,
-                    "z_ri_ps": z_ri_ps,
-                    "eta_therm": eta_therm,
-                    "eta_trans_ol_wd": eta_trans_ol_wd,
-                    "eta_trans_wd_ri": eta_trans_wd_ri,
-                    "eta_trans_ri_ps": eta_trans_ri_ps,
-                    "prescribed_velocity": velocity,
-                    "prescribed_temperature_anomaly": temperature,
-                    "mg_num": mg_num,
-                    "scenario": scenario,
-                }
+                entry = {"time": self.preprocessor.get_mesh_time_myr(mesh, model_id, tstep)}
 
                 depth_data = mesh.point_data["depth"]
                 d_min, d_max = np.min(depth_data), np.max(depth_data)
@@ -429,17 +286,8 @@ class PostProcessingPipeline(BasePipeline):
             transition_summary_cache, _ = self.run(transition_summary_cache_path, seismic_profile_cache_path, force_reprocess)
 
         float_cols = []
-        scientific_cols = ["z_ol_wd", "z_wd_ri", "z_ri_ps", "prescribed_velocity"]
-        integer_cols = [
-            "time",
-            "eta_therm",
-            "eta_trans_ol_wd",
-            "eta_trans_wd_ri",
-            "eta_trans_ri_ps",
-            "prescribed_temperature_anomaly",
-            "mg_num",
-            "scenario",
-        ]
+        scientific_cols = []
+        integer_cols = ["time"]
 
         for rate_field, x_key, disp_key, width_key, _, _ in self.trans_info.values():
             suffix = x_key.split("_")[-1]
@@ -531,11 +379,11 @@ class PostProcessingPipeline(BasePipeline):
         Args:
             representative_trace: Output of _extract_representative_trace.
             entry:                  Summary dict to populate in-place.
-            phase_field:            Phase fraction field (e.g. 'X_wd').
+            phase_field:            Phase fraction field (e.g. 'xi_ol_wd').
             x_key:                  Cache key for the x_position scalar.
             disp_key:               Cache key for the displacement scalar.
             width_key:              Cache key for the transition width scalar.
-            suffix:                 Short tag used to namespace max-value keys ('410', '660').
+            suffix:                 Short tag used to namespace max-value keys ('410').
             rxn_depth:              Nominal equilibrium reaction depth (m).
             rate_field:             Reaction-rate field whose maximum is also recorded.
         """
@@ -593,8 +441,8 @@ class PostProcessingPipeline(BasePipeline):
         """
         Measure phase transition displacement and width from a pre-sampled trace profile.
 
-        Unlike measure_discontinuity_structure, which scans many vertical columns and picks the best one heuristically, this method accepts a single
-        depth profile that was already sampled along the maximum-thermal-anomaly trace and applies _evaluate_transition_structure directly to it.
+        Applies _evaluate_transition_structure directly to a single depth
+        profile sampled along the representative trace.
 
         Args:
             trace_depths:       Depth coordinates of the trace (m), not necessarily sorted.
@@ -631,14 +479,12 @@ class PostProcessingPipeline(BasePipeline):
         x_step_limit: float = 150e3,
     ) -> dict:
         """
-        Extract the representative vertical trace by following one coherent thermal feature.
-
-        The trace follows the coldest slab material. At each slice the search is confined to a neighbourhood of
-        the previous position, so the trace slides laterally with the feature (by at most
+        Extract the representative vertical trace. With a fixed ``trace_x``
+        (isothermal suites) the trace is the vertical line nearest that x at
+        every depth. Otherwise it follows one coherent thermal feature: at
+        each slice the search is confined to a neighbourhood of the previous
+        position, so the trace slides laterally with the feature (by at most
         ``x_step_limit`` per slice) instead of hopping onto an unrelated one.
-
-        Isothermal suites (box/sink) pass a fixed ``trace_x`` instead: the trace is the
-        vertical line nearest that x at every depth, ignoring the anomaly fields.
         """
 
         all_fields = list(mesh.point_data.keys())
@@ -718,22 +564,9 @@ class PostProcessingPipeline(BasePipeline):
         """
         Flatten the nested cache into a list of row dicts for DataFrame construction.
 
-        Output columns are derived from trans_info so they remain consistent if transitions are added or removed.
+        Output columns are derived from trans_info so they stay consistent if transitions are added or removed.
         """
-        keys = [
-            "time",
-            "z_ol_wd",
-            "z_wd_ri",
-            "z_ri_ps",
-            "eta_therm",
-            "eta_trans_ol_wd",
-            "eta_trans_wd_ri",
-            "eta_trans_ri_ps",
-            "prescribed_velocity",
-            "prescribed_temperature_anomaly",
-            "mg_num",
-            "scenario",
-        ]
+        keys = ["time"]
         for rate_field, x_key, disp_key, width_key, _, _ in self.trans_info.values():
             suffix = x_key.split("_")[-1]
             keys.extend([x_key, disp_key, width_key])
@@ -795,8 +628,7 @@ class PlottingPipeline(BasePipeline):
                     log_warn(f"no result files for model: {model_id}")
                 continue
 
-            model_id_padded = re.sub(r"B(\d+)", lambda m: f"B{int(m.group(1)):0{2}d}", model_id)
-            out_fig_dir = self.config.default_fig_dir / "meshes" / model_id_padded
+            out_fig_dir = self.config.default_fig_dir / "meshes" / model_id
             out_fig_dir.mkdir(parents=True, exist_ok=True)
 
             for pvtu_path, tstep in self._iter_valid_timesteps(pvtu_files, timesteps):
@@ -806,7 +638,7 @@ class PlottingPipeline(BasePipeline):
                         continue
 
                     field_id = self.config.file_map.get(field_name, field_name.replace("_", "-"))
-                    out_path = out_fig_dir / f"{model_id_padded.replace('_', '-')}-{field_id}-{str(tstep).zfill(4)}.png"
+                    out_path = out_fig_dir / f"{model_id.replace('_', '-')}-{field_id}-{str(tstep).zfill(4)}.png"
 
                     if not out_path.exists():
                         needed_fields.append((field_name, out_path))
@@ -919,7 +751,7 @@ class FullPipeline(BasePipeline):
         )
 
         if save_csv:
-            csv_path = csv_path or Path("structure-summary-sw.csv")
+            csv_path = csv_path or Path("structure-summary.csv")
             post_processor.export_transition_summary(csv_path, transition_summary_cache, transition_summary_cache_path)
 
             if fields_for_seismic_profiles:

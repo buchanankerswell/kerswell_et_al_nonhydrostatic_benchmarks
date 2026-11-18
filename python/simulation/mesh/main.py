@@ -1,4 +1,3 @@
-import re
 import subprocess
 import sys
 from argparse import ArgumentParser, ArgumentTypeError, Namespace
@@ -27,13 +26,11 @@ def parse_arguments() -> Namespace:
     parser = ArgumentParser(description="Visualize and postprocess simulation results.")
 
     parser.add_argument("dG_profile_ol_wd", type=str, help="Path to olivine-wadsleyite dG profile")
-    parser.add_argument("dG_profile_wd_ri", type=str, help="Path to wadsleyite-ringwoodite dG profile")
-    parser.add_argument("dG_profile_ri_ps", type=str, help="Path to ringwoodite-bridgmanite dG profile")
     parser.add_argument("model_height", type=float, help="Model height [m]")
     parser.add_argument("surface_pressure", type=float, help="Surface pressure [Pa]")
     parser.add_argument("out_fig_dir", type=str, help="Output figure directory")
     parser.add_argument("out_data_dir", type=str, help="Flattened simulation/results dir")
-    parser.add_argument("--suite-tag", type=str, required=True, help="Suite tag: sw, nc, or test")
+    parser.add_argument("--suite-tag", type=str, required=True, help="Suite tag: box or sink")
 
     parser.add_argument("--model-ids", nargs="+", type=str, required=True, help="Simulation names")
     parser.add_argument("--timesteps", nargs="+", type=int, required=True, help="Timesteps to process")
@@ -43,8 +40,6 @@ def parse_arguments() -> Namespace:
     parser.add_argument("--suppress-artifact", type=str2bool, default=False, help="Skip suite artifact log (parent logs once).")
 
     parser.add_argument("--depth-corr-ol-wd", type=float, default=0.0, help="Depth correction for the olivine -> wadsleyite transition [m].")
-    parser.add_argument("--depth-corr-wd-ri", type=float, default=0.0, help="Depth correction for the wadsleyite -> ringwoodite transition [m].")
-    parser.add_argument("--depth-corr-ri-ps", type=float, default=0.0, help="Depth correction for the ringwoodite -> bridgmanite transition [m].")
     parser.add_argument(
         "--nominal-410",
         type=float,
@@ -84,8 +79,6 @@ def main():
     if args.chunk_size and args.chunk_size > 0 and len(model_ids) > args.chunk_size:
         positionals = [
             args.dG_profile_ol_wd,
-            args.dG_profile_wd_ri,
-            args.dG_profile_ri_ps,
             str(args.model_height),
             str(args.surface_pressure),
             args.out_fig_dir,
@@ -107,8 +100,6 @@ def main():
                 "--timesteps",
                 *[str(t) for t in (args.timesteps or [])],
                 f"--depth-corr-ol-wd={args.depth_corr_ol_wd}",
-                f"--depth-corr-wd-ri={args.depth_corr_wd_ri}",
-                f"--depth-corr-ri-ps={args.depth_corr_ri_ps}",
                 f"--mode={args.mode}",
                 f"--save-csv={args.save_csv}",
                 f"--suite-tag={args.suite_tag}",
@@ -131,23 +122,9 @@ def main():
     headers, data = read_dG_profile(args.dG_profile_ol_wd)
     surface_depth = find_surface_depth_offset(headers, data, args.surface_pressure)
 
-    depth_corrections: dict[str, float] = {
-        "X_wd": args.depth_corr_ol_wd,
-        "X_ri": args.depth_corr_wd_ri,
-        "X_ps": args.depth_corr_ri_ps,
-    }
-
-    trans_data: dict[str, PhaseTransition] = {}
-    for phase_key, filepath in [("X_wd", args.dG_profile_ol_wd), ("X_ri", args.dG_profile_wd_ri), ("X_ps", args.dG_profile_ri_ps)]:
-        hdrs, dat = read_dG_profile(filepath)
-
-        transition = find_transition(hdrs, dat, model_height, surface_depth)
-        correction = depth_corrections.get(phase_key, 0.0)
-
-        transition.depth += correction
-        transition.y -= correction
-
-        trans_data[phase_key] = transition
+    trans_data: dict[str, PhaseTransition] = {"X_wd": find_transition(headers, data, model_height, surface_depth)}
+    trans_data["X_wd"].depth += args.depth_corr_ol_wd
+    trans_data["X_wd"].y -= args.depth_corr_ol_wd
 
     if args.nominal_410 is not None and args.suite_tag in ("box", "sink"):
         trans_data["X_wd"].depth = args.nominal_410
@@ -163,44 +140,25 @@ def main():
     force_reprocess = args.force_reprocess or False
     verbosity = args.verbosity or 0
 
+    fields_for_seismic_profiles = ["density", "seismic_Vp", "seismic_Vs"]
+
+    # NH benchmarks: single ol-wd reaction; pressure is the key
+    # diagnostic (spurious-wave control), xi tracks the front.
     fields_to_plot = [
         "nonadiabatic_temperature",
-        "nonadiabatic_density",
+        "nonadiabatic_pressure",
         "velocity_vertical",
         "viscosity",
+        "xi_ol_wd",
+        "density",
         "reaction_rate_C0",
-        "reaction_rate_C1",
-        "reaction_rate_C2",
-        "X_wd",
-        "X_ri",
-        "X_ps",
     ]
-    if args.suite_tag in ("box", "sink"):
-        # NH benchmarks: single ol-wd reaction; pressure is the key
-        # diagnostic (spurious-wave control), xi tracks the front.
-        fields_to_plot = [
-            "nonadiabatic_temperature",
-            "nonadiabatic_pressure",
-            "velocity_vertical",
-            "viscosity",
-            "xi_ol_wd",
-            "density",
-            "reaction_rate_C0",
-        ]
 
     fields_for_seismic_profiles = ["density", "seismic_Vp", "seismic_Vs"]
 
     plot_config = MeshConfig()
     plot_config.file_map = {k: plot_config.file_map[k] for k in fields_to_plot if k in plot_config.file_map}
     plot_config.default_fig_dir = out_fig_dir
-    if args.suite_tag in ("box", "sink"):
-        # Narrow/square domains: normalize camera framing to mesh height so
-        # the colorbar keeps its white band below the mesh. The slab framing
-        # is relative to max_span = 1.5e6 (1.5x the 1e6 height); bench
-        # max_span equals the 1e6 height, so scale both by 1.5 to reproduce
-        # the slab-relative geometry.
-        plot_config.camera_zoom_factor *= 1.5
-        plot_config.camera_y_shift_factor *= 1.5
 
     pvtu_in_dirs = dict(zip(model_ids, in_dirs))
     visualize_ids = args.visualize_ids or list(pvtu_in_dirs.keys())
@@ -287,28 +245,18 @@ def main():
             log_artifact(csv_path)
 
     if mode in ["visualize", "full"]:
-        if args.suite_tag in ("box", "sink"):
-            tile_sets = {
-                "set0": {"tags": None, "fields": ["nonadiabatic_temperature", "nonadiabatic_pressure", "velocity_vertical"]},
-                "set1": {"tags": None, "fields": ["viscosity", "xi_ol_wd", "density"]},
-                "set2": {"tags": None, "fields": ["nonadiabatic_pressure", "reaction_rate_C0", "xi_ol_wd"]},
-            }
-        else:
-            tile_sets = {
-                "set0": {"tags": None, "fields": ["nonadiabatic_temperature", "nonadiabatic_density", "velocity_vertical"]},
-                "set1": {"tags": None, "fields": ["reaction_rate_C0", "reaction_rate_C1", "reaction_rate_C2"]},
-                "set2": {"tags": None, "fields": ["X_wd", "X_ri", "X_ps"]},
-                "set3": {"tags": None, "fields": ["nonadiabatic_temperature", "viscosity", "X_ps"]},
-            }
+        tile_sets = {
+            "set0": {"tags": None, "fields": ["nonadiabatic_temperature", "nonadiabatic_pressure", "velocity_vertical"]},
+            "set1": {"tags": None, "fields": ["viscosity", "xi_ol_wd", "density"]},
+            "set2": {"tags": None, "fields": ["nonadiabatic_pressure", "reaction_rate_C0", "xi_ol_wd"]},
+        }
 
         for model_id in chunk_vis_ids:
-            model_id_padded = re.sub(r"B(\d+)", lambda m: f"B{int(m.group(1)):0{2}d}", model_id)
-
             for config in tile_sets.values():
                 fields = config.get("fields", None)
                 tags = config.get("tags", None)
                 if fields and len(fields) == 3:
-                    tiler = ImageTiler(plot_config, out_fig_dir / "meshes" / model_id_padded, fields[0], fields[1], fields[2], tags)
+                    tiler = ImageTiler(plot_config, out_fig_dir / "meshes" / model_id, fields[0], fields[1], fields[2], tags)
                     tiler.tile_images()
 
 

@@ -1,7 +1,7 @@
 """Per-step probe history: Stokes P, relaxed pbar, and xi at fixed points.
 
 The relaxed_pressure field is initialized to an analytic lithostatic
-(rho=3900, g=10) and, with tau = 0, frozen per parcel: its Eulerian
+(rho=3900, g=9.81) and, with tau = 0, frozen per parcel: its Eulerian
 decline at a fixed probe then measures slow background creep advecting
 the initial gradient, not a true pressure change. Stokes P at the same
 probe stays flat. Prints linear decline slopes per run and probe.
@@ -13,7 +13,6 @@ Usage (repo root):
 """
 
 import argparse
-import re
 import sys
 from pathlib import Path
 
@@ -23,16 +22,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from common import uid_label
+
 RESULTS = Path("simulation/results")
 
-
-def short(run):
-    m = re.search(r"_Damp([A-Za-z]+)([\d.e]*)", run)
-    damp = (m.group(1) + m.group(2)) if m else run
-    mo = re.search(r"_Dynp(On|Off)_", run)
-    dyn = f" {mo.group(1)}" if mo else ""
-    mref = re.search(r"_Res(\d+)", run)
-    return f"{damp}{dyn}[r{mref.group(1)}]" if mref else f"{damp}{dyn}"
+LITHOSTATIC_GRADIENT_MPA_PER_KM = 3900 * 9.81 / 1e3
 
 
 def load_probes(run):
@@ -80,7 +74,7 @@ def main():
         t = a[:, 0, ti] / 1e6
         for p, ls in ((0, "-"), (1, "--")):
             kw = dict(lw=1.2, alpha=0.85, ls=ls)
-            ax[0].plot(t, a[:, p, pi] / 1e6, label=short(run) if p == 0 else None, **kw)
+            ax[0].plot(t, a[:, p, pi] / 1e6, label=uid_label(run) if p == 0 else None, **kw)
             ax[1].plot(t, a[:, p, ri] / 1e6, **kw)
             ax[2].plot(t, a[:, p, xi], **kw)
         sp0 = slope(t, a[:, 0, ri] / 1e6)
@@ -90,8 +84,8 @@ def main():
         dy1 = float(np.sum(0.5 * (a[1:, 1, vy] + a[:-1, 1, vy]) * np.diff(a[:, 0, ti]))) / 1e3
         dp0 = float(a[-1, 0, ri] - a[0, 0, ri]) / 1e6
         print(
-            f"{short(run)}: pbar slope p0 {sp0:.0f} MPa/Myr, p1 {sp1:.0f} MPa/Myr, "
-            f"xi-flip p0 at {flip:.2f} Myr, cum dy p0 {dy0:.0f} km -> adv {39 * -dy0:.0f} MPa vs actual {dp0:.0f} MPa, "
+            f"{uid_label(run)}: pbar slope p0 {sp0:.0f} MPa/Myr, p1 {sp1:.0f} MPa/Myr, "
+            f"xi-flip p0 at {flip:.2f} Myr, cum dy p0 {dy0:.0f} km -> adv {LITHOSTATIC_GRADIENT_MPA_PER_KM * -dy0:.0f} MPa vs actual {dp0:.0f} MPa, "
             f"cum dy p1 {dy1:.0f} km"
         )
     ax[0].set_ylabel("Stokes P [MPa]")

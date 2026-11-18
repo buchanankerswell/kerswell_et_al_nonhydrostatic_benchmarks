@@ -14,7 +14,6 @@ Usage (repo root):
 
 import argparse
 import pickle
-import re
 import sys
 from pathlib import Path
 
@@ -24,6 +23,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from common import uid_label
 from simulation.params.transitions import (
     find_surface_depth_offset,
     find_transition,
@@ -33,13 +33,12 @@ from simulation.params.transitions import (
 RESULTS = Path("simulation/results")
 
 
-def short(run):
-    m = re.search(r"_Damp([A-Za-z]+)([\d.e]*)", run)
-    damp = (m.group(1) + m.group(2)) if m else run
-    mo = re.search(r"_Dynp(On|Off)_", run)
-    dyn = f" {mo.group(1)}" if mo else ""
-    mref = re.search(r"_Res(\d+)", run)
-    return f"{damp}{dyn}[r{mref.group(1)}]" if mref else f"{damp}{dyn}"
+def clean(field):
+    z = np.asarray(field["depths"], float)
+    v = np.asarray(field["values"], float)
+    m = np.isfinite(z) & np.isfinite(v)
+    o = np.argsort(z[m])
+    return z[m][o] / 1e3, v[m][o]
 
 
 def load_rep(run, tag):
@@ -47,14 +46,6 @@ def load_rep(run, tag):
         seis = pickle.load(f)
     ts = max(seis[run].keys())
     return seis[run][ts]["representative"], ts
-
-
-def clean(field):
-    z = np.asarray(field["depths"], float)
-    v = np.asarray(field["values"], float)
-    m = np.isfinite(z) & np.isfinite(v)
-    o = np.argsort(z[m])
-    return z[m][o] / 1e3, v[m][o]
 
 
 def zero_cross(z, v):
@@ -105,7 +96,7 @@ def main():
         zr, rate = clean(rep["reaction_rate_C0"])
         zp, p = clean(rep["p"])
         za, pa = clean(rep["adiabatic_pressure"])
-        kw = dict(lw=1.2, alpha=0.85, label=short(run))
+        kw = dict(lw=1.2, alpha=0.85, label=uid_label(run))
         ax[0].plot(xi, zx, **kw)
         ax[1].plot(dg / 1e3, zd, **kw)
         ax[2].plot(rate, zr, **kw)
@@ -118,7 +109,7 @@ def main():
         pmod0 = float(np.interp(rt0, zp, p)) if rt else float("nan")
         j = int(np.nanargmax(np.abs(rate))) if np.isfinite(rate).any() else -1
         print(
-            f"{short(run)}: dG=0 at {rt0:.1f} km (P={pmod0:.3f} GPa vs prof {prof_peq / 1e9:.3f}), "
+            f"{uid_label(run)}: dG=0 at {rt0:.1f} km (P={pmod0:.3f} GPa vs prof {prof_peq / 1e9:.3f}), "
             f"xi0.5 at {xihalf:.1f} km, max|rate| {rate[j]:.3g}/Ma at {zr[j]:.1f} km"
         )
     for a in ax:

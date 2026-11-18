@@ -14,7 +14,8 @@ CLEAN := $(PYTHON)/**/__pycache__ \
 	 $(FIGS)/adiabat \
 	 $(FIGS_BOX_SUITE) \
 	 $(FIGS_SINK_SUITE) \
-	 $(FIGS_SIMULATION) \
+	 $(FIGS)/benchmarks \
+	 $(FIGS)/sink_block \
 	 $(DATA_MESH_BOX_SUITE) \
 	 $(DATA_MESH_SINK_SUITE) \
 	 $(POSTPROCESSED_CSV)
@@ -36,16 +37,11 @@ $(POSTPROCESSED_CSV):
 	  --data-dir $(SIMULATION)/results \
 	  --out-csv $@ \
 	  --profile-ol-wd $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
-	  --profile-wd-ri $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
-	  --profile-ri-ps $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
 	  --model-height $(MODEL_HEIGHT_BOX) \
 	  --surface-pressure $(SURFACE_PRESSURE) \
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
-	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
-	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
 	  --nominal-410-box=$(NOMINAL_410_BOX) \
 	  --nominal-410-sink400=$(NOMINAL_410_SINK400) \
-	  --nominal-410-sink0=$(NOMINAL_410_SINK0) \
 	  --force
 	$(call LOG_ARTIFACT,$@)
 
@@ -69,61 +65,38 @@ pressure-waves: timeseries
 
 meshes: meshes-box-suite meshes-sink-suite
 
-meshes-box-suite:
-	@$(eval MODELS := $(MODELS_BOX_SUITE))
+# Shared mesh recipe: $(1)=suite tag, $(2)=models, $(3)=visualize ids,
+# $(4)=fig dir, $(5)=410 nominal [m], $(6)=trace x [m], $(7)=model height [m].
+define MESH_SUITE
+	@$(eval MODELS := $(2))
 	@$(eval DIRS := $(addprefix $(SIMULATION)/results/, $(MODELS)))
-	@$(eval VIS := $(VIS_MODELS_BOX_SUITE))
+	@$(eval VIS := $(3))
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/main.py \
 	  $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
-	  $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
-	  $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
-	  $(MODEL_HEIGHT_BOX) \
+	  $(7) \
 	  $(SURFACE_PRESSURE) \
-	  $(FIGS_SIM_BOX_SUITE) \
+	  $(4) \
 	  $(SIMULATION)/results \
 	  --model-ids $(MODELS) \
-	  --timesteps $(TIMESTEPS_MESH_BOX_SUITE) \
-	  --suite-tag $(TAG_BOX_SUITE) \
+	  --timesteps $(TIMESTEPS) \
+	  --suite-tag $(1) \
 	  --in-dirs $(DIRS) \
 	  --visualize-ids $(VIS) \
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
-	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
-	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
-	  --nominal-410=$(NOMINAL_410_BOX) \
-	  --trace-x=$(TRACE_X_BOX) \
+	  --nominal-410=$(5) \
+	  --trace-x=$(6) \
 	  --mode=$(POSTPROCESS_MODE) \
 	  --save-csv=$(SAVE_CSV) \
 	  --force-reprocess=$(FORCE_REPROCESS) \
 	  --verbosity=$(POSTPROCESS_VERBOSITY) \
 	  --chunk-size=$(CHUNK_SIZE)
+endef
+
+meshes-box-suite:
+	$(call MESH_SUITE,$(TAG_BOX_SUITE),$(MODELS_BOX_SUITE),$(VIS_MODELS_BOX_SUITE),$(FIGS_SIM_BOX_SUITE),$(NOMINAL_410_BOX),$(TRACE_X_BOX),$(MODEL_HEIGHT_BOX))
 
 meshes-sink-suite:
-	@$(eval MODELS := $(MODELS_SINK_SUITE))
-	@$(eval DIRS := $(addprefix $(SIMULATION)/results/, $(MODELS)))
-	@$(eval VIS := $(VIS_MODELS_SINK_SUITE))
-	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/simulation/mesh/main.py \
-	  $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
-	  $(SIMULATION)/data/wadsleyite-ringwoodite-profile-Mg$(MG_NUM).tsv \
-	  $(SIMULATION)/data/ringwoodite-postspinel-profile-Mg$(MG_NUM).tsv \
-	  $(MODEL_HEIGHT_BOX) \
-	  $(SURFACE_PRESSURE) \
-	  $(FIGS_SIM_SINK_SUITE) \
-	  $(SIMULATION)/results \
-	  --model-ids $(MODELS) \
-	  --timesteps $(TIMESTEPS_MESH_SINK_SUITE) \
-	  --suite-tag $(TAG_SINK_SUITE) \
-	  --in-dirs $(DIRS) \
-	  --visualize-ids $(VIS) \
-	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
-	  --depth-corr-wd-ri=$(DEPTH_CORRECTION_WD_RI) \
-	  --depth-corr-ri-ps=$(DEPTH_CORRECTION_RI_PS) \
-	  --nominal-410=$(NOMINAL_410_SINK400) \
-	  --trace-x=$(TRACE_X_SINK) \
-	  --mode=$(POSTPROCESS_MODE) \
-	  --save-csv=$(SAVE_CSV) \
-	  --force-reprocess=$(FORCE_REPROCESS) \
-	  --verbosity=$(POSTPROCESS_VERBOSITY) \
-	  --chunk-size=$(CHUNK_SIZE)
+	$(call MESH_SUITE,$(TAG_SINK_SUITE),$(MODELS_SINK_SUITE),$(VIS_MODELS_SINK_SUITE),$(FIGS_SIM_SINK_SUITE),$(NOMINAL_410_SINK400),$(TRACE_X_SINK),$(MODEL_HEIGHT_SINK))
 
 adiabat: $(PROFILES)
 

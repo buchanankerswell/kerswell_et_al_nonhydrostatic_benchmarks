@@ -36,13 +36,9 @@ class MeshPlotter:
     verbosity: int = 0
 
     # Phase fraction fields and the config flag that enables their contours.
-    # Add entries here to include additional phase contours without changing logic.
-    _PHASE_CONTOUR_MAP: ClassVar[dict[str, str]] = {
-        "X_ol": "draw_X_ol_contours",
-        "X_wd": "draw_X_wd_contours",
-        "X_ri": "draw_X_ri_contours",
-        "X_ps": "draw_X_ps_contours",
-    }
+    # Empty for the single-reaction benchmarks (no X_* fields in the meshes);
+    # the measured-transition overlays come through the trace/arrows path.
+    _PHASE_CONTOUR_MAP: ClassVar[dict[str, str]] = {}
 
     # Colormap classification sets for O(1) lookup.
     _DIVERGING_CMAPS: ClassVar[set[str]] = {
@@ -101,13 +97,13 @@ class MeshPlotter:
     }
 
     # Fields whose scalars are log-transformed before display
-    _LOG_FIELDS: ClassVar[set[str]] = {"viscosity", "strain_rate", "arrhenius_ol_wd", "arrhenius_wd_ri", "arrhenius_ri_ps"}
+    _LOG_FIELDS: ClassVar[set[str]] = {"viscosity"}
 
     # Fields whose scalars use signed-log transformation before display
-    _SIGNED_LOG_FIELDS: ClassVar[set[str]] = {"reaction_rate_C0", "reaction_rate_C1", "reaction_rate_C2"}
+    _SIGNED_LOG_FIELDS: ClassVar[set[str]] = {"reaction_rate_C0"}
 
     # Phase fraction fields for which the sequential colormap end-color is modified
-    _MODIFIED_SEQ_FIELDS: ClassVar[set[str]] = {"stress_second_invariant", "X_ol", "X_wd", "X_ri", "X_ps"}
+    _MODIFIED_SEQ_FIELDS: ClassVar[set[str]] = set()
 
     def plot_mesh(
         self,
@@ -120,15 +116,14 @@ class MeshPlotter:
         """
         Render a scalar field plot of the mesh and save it to out_path.
 
-        Skips rendering if the output file already exists. Optionally draws a vertical profile line and horizontal depth-bound lines as annotations.
+        Skips rendering if the output file already exists. Draws representative-trace and transition-bound annotations when provided.
 
         Args:
-            mesh:                    Mesh to render. Must contain the requested field.
-            field:                   Name of the scalar field to display.
-            out_path:                Destination PNG file path.
-            profile_x_pos:           x-coordinate (m) of the vertical annotation line. Skipped if nan.
-            profile_x_depth_bounds:  (lower, upper) depth coordinates (m) for horizontal annotation lines. Each is skipped if nan.
-            contour_color:           Color for phase fraction contour lines.
+            mesh:            Mesh to render. Must contain the requested field.
+            field:           Name of the scalar field to display.
+            out_path:        Destination PNG file path.
+            annotations:     Trace/arrow annotation dicts from the post-processing cache.
+            contour_color:   Color for phase fraction contour lines.
         """
         if out_path.exists():
             return
@@ -162,7 +157,7 @@ class MeshPlotter:
             if field in self.trans_info:
                 transition_data = self.trans_info.get(field)
                 if transition_data:
-                    rxn_y = transition_data[-2]
+                    rxn_y = transition_data.trans_y
                     self._add_horizontal_line(pl, mesh, rxn_y, cfg.transition_contour_color)
 
         for ann in annotations:
@@ -260,40 +255,6 @@ class MeshPlotter:
 
         pts = np.column_stack([x_positions[valid], y_max - depths[valid], np.zeros(valid.sum())])
 
-        sort_idx = np.argsort(pts[:, 1])
-        polyline = pv.lines_from_points(pts[sort_idx], close=False)
-        pl.add_mesh(polyline, color=color, line_width=line_width, opacity=alpha, render_lines_as_tubes=True)
-
-    def _add_vertical_line(
-        self,
-        pl: pv.Plotter,
-        mesh: pv.UnstructuredGrid,
-        x_pos: float,
-        color: str = "black",
-        alpha: float = 1.0,
-        line_width: int = 5,
-    ) -> None:
-        """
-        Draw a smooth vertical annotation line by slicing the mesh at x = x_pos.
-
-        The slice interpolates point positions within cells, avoiding the staircase artifact from connecting raw grid nodes.
-
-        Args:
-            pl:            Active PyVista plotter.
-            mesh:          Source mesh used to find point coordinates.
-            x_pos:         x-coordinate of the line (m).
-            color:         Line color.
-            alpha:         Line opacity.
-            line_width:    Rendered line width in pixels.
-        """
-        try:
-            slc = mesh.slice(normal=[1.0, 0.0, 0.0], origin=[x_pos, 0.0, 0.0])
-        except Exception:
-            return
-        if slc.n_points < 2:
-            return
-
-        pts = slc.points
         sort_idx = np.argsort(pts[:, 1])
         polyline = pv.lines_from_points(pts[sort_idx], close=False)
         pl.add_mesh(polyline, color=color, line_width=line_width, opacity=alpha, render_lines_as_tubes=True)

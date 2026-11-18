@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import numpy as np
-import pyvista as pv
 from config import MeshConfig
 
 
@@ -16,83 +15,6 @@ class MeshPostProcessor:
 
     config: MeshConfig
     verbosity: int = 0
-
-    def measure_discontinuity_structure(
-        self,
-        mesh: pv.UnstructuredGrid,
-        field: str,
-        rxn_depth: float,
-        x_offset: float = 750e3,
-        width_threshold: float = 15e3,
-    ) -> dict[str, float]:
-        """
-        Find the best-representative vertical profile and measure the phase transition displacement and width from the X=0.1 to X=0.9 interval.
-
-        Args:
-            mesh:      Source mesh with 'depth' and field point data.
-            field:     Phase fraction field name (values expected in [0, 1]).
-            rxn_depth: Nominal reaction depth for this transition (m).
-            threshold: Width threshold (m) above which width-based selection is preferred when not in a displacement regime.
-
-        Returns:
-            Dict with keys 'x_position', 'displacement', and 'width' (all in m). All values are nan if no valid profile is found.
-        """
-        x_coords = mesh.points[:, 0]
-        x_center = 0.5 * (x_coords.min() + x_coords.max())
-        x_start = max(x_center - x_offset, x_coords.min())
-        x_end = min(x_center + x_offset, x_coords.max())
-
-        x_positions = np.unique(x_coords)
-        x_positions = x_positions[(x_positions >= x_start) & (x_positions <= x_end)]
-
-        valid = []
-        for x in x_positions:
-            mask = x_coords == x
-            depths = mesh.point_data["depth"][mask]
-            values = mesh.point_data[field][mask]
-            sort_idx = np.argsort(depths)
-
-            trans_depth, displacement, width = self._evaluate_transition_structure(depths[sort_idx], values[sort_idx], rxn_depth)
-            if not (np.isnan(trans_depth) or np.isnan(displacement) or np.isnan(width)):
-                valid.append((x, trans_depth, displacement, width))
-
-        if not valid:
-            return {"x_position": np.nan, "displacement": np.nan, "width": np.nan}
-
-        x_vals, trans_depths, displacements, widths = np.array(valid).T
-
-        # Determine most representative depth profile
-        if np.any(widths > width_threshold):
-            best_idx = np.nanargmax(widths)
-        else:
-            median_trans_depth = np.nanmedian(trans_depths)
-            deviations = np.abs(trans_depths - median_trans_depth)
-            best_idx = np.nanargmax(deviations)
-
-        return {"x_position": x_vals[best_idx], "displacement": displacements[best_idx], "width": widths[best_idx]}
-
-    def extract_depth_profile(self, mesh: pv.UnstructuredGrid, field: str, x_pos: float, tolerance=500.0) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Return (depths, values) along a vertical profile at x_pos, sorted by depth.
-
-        Args:
-            mesh:          Source mesh with 'depth' point data.
-            field:         Field name to extract values for.
-            x_pos:         x-coordinate of the vertical profile (m).
-            tolerance:     x_pos tolerance for extracting depth profile (m).
-
-        Returns:
-            Tuple of (depths, values) arrays sorted by depth, or two empty arrays if no points are found at x_pos.
-        """
-        mask = np.isclose(mesh.points[:, 0], x_pos, atol=tolerance)
-        if not np.any(mask):
-            return np.empty(0), np.empty(0)
-
-        depths = mesh.point_data["depth"][mask]
-        values = mesh.point_data[field][mask] * self.config.scaling_map.get(field, 1.0)
-
-        sort_idx = np.argsort(depths)
-        return depths[sort_idx], values[sort_idx]
 
     def calculate_max_in_region(
         self, depths: np.ndarray, values: np.ndarray, rxn_depth: float, displacement: float, width: float, width_threshold: float = 15e3
@@ -157,7 +79,7 @@ class MeshPostProcessor:
         """
         Return (lower_factor, upper_factor) for the transition depth window.
 
-        Narrow transitions (width <= 5 km) use a wider lower margin to capture the full phase change. Broad transitions use a tighter window.
+        Narrow transitions (width <= threshold) use a wider lower margin to capture the full phase change. Broad transitions use a tighter window.
         """
         return (2.5, 1.5) if width <= width_threshold else (2.0, 1.0)
 
@@ -171,12 +93,9 @@ class MeshPostProcessor:
         """
         Measure the displacement and width of a phase transition from a depth profile.
 
-        A phase fraction grows from zero to one across its own transition, but the next transition
-        overprints it: the wadsleyite fraction of a cold slab falls back to zero below the 520.
-        The transition is therefore bracketed from the profile itself, from the first sample above
+        The transition is bracketed from the profile itself, from the first sample above
         one tenth to the first sample above nine tenths, and the monotonicity repair is confined to
-        that bracket. Repairing the whole depth column would pull the overprinting transition into
-        the repair and flatten the transition boundaries along with it.
+        that bracket.
 
         Within the bracket the profile is repaired for monotonicity using isotonic regression
         (PAVA), which pools local decreases and leaves the rise itself untouched.

@@ -12,7 +12,7 @@ main <- function() {
   postprocessed_csv <- args[2]
   out_dir <- args[3]
 
-  lapply(list.files(util_dir, pattern = "R$", full.names = TRUE), source)
+  lapply(list.files(util_dir, pattern = "\\.R$", full.names = TRUE), source)
 
   write_postprocessed_summary_table(postprocessed_csv, out_dir)
 }

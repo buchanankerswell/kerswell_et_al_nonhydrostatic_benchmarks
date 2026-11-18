@@ -51,6 +51,7 @@ $(ASPECT_PLUGIN): $(ASPECT_EXE) $(DEALII_ENABLE)
 
 clean:
 	@$(call SAFE_RM_LIST,$(CLEAN))
+	# Symlinks need find -type l; SAFE_RM covers files/dirs (see project.mk).
 	@find $(PROJECT_ROOT)/simulation -type l -path '*/plugins*/aspect*' | while read -r item; do \
 	  if [[ "$$item" == $(PROJECT_ROOT)* ]]; then \
 	    . "$(BASH)/utils/log.sh"; log_delete "$$item"; \

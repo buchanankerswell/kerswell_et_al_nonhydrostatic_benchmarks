@@ -30,7 +30,8 @@ def load(suite):
         return None
     df = pd.read_csv(path)
     df["res"] = df["model_id"].str.extract(r"_Res(\d+)").astype(int)
-    df["damp"] = df["model_id"].str.extract(r"_Damp([A-Za-z]+[\d.e]*)")
+    df["damp"] = df["model_id"].str.extract(r"_Damp([A-Za-z]+[\d.e+-]*)")
+    df["z"] = df["model_id"].str.extract(r"_Z([\d.e+-]+)")
     df["dynp"] = df["model_id"].str.contains("_DynpOn_")
     rate_col = next((c for c in df.columns if "reaction_rate" in c and "410" in c), None)
     if rate_col is None:
@@ -43,10 +44,10 @@ def load(suite):
 def panel_rate_vs_res(ax, df, title):
     sub = df[df["damp"].str.contains("Bimpl|None", na=False)]
     final = sub.sort_values("timestep").groupby("model_id").tail(1)
-    for damp, grp in final.groupby("damp"):
+    for (damp, z), grp in final.groupby(["damp", "z"]):
         grp = grp.sort_values("res")
         kw = dict(lw=2.5) if damp == "None" else dict(lw=1.2, marker="o")
-        ax.plot(grp["res"], grp["rate"], label=damp, **kw)
+        ax.plot(grp["res"], grp["rate"], label=f"{damp} Z{z}", **kw)
     ax.set_yscale("log")
     ax.set_xlabel("global refinement (Res)")
     ax.set_ylabel("final max |rate| [1/s]")
@@ -61,7 +62,11 @@ def panel_history(ax, df, title, damp_pat="Bimpl1e21"):
         sub = df[df["damp"].str.contains("Bimpl", na=False)].copy()
     for mid, grp in sub.groupby("model_id"):
         m = re.search(r"_Res(\d+)", mid)
-        ax.plot(grp["timestep"], grp["rate"], label=f"Res{m.group(1)}" if m else mid, lw=1.5)
+        mz = re.search(r"_Z([\d.e+-]+)", mid)
+        tag = f"Res{m.group(1)}" if m else mid
+        if mz:
+            tag += f" Z{mz.group(1)}"
+        ax.plot(grp["timestep"], grp["rate"], label=tag, lw=1.5)
     ax.set_yscale("log")
     ax.set_xlabel("output timestep")
     ax.set_ylabel("max |rate| [1/s]")

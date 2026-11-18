@@ -29,7 +29,7 @@ main <- function() {
   out_material_profiles <- file.path(out_dir, "material-property-profiles.png")
   out_thermodynamic_profiles <- file.path(out_dir, "thermodynamic-property-profiles.png")
 
-  missing <- c(in_material_table, in_profiles)[!file.exists(c(in_material_table, in_profiles))]
+  missing <- c(in_material_table, in_profiles, in_adiabatic_profile)[!file.exists(c(in_material_table, in_profiles, in_adiabatic_profile))]
 
   if (length(missing) > 0) {
     log_warn("the following input files do not exist:")

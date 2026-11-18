@@ -3,23 +3,27 @@
 # (python postprocess target); damping groups parse straight from the UID.
 
 suite_lab_box <- "Box"
-suite_lab_sink <- "Sink-block"
-suite_pal <- c("Box" = "#E41A1C", "Sink-block" = "#377EB8")
-suite_shapes <- c("Box" = 21, "Sink-block" = 22)
-res_pal <- c("4" = "#999999", "5" = "#FDB462", "6" = "#E41A1C", "7" = "#984EA3")
+suite_lab_sink <- "Sink"
+suite_shapes <- c("Box" = 21, "Sink" = 22)
+z_levels <- c("9.51e-08", "4.44e-04", "1.4e+04")
+z_pal <- c("frozen" = "#7FB3D5", "matrix" = "#E41A1C", "instant" = "#4D148C")
 
-damp_kind <- function(damp) {
+damp_family <- function(damp) {
   str_extract(damp, "^[A-Za-z]+")
 }
 
-damp_label <- function(damp, dynp) {
+damp_value <- function(damp) {
+  suppressWarnings(as.numeric(str_extract(damp, "[\\d.e+-]+$")))
+}
+
+damp_display <- function(damp, dynp) {
   case_when(
     damp == "None" & dynp == 0 ~ "equilibrium (no feedback)",
     damp == "None" ~ "undamped",
-    damp_kind(damp) == "Bimpl" ~ paste0("implicit bulk \u03b6=", str_extract(damp, "[\\d.e]+$")),
-    damp_kind(damp) == "Bexpl" ~ paste0("explicit bulk \u03b6=", str_extract(damp, "[\\d.e]+$")),
-    damp_kind(damp) == "Rel" ~ paste0("relaxed \u03c4=", str_extract(damp, "[\\d.e]+$"), " s"),
-    damp_kind(damp) == "Cap" ~ paste0("capped ", str_extract(damp, "[\\d.e]+$"), " Pa"),
+    damp_family(damp) == "Bimpl" ~ paste0("implicit bulk \u03b6=", str_extract(damp, "[\\d.e+-]+$")),
+    damp_family(damp) == "Bexpl" ~ paste0("explicit bulk \u03b6=", str_extract(damp, "[\\d.e+-]+$")),
+    damp_family(damp) == "Rel" ~ paste0("relaxed \u03c4=", str_extract(damp, "[\\d.e+-]+$"), " s"),
+    damp_family(damp) == "Cap" ~ paste0("capped ", str_extract(damp, "[\\d.e+-]+$"), " Pa"),
     TRUE ~ damp
   )
 }
@@ -37,22 +41,25 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
         TRUE ~ suite
       ), levels = c(suite_lab_box, suite_lab_sink)),
       res = factor(res, levels = c(4, 5, 6, 7)),
-      kind = damp_kind(damp),
-      kind_ord = factor(kind, levels = c("None", "Bimpl", "Bexpl", "Rel", "Cap")),
-      label = damp_label(damp, dynp)
+      z = factor(z, levels = z_levels, labels = c("frozen", "matrix", "instant")),
+      damp_family = damp_family(damp),
+      damp_num = damp_value(damp),
+      damp_family_ord = factor(damp_family, levels = c("None", "Bimpl", "Bexpl", "Rel", "Cap")),
+      damp_display = damp_display(damp, dynp)
     ) |>
-    arrange(suite, dynp, kind_ord, damp) |>
-    mutate(label = factor(label, levels = unique(label)))
+    arrange(suite, dynp, damp_family_ord, damp_num) |>
+    mutate(damp_display = factor(damp_display, levels = unique(damp_display)))
   df
 }
 
-structure_panel <- function(data, y_var, y_label, show_legend = FALSE) {
-  ggplot(data, aes(x = label, y = !!sym(y_var))) +
-    geom_point(aes(fill = res, shape = suite), size = 4, color = "black", stroke = 0.5, alpha = 0.9, show.legend = show_legend) +
-    scale_fill_manual(values = res_pal, drop = FALSE, name = "Res") +
+structure_strip <- function(data, y_var, y_label, show_legend = FALSE) {
+  ggplot(data, aes(x = damp_display, y = !!sym(y_var))) +
+    geom_point(aes(fill = z, shape = suite), size = 4, color = "black", stroke = 0.5, alpha = 0.9, show.legend = show_legend) +
+    scale_fill_manual(values = z_pal, drop = FALSE, name = "Z") +
     scale_shape_manual(values = suite_shapes, drop = FALSE, name = "Suite") +
     guides(fill = guide_legend(override.aes = list(size = 3.5, shape = 21))) +
-    labs(y = y_label, x = NULL, fill = "Res", shape = "Suite") +
+    facet_wrap(~res, nrow = 1, labeller = label_both) +
+    labs(y = y_label, x = NULL) +
     theme_bw(base_size = 14) +
     theme_bench() +
     theme(
@@ -66,14 +73,14 @@ visualize_benchmark_structure <- function(df, out_path, force_rewrite = FALSE) {
     return(invisible())
   }
   ensure_output_dir(out_path)
-  p_disp <- structure_panel(df, "disp410_km", "410 displacement (km)")
-  p_width <- structure_panel(df, "width410_km", "410 width (km)")
-  p_rate <- structure_panel(df, "rate410", "Max reaction rate (1/Ma)")
-  p_kin <- structure_panel(df, "kin410_km", "Kinetic contribution (km)", show_legend = TRUE)
+  p_disp <- structure_strip(df, "disp410_km", "410 displacement (km)")
+  p_width <- structure_strip(df, "width410_km", "410 width (km)")
+  p_rate <- structure_strip(df, "rate410", "Max reaction rate (1/Ma)")
+  p_kin <- structure_strip(df, "kin410_km", "Kinetic contribution (km)", show_legend = TRUE)
   p <- (p_disp | p_width) / (p_rate | p_kin) +
     plot_layout(guides = "collect") &
     theme(legend.position = "right")
-  ggsave(out_path, plot = p, width = 12, height = 7, dpi = 300, bg = "white", create.dir = TRUE)
+  ggsave(out_path, plot = p, width = 14, height = 8, dpi = 300, bg = "white", create.dir = TRUE)
   log_artifact(out_path)
 }
 
@@ -84,7 +91,6 @@ theme_bench <- function() {
     panel.background = element_rect(fill = "grey92"),
     plot.margin = margin(5, 5, 5, 5),
     axis.ticks = element_blank(),
-    legend.title = element_blank(),
     legend.text = element_text(size = 11),
     legend.background = element_blank()
   )

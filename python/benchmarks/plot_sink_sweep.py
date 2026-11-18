@@ -28,11 +28,13 @@ DAMP_KIND_LABEL = {"None": "undamped", "Bimpl": "implicit", "Bexpl": "explicit",
 
 
 def short_name(run):
-    m = re.search(r"_Damp([A-Za-z]+)([\d.e]*)", run)
+    m = re.search(r"_Damp([A-Za-z]+)([\d.e+-]*)", run)
     kind, val = (m.group(1), m.group(2)) if m else (run, "")
     mres = re.search(r"_Res(\d+)", run)
     res = f"res{mres.group(1)}" if mres else ""
-    return f"{DAMP_KIND_LABEL.get(kind, kind)} {val} [{res}]".strip()
+    mz = re.search(r"_Z([\d.e+-]+)", run)
+    ztag = f" Z{mz.group(1)}" if mz else ""
+    return f"{DAMP_KIND_LABEL.get(kind, kind)} {val} [{res}{ztag}]".strip()
 
 
 def load_timeseries(run):
@@ -84,11 +86,12 @@ def read_pvtu(run, idx, time_myr=None):
         return None, None
     if time_myr is not None:
         # Pick the output closest to the requested model time by probing TIME
+        # (ASPECT field data stores time in seconds; convert to Myr).
         best, best_dt = len(files) - 1, None
         for i, f in enumerate(files):
             try:
                 m = pv.read(f)
-                t = float(np.asarray(m["TIME"]).ravel()[0]) / 1e6  # TIME is in years
+                t = float(np.asarray(m["TIME"]).ravel()[0]) / 1e6  # TIME is in seconds
                 dt = abs(t - time_myr)
                 if best_dt is None or dt < best_dt:
                     best, best_dt = i, dt
@@ -103,7 +106,7 @@ def read_pvtu(run, idx, time_myr=None):
     return (mesh, pts, data), os.path.basename(files[idx])
 
 
-def front_depth(pts, xi, x_bins=60):
+def front_depth(pts, xi, y_max, x_bins=60):
     """Depth [km] of the xi=0.5 crossing per x-bin (NaN where absent)."""
     x = pts[:, 0] / 1e3
     y = pts[:, 1] / 1e3
@@ -119,7 +122,7 @@ def front_depth(pts, xi, x_bins=60):
         for k in range(len(ys) - 1):
             if (xs[k] - 0.5) * (xs[k + 1] - 0.5) <= 0 and xs[k] != xs[k + 1]:
                 f = (0.5 - xs[k]) / (xs[k + 1] - xs[k])
-                depth[i] = ys[k] + f * (ys[k + 1] - ys[k])
+                depth[i] = (y_max / 1e3) - (ys[k] + f * (ys[k + 1] - ys[k]))
                 break
     return xc, depth
 
@@ -133,7 +136,7 @@ def plot_fronts(runs, idx, time_myr):
             continue
         (mesh, pts, data), fname = got
         label = f"{short_name(run)}"
-        xc, depth = front_depth(pts, data["xi_ol_wd"])
+        xc, depth = front_depth(pts, data["xi_ol_wd"], mesh.bounds[3])
         ax[0].plot(xc, depth, label=label)
         # Halo centerline: sample the pressure field along x = 500 km
         # (interpolated sampling smooths DG jumps for a readable profile).

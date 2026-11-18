@@ -12,7 +12,6 @@ Usage (repo root):
 """
 
 import argparse
-import re
 import sys
 from pathlib import Path
 
@@ -22,45 +21,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-RESULTS = Path("simulation/results")
-
-
-def short(run):
-    m = re.search(r"_Damp([A-Za-z]+)([\d.e]*)", run)
-    damp = (m.group(1) + m.group(2)) if m else run
-    mo = re.search(r"_Dynp(On|Off)_", run)
-    dyn = f" {mo.group(1)}" if mo else ""
-    mref = re.search(r"_Res(\d+)", run)
-    return f"{damp}{dyn}[r{mref.group(1)}]" if mref else f"{damp}{dyn}"
-
-
-def load_depth_average(run):
-    path = RESULTS / run / "depth_average.txt"
-    if not path.exists():
-        return None
-    column_names, data_rows = None, []
-    with open(path) as f:
-        for line in f:
-            s = line.strip()
-            if not s:
-                continue
-            if s.startswith("#"):
-                column_names = s[1:].split()
-                continue
-            data_rows.append([float(x) for x in s.split()])
-    if not data_rows or column_names is None or len(column_names) < 3:
-        return None
-    data = np.array(data_rows)
-    times = np.unique(data[:, 0])
-    last = data[data[:, 0] == times[-1]]
-    try:
-        temperature_index = column_names.index("temperature")
-    except ValueError:
-        return None
-    xi_index = next((i for i, n in enumerate(column_names) if n.startswith("xi_")), None)
-    if xi_index is None:
-        return None
-    return {"depth_km": last[:, 1] / 1e3, "temperature": last[:, temperature_index], "xi": last[:, xi_index]}
+from common import load_depth_average, uid_label
 
 
 def plot_set(runs, title, out_path):
@@ -72,8 +33,8 @@ def plot_set(runs, title, out_path):
             continue
         plotted += 1
         temps.append(profile["temperature"])
-        ax[0].plot(profile["temperature"], profile["depth_km"], label=short(run), lw=1.2, alpha=0.85)
-        ax[1].plot(profile["xi"], profile["depth_km"], label=short(run), lw=1.2, alpha=0.85)
+        ax[0].plot(profile["temperature"], profile["depth_km"], label=uid_label(run), lw=1.2, alpha=0.85)
+        ax[1].plot(profile["xi"], profile["depth_km"], label=uid_label(run), lw=1.2, alpha=0.85)
     if plotted == 0:
         print(f"skip {out_path.name}: no depth_average.txt found", file=sys.stderr)
         plt.close(fig)

@@ -16,7 +16,6 @@ Usage (repo root):
 
 import argparse
 import csv
-import re
 import sys
 from pathlib import Path
 
@@ -26,27 +25,16 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from common import UID_DAMP_RE, load_probe_series, load_stats_series, load_vtu_series, uid_label
+
 RESULTS = Path("simulation/results")
 
-UID_DAMP_RE = re.compile(r"_Damp[A-Za-z]+[\d.e]*")
 
-
-def short(run):
-    """Compact label from a UID: damping + dynp state + refinement tag."""
-    m = re.search(r"_Damp([A-Za-z]+)([\d.e]*)", run)
-    damp = (m.group(1) + m.group(2)) if m else run
-    mo = re.search(r"_Dynp(On|Off)_", run)
-    dyn = f" {mo.group(1)}" if mo else ""
-    mref = re.search(r"_Res(\d+)", run)
-    ref = f"r{mref.group(1)}" if mref else ""
-    return f"{damp}{dyn} [{ref}]"
-
-
-def control_twin(run):
+def undamped_twin(run):
     return UID_DAMP_RE.sub("_DampNone", run, count=1)
 
 
-def nodynp_twin(run):
+def no_feedback_twin(run):
     return run.replace("_DynpOn_", "_DynpOff_", 1)
 
 
@@ -58,83 +46,19 @@ def discover(prefix):
     return runs
 
 
-def load_series(run):
-    path = RESULTS / run / "timeseries.csv"
-    if not path.exists():
-        return None
-    t, pmax, pmin, xir = [], [], [], []
-    with open(path) as f:
-        for r in csv.DictReader(f):
-            t.append(float(r["time_yr"]) / 1e6)
-            pmax.append(float(r["nonadiabatic_pressure_max"]) / 1e6)
-            pmin.append(float(r["nonadiabatic_pressure_min"]) / 1e6)
-            try:
-                xir.append(float(r["xi_ol_wd_max"]) - float(r["xi_ol_wd_min"]))
-            except (KeyError, ValueError):
-                xir.append(float("nan"))
-    return {"t": np.array(t), "pmax": np.array(pmax), "pmin": np.array(pmin), "xir": np.array(xir)}
-
-
-def load_stats(run):
-    """Full-resolution velocity series from stats-timeseries.csv (m/yr, Myr)."""
-    path = RESULTS / run / "stats-timeseries.csv"
-    if not path.exists():
-        return None
-    times, rms_values, max_values = [], [], []
-    with open(path) as f:
-        for r in csv.DictReader(f):
-            try:
-                times.append(float(r["time_yr"]) / 1e6)
-                rms_values.append(float(r["rms_velocity_m_yr"]))
-                max_values.append(float(r["max_velocity_m_yr"]))
-            except (KeyError, ValueError):
-                continue
-    if len(times) < 2:
-        return None
-    return {"time_myr": np.array(times), "rms": np.array(rms_values), "vmax": np.array(max_values)}
-
-
-def load_probe(run, field="relaxed_pressure"):
-    """Relaxed-pressure probe-0 series from point_values.txt (MPa, Myr)."""
-    path = RESULTS / run / "point_values.txt"
-    if not path.exists():
-        return None
-    column_names, time_blocks, block_rows = None, [], []
-    with open(path) as f:
-        for line in f:
-            s = line.strip()
-            if s.startswith("#"):
-                column_names = [w.strip("<>") for w in s[1:].split()]
-                continue
-            if not s:
-                if block_rows:
-                    time_blocks.append(block_rows)
-                    block_rows = []
-                continue
-            block_rows.append([float(x) for x in s.split()])
-    if block_rows:
-        time_blocks.append(block_rows)
-    if not time_blocks or column_names is None or field not in column_names:
-        return None
-    field_index = column_names.index(field)
-    times = np.array([b[0][0] for b in time_blocks]) / 1e6
-    values = np.array([b[0][field_index] for b in time_blocks]) / 1e6
-    return {"time_myr": times, "values": values}
-
-
 def peak_of(run):
-    s = load_series(run)
+    s = load_vtu_series(run)
     if s is None or len(s["t"]) < 2:
         return None
     return float((s["pmax"] - s["pmin"]).max())
 
 
 def summarize(run, peaks):
-    s = load_series(run)
+    s = load_vtu_series(run)
     if s is None or len(s["t"]) < 2:
         print(f"skip {run}: single output, no wave history", file=sys.stderr)
         return None
-    stats = load_stats(run)
+    stats = load_stats_series(run)
     if stats is not None and np.isfinite(stats["rms"]).any():
         peak_rms = float(np.nanmax(stats["rms"]))
         final_rms = float(stats["rms"][np.isfinite(stats["rms"])][-1])
@@ -144,7 +68,7 @@ def summarize(run, peaks):
     p2p = s["pmax"] - s["pmin"]
     i = int(np.argmax(p2p))
     peak = float(p2p[i])
-    ctrl, nod = control_twin(run), nodynp_twin(run)
+    ctrl, nod = undamped_twin(run), no_feedback_twin(run)
     cp, np_ = peaks.get(ctrl), peaks.get(nod)
     return {
         "run": run,
@@ -166,13 +90,13 @@ def summarize(run, peaks):
 
 
 def plot_suite(runs, title, out_path, control, reference=None):
-    runs = [r for r in runs if load_series(r) is not None]
+    runs = [r for r in runs if load_vtu_series(r) is not None]
     if not runs:
         print(f"skip {out_path.name}: no timeseries.csv found", file=sys.stderr)
         return
     fig, ax = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
     for run in runs:
-        s = load_series(run)
+        s = load_vtu_series(run)
         if s is None:
             continue
         if run == control:
@@ -181,8 +105,8 @@ def plot_suite(runs, title, out_path, control, reference=None):
             kw = dict(lw=1.5, ls="--", color="grey")
         else:
             kw = dict(lw=1.2, alpha=0.85)
-        ax[0].plot(s["t"], s["pmax"] - s["pmin"], label=short(run), **kw)
-        ax[1].plot(s["t"], s["pmin"], label=short(run), **kw)
+        ax[0].plot(s["t"], s["pmax"] - s["pmin"], label=uid_label(run), **kw)
+        ax[1].plot(s["t"], s["pmin"], label=uid_label(run), **kw)
     ax[0].set_ylabel("peak-to-peak dyn. pressure [MPa]")
     ax[1].set_ylabel("min dyn. pressure [MPa]")
     ax[1].set_xlabel("time [Myr]")
@@ -200,7 +124,7 @@ def plot_rms_suite(runs, title, out_path, control, reference=None):
     fig, ax = plt.subplots(figsize=(8, 5))
     plotted = 0
     for run in runs:
-        stats = load_stats(run)
+        stats = load_stats_series(run)
         if stats is None:
             continue
         plotted += 1
@@ -210,7 +134,7 @@ def plot_rms_suite(runs, title, out_path, control, reference=None):
             kw = dict(lw=1.5, ls="--", color="grey")
         else:
             kw = dict(lw=1.2, alpha=0.85)
-        ax.plot(stats["time_myr"], stats["rms"], label=short(run), **kw)
+        ax.plot(stats["time_myr"], stats["rms"], label=uid_label(run), **kw)
     if plotted == 0:
         print(f"skip {out_path.name}: no stats-timeseries.csv found", file=sys.stderr)
         plt.close(fig)
@@ -231,7 +155,7 @@ def plot_probe_suite(runs, title, out_path, control, reference=None, field="rela
     fig, ax = plt.subplots(figsize=(8, 5))
     plotted = 0
     for run in runs:
-        probe = load_probe(run, field)
+        probe = load_probe_series(run, field)
         if probe is None:
             continue
         plotted += 1
@@ -241,7 +165,7 @@ def plot_probe_suite(runs, title, out_path, control, reference=None, field="rela
             kw = dict(lw=1.5, ls="--", color="grey")
         else:
             kw = dict(lw=1.2, alpha=0.85)
-        ax.plot(probe["time_myr"], probe["values"], label=short(run), **kw)
+        ax.plot(probe["time_myr"], probe["values"], label=uid_label(run), **kw)
     if plotted == 0:
         print(f"skip {out_path.name}: no point_values.txt found", file=sys.stderr)
         plt.close(fig)
@@ -258,7 +182,7 @@ def plot_probe_suite(runs, title, out_path, control, reference=None, field="rela
 
 
 def paper_set(runs, ref):
-    return sorted(r for r in runs if f"_Res{ref}_" in r)
+    return sorted(r for r in runs if f"_Res{ref}" in r and r.endswith(f"_Res{ref}"))
 
 
 def main():

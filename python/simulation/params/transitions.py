@@ -1,6 +1,3 @@
-import argparse
-import os
-import re
 from dataclasses import dataclass
 
 import numpy as np
@@ -26,39 +23,11 @@ class PhaseTransition:
     density_jump: float
 
 
-def nominal_410_for_uid(model_id: str, nominal_box: float, nominal_sink400: float, nominal_sink0: float) -> float:
-    """Runtime-adiabat 410 nominal (m) for a UID: box and sink-Block0 share
-    the block-free adiabat; sink Block400 carries the block weight."""
+def nominal_410_for_uid(model_id: str, nominal_box: float, nominal_sink400: float) -> float:
+    """Runtime-adiabat 410 nominal (m) for a UID: box uses the block-free adiabat; all sink runs carry Block400."""
     if model_id.startswith("NH_Box_"):
         return nominal_box
-    block = re.search(r"_Block(\d+)", model_id)
-    if block is not None and block.group(1) == "0":
-        return nominal_sink0
     return nominal_sink400
-
-
-def parse_arguments() -> argparse.Namespace:
-    """
-    Handles command-line argument parsing for phase transition extraction.
-
-    Returns:
-        argparse.Namespace: The parsed command-line arguments.
-    """
-    parser = argparse.ArgumentParser(description="Extract phase transition parameters from thermodynamic profile TSV files for ASPECT.")
-
-    parser.add_argument("ol_wd", type=str, help="Path to the olivine -> wadsleyite TSV profile")
-    parser.add_argument("wd_ri", type=str, help="Path to the wadsleyite -> ringwoodite TSV profile")
-    parser.add_argument("ri_ps", type=str, help="Path to the ringwoodite -> bridgmanite TSV profile")
-    parser.add_argument("model_height", type=float, help="Total height of the ASPECT model domain [m]")
-    parser.add_argument("surface_pressure", type=float, help="Pressure at the model top boundary [Pa]")
-
-    args = parser.parse_args()
-
-    for f in [args.ol_wd, args.wd_ri, args.ri_ps]:
-        if not os.path.isfile(f):
-            parser.error(f"Profile file not found: {f}")
-
-    return args
 
 
 def read_dG_profile(filepath: str) -> tuple[list[str], np.ndarray]:
@@ -156,40 +125,3 @@ def find_transition(headers: list[str], data: np.ndarray, model_height: float, s
             return PhaseTransition(y=model_y, depth=model_depth, temperature=trans_T, clapeyron=clapeyron, density_jump=trans_drho)
 
     raise ValueError(" XX Error: no zero crossing found in delta_molar_gibbs")
-
-
-def main() -> None:
-    """
-    Main execution logic: extracts transition data for all three mantle phases.
-    """
-    args: argparse.Namespace = parse_arguments()
-
-    # Determine depth offset using the first profile (olivine -> wadsleyite)
-    ref_headers, ref_data = read_dG_profile(args.ol_wd)
-    surface_depth_offset: float = find_surface_depth_offset(ref_headers, ref_data, args.surface_pressure)
-
-    transitions: list[PhaseTransition] = []
-    files: list[str] = [args.ol_wd, args.wd_ri, args.ri_ps]
-
-    for filepath in files:
-        headers, data = read_dG_profile(filepath)
-        pt = find_transition(headers, data, args.model_height, surface_depth_offset)
-        transitions.append(pt)
-
-    # Flatten the dataclass values for the space-separated output
-    output_values: list[float] = []
-    for pt in transitions:
-        output_values.extend([pt.y, pt.depth, pt.temperature, pt.clapeyron, pt.density_jump])
-
-    def fmt(v: float, i: int) -> str:
-        field_idx = i % 5  # y, depth, T, clap, drho
-        # y, depth, and clapeyron use scientific notation; T and drho use fixed float
-        if field_idx in (0, 1, 3):
-            return f"{v:.4e}"
-        return f"{v:.1f}"
-
-    print(" ".join(fmt(v, i) for i, v in enumerate(output_values)))
-
-
-if __name__ == "__main__":
-    main()

@@ -5,16 +5,14 @@
 include $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../project.mk)
 include $(SIMULATION)/local.mk
 
-.PHONY: all sync-barkla run-aspect download clean help
-
-all: ;
+.PHONY: sync-barkla run-aspect download clean help
 
 download:
 	@$(BASH)/simulation/download-zenodo.sh "$(ZENODO_DATASET_DOI)" "$(PROJECT_ROOT)" "$(ZENODO_FILES)" "$(FORCE_DOWNLOAD)"
 
 sync-barkla:
 	@FORCE_SYNC=$(FORCE_SYNC) $(BASH)/simulation/sync-barkla2.sh \
-	  "$(notdir $(PRMS_BOX) $(PRMS_SINK))" "$(TIMESTEPS_SYNC)" "$(SIMULATION)" "$(BARKLA2_SIMULATION)"
+	  "$(notdir $(PRMS_BOX) $(PRMS_SINK))" "$(TIMESTEPS)" "$(SIMULATION)" "$(BARKLA2_SIMULATION)"
 
 PRM_NAME := $(basename $(notdir $(PRM)))
 RUN      := $(PRM:.prm=.run)

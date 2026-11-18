@@ -23,7 +23,6 @@ class ImageTiler:
     field2: str
     field3: str | None = None
     tags: str | None = None  # Up to 3 characters, one per panel (e.g. "abc")
-    fps: int = 10
     tag_size: int = 188  # Font size in points
 
     tiles_dir: Path = field(init=False)
@@ -33,7 +32,6 @@ class ImageTiler:
     images_field3: list[Path] = field(init=False)
     fields_list: list[str] = field(init=False)
     field_file_maps: list[str | None] = field(init=False)
-    tiled_images: list[Path] = field(default_factory=list, init=False)
 
     verbosity: int = 1
 
@@ -189,14 +187,11 @@ class ImageTiler:
         combined = self._concatenate_images_horizontally(annotated)
         combined.save(out_tile)
 
-        self.tiled_images.append(out_tile)
-
     def tile_images(self) -> None:
         """Tile all matched timestep images across the configured fields.
 
         Iterates over paired image sequences, validates timestep alignment,
-        and delegates each matched set to _tile_single. Results accumulate
-        in self.tiled_images.
+        and delegates each matched set to _tile_single.
         """
         tags = self._parse_tags()
 

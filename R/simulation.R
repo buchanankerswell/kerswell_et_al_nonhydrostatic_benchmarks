@@ -14,7 +14,7 @@ main <- function() {
 
   lapply(list.files(util_dir, pattern = "\\.R$", full.names = TRUE), source)
 
-  force_rewrite <- parse_logical(args[4])
+  force_rewrite <- if (length(args) >= 4) parse_logical(args[4]) else FALSE
 
   df <- read_benchmark_postprocessed(postprocessed_csv)
   if (is.null(df) || !nrow(df)) {
