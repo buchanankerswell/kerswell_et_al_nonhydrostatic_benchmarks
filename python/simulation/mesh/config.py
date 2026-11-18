@@ -74,6 +74,17 @@ _FIELD_DEFAULTS: dict[str, tuple] = {
         False,
         False,
     ),
+    "dG_driving_0": (
+        "dg-driving-ol-wd",
+        "PuOr_r",
+        "auto",
+        "$dG$ ol-wd (kJ/mol)",
+        "%.1f",
+        1e-3,
+        False,
+        False,
+        True,
+    ),
     "seismic_Vp": (
         "vp",
         "copper_r",

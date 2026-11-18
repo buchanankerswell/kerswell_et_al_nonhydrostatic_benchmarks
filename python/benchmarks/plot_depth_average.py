@@ -21,7 +21,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import load_depth_average, uid_label
+from common import apply_bench_style, load_depth_average, uid_label
+
+
+apply_bench_style()
 
 
 def plot_set(runs, title, out_path):
@@ -48,14 +51,12 @@ def plot_set(runs, title, out_path):
     ax[1].set_ylabel("depth [km]")
     ax[1].set_xlabel("xi_ol_wd [-]")
     ax[1].set_xlim(-0.05, 1.05)
-    for a in ax:
-        a.grid(True, alpha=0.3)
     ax[0].invert_yaxis()
-    ax[0].legend(fontsize=8, loc="best")
+    ax[0].legend(fontsize=11, loc="upper right", frameon=False)
     fig.suptitle(title)
     fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=110)
+    fig.savefig(out_path, dpi=300)
     plt.close(fig)
     print(f"wrote {plotted} profiles -> {out_path}")
 

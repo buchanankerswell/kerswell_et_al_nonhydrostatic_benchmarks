@@ -11,19 +11,28 @@ MODELS_SINK_SUITE := $(notdir $(RESULTS_SINK_SUITE))
 
 CLEAN := $(PYTHON)/**/__pycache__ \
 	 $(PYTHON)/simulation/**/__pycache__ \
+	 $(PYTHON)/setup/**/__pycache__ \
 	 $(FIGS)/adiabat \
+	 $(FIGS_SETUP) \
 	 $(FIGS_BOX_SUITE) \
 	 $(FIGS_SINK_SUITE) \
 	 $(FIGS)/benchmarks \
-	 $(FIGS)/sink_block \
 	 $(DATA_MESH_BOX_SUITE) \
 	 $(DATA_MESH_SINK_SUITE) \
-	 $(POSTPROCESSED_CSV)
+	 $(POSTPROCESSED_CSV) \
+	 $(SIMULATION)/results/pressure-wave-summary.csv
 
-.PHONY: all visualize sync-barkla postprocess timeseries pressure-waves adiabat meshes meshes-box-suite meshes-sink-suite clean help
+.PHONY: all visualize sync-barkla postprocess timeseries pressure-waves diagnostics setup adiabat meshes meshes-box-suite meshes-sink-suite clean help
 
 all: visualize
-visualize: meshes
+visualize: meshes setup
+
+setup:
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/setup/domains.py --suite box --width-m $(MODEL_WIDTH_BOX) --height-m $(MODEL_HEIGHT_BOX) \
+	  --transition-y-m $(TRANSITION_Y_OL_WD) --trace-x-m $(TRACE_X_BOX) --nominal-m $(NOMINAL_410_BOX) --probes "$(POINTS_BOX)" --out $(FIGS_SETUP)/box-domain.png
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/setup/domains.py --suite sink --width-m $(MODEL_WIDTH_SINK) --height-m $(MODEL_HEIGHT_SINK) \
+	  --transition-y-m $(TRANSITION_Y_OL_WD) --trace-x-m $(TRACE_X_SINK) --nominal-m $(NOMINAL_410_SINK400) --probes "$(POINTS_SINK)" --out $(FIGS_SETUP)/sink-domain.png
+	$(call LOG_ARTIFACT,$(FIGS_SETUP))
 
 sync-barkla:
 	@$(MAKE) --no-print-directory -C $(BASH) sync-barkla
@@ -57,10 +66,18 @@ pressure-waves: timeseries
 	  --plot-sink $(PLOT_SINK_RUNS) \
 	  --out-csv $(SIMULATION)/results/pressure-wave-summary.csv \
 	  --fig-dir $(FIGS)/benchmarks
-	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_average.py \
-	  --plot-box $(PLOT_BOX_RUNS) \
-	  --plot-sink $(PLOT_SINK_RUNS) \
-	  --fig-dir $(FIGS)/benchmarks
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_joint_profiles.py \
+	  --runs $(PLOT_BOX_RUNS) --suite-tag box --profile $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
+	  --model-height $(MODEL_HEIGHT_BOX) --surface-pressure $(SURFACE_PRESSURE) \
+	  --nominal-km $(shell echo $(NOMINAL_410_BOX) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/joint_profiles_box.png --title "Box joint 410 profiles"
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_joint_profiles.py \
+	  --runs $(PLOT_SINK_RUNS) --suite-tag sink --profile $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
+	  --model-height $(MODEL_HEIGHT_SINK) --surface-pressure $(SURFACE_PRESSURE) \
+	  --nominal-km $(shell echo $(NOMINAL_410_SINK400) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/joint_profiles_sink.png --title "Sink joint 410 profiles"
+	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
+
+diagnostics: postprocess
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_bimpl_resolution.py --fig-dir $(FIGS)/benchmarks
 	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
 meshes: meshes-box-suite meshes-sink-suite
@@ -118,5 +135,7 @@ help:
 	$(call LOG_DETAIL,meshes-sink-suite  Visualize NH sinking-block benchmarks)
 	$(call LOG_DETAIL,postprocess        Export postprocessed table (thermal-kinetic split at 410))
 	$(call LOG_DETAIL,timeseries         Extract per-run pressure/front/stats timeseries from solutions)
-	$(call LOG_DETAIL,pressure-waves     Quantify waves: vtu peaks + per-step RMS/probe/depth-average plots)
+	$(call LOG_DETAIL,pressure-waves     Quantify waves: vtu peaks + RMS/probe/joint plots)
+	$(call LOG_DETAIL,diagnostics        Supplement: implicit-bulk resolution robustness (needs postprocess))
+	$(call LOG_DETAIL,setup              Draw setup domain sketches (initial + boundary conditions))
 	$(call LOG_DETAIL,clean              Remove generated files (safe))

@@ -23,7 +23,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import uid_label
+from common import apply_bench_style, uid_label
 from simulation.params.transitions import (
     find_surface_depth_offset,
     find_transition,
@@ -31,6 +31,8 @@ from simulation.params.transitions import (
 )
 
 RESULTS = Path("simulation/results")
+
+apply_bench_style()
 
 
 def clean(field):
@@ -116,18 +118,17 @@ def main():
         a.axhline(nominal, color="grey", lw=1.0, ls="--")
         a.invert_yaxis()
         a.set_ylim(500, 250)
-        a.grid(True, alpha=0.3)
     ax[0].set_xlabel("xi_ol_wd [-]")
     ax[0].set_xlim(-0.05, 1.05)
     ax[1].set_xlabel("dG [kJ/mol]")
     ax[2].set_xlabel("rate [1/Ma]")
     ax[3].set_xlabel("P - P_ad [GPa]")
     ax[0].set_ylabel("depth [km]")
-    ax[0].legend(fontsize=8, loc="lower left")
+    ax[0].legend(fontsize=11, loc="lower left", frameon=False)
     fig.suptitle(args.title or f"Joint 410 profiles ({args.suite_tag}, final output)")
     fig.tight_layout()
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(args.out, dpi=110)
+    fig.savefig(args.out, dpi=300)
     plt.close(fig)
     print(f"wrote -> {args.out}")
 

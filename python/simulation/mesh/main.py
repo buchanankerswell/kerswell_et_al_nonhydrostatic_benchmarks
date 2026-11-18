@@ -142,16 +142,16 @@ def main():
 
     fields_for_seismic_profiles = ["density", "seismic_Vp", "seismic_Vs"]
 
-    # NH benchmarks: single ol-wd reaction; pressure is the key
-    # diagnostic (spurious-wave control), xi tracks the front.
+    # Isothermal suites: no thermal anomaly to follow, viscosity is uniform.
+    # Set A (buoyancy response): dyn pressure + density anomaly + vertical velocity.
+    # Set B (kinetic feedback): driving energy + reaction rate + phase fraction.
     fields_to_plot = [
-        "nonadiabatic_temperature",
         "nonadiabatic_pressure",
+        "nonadiabatic_density",
         "velocity_vertical",
-        "viscosity",
-        "xi_ol_wd",
-        "density",
+        "dG_driving_0",
         "reaction_rate_C0",
+        "xi_ol_wd",
     ]
 
     fields_for_seismic_profiles = ["density", "seismic_Vp", "seismic_Vs"]
@@ -246,9 +246,8 @@ def main():
 
     if mode in ["visualize", "full"]:
         tile_sets = {
-            "set0": {"tags": None, "fields": ["nonadiabatic_temperature", "nonadiabatic_pressure", "velocity_vertical"]},
-            "set1": {"tags": None, "fields": ["viscosity", "xi_ol_wd", "density"]},
-            "set2": {"tags": None, "fields": ["nonadiabatic_pressure", "reaction_rate_C0", "xi_ol_wd"]},
+            "set0": {"tags": None, "fields": ["nonadiabatic_pressure", "nonadiabatic_density", "velocity_vertical"]},
+            "set1": {"tags": None, "fields": ["dG_driving_0", "reaction_rate_C0", "xi_ol_wd"]},
         }
 
         for model_id in chunk_vis_ids:

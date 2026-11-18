@@ -49,6 +49,7 @@ FIGS_SIM_SINK_SUITE := $(FIGS_SINK_SUITE)/simulation
 FIGS_SIMULATION := $(FIGS)/simulation
 FIGS_STRUCTURE  := $(FIGS)/structure
 FIGS_SEISMIC    := $(FIGS)/seismic
+FIGS_SETUP      := $(FIGS)/setup
 # All generated outputs live under results (ASPECT runs + mesh/postprocess
 # products); data holds required versioned inputs only.
 POSTPROCESSED_CSV := $(ASPECT_RESULTS)/postprocessed.csv

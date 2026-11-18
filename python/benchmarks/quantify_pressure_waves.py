@@ -25,9 +25,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import UID_DAMP_RE, load_probe_series, load_stats_series, load_vtu_series, uid_label
+from common import UID_DAMP_RE, apply_bench_style, load_probe_series, load_stats_series, load_vtu_series, parse_uid_columns, uid_label
 
 RESULTS = Path("simulation/results")
+
+apply_bench_style()
 
 
 def undamped_twin(run):
@@ -86,6 +88,7 @@ def summarize(run, peaks):
         "reduction_vs_control": (round((cp - peak) / cp, 3) if cp else None),
         "nodynp_run": nod,
         "rel_err_vs_nodynp": (round((peak - np_) / np_, 3) if np_ else None),
+        **parse_uid_columns(run),
     }
 
 
@@ -110,13 +113,11 @@ def plot_suite(runs, title, out_path, control, reference=None):
     ax[0].set_ylabel("peak-to-peak dyn. pressure [MPa]")
     ax[1].set_ylabel("min dyn. pressure [MPa]")
     ax[1].set_xlabel("time [Myr]")
-    for a in ax:
-        a.grid(True, alpha=0.3)
-    ax[0].legend(fontsize=8, loc="best")
+    ax[0].legend(fontsize=11, loc="upper right", frameon=False)
     fig.suptitle(title)
     fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=110)
+    fig.savefig(out_path, dpi=300)
     plt.close(fig)
 
 
@@ -142,12 +143,11 @@ def plot_rms_suite(runs, title, out_path, control, reference=None):
     ax.set_yscale("log")
     ax.set_ylabel("RMS velocity [m/yr]")
     ax.set_xlabel("time [Myr]")
-    ax.grid(True, alpha=0.3, which="both")
-    ax.legend(fontsize=8, loc="best")
+    ax.legend(fontsize=11, loc="upper right", frameon=False)
     fig.suptitle(title)
     fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=110)
+    fig.savefig(out_path, dpi=300)
     plt.close(fig)
 
 
@@ -155,7 +155,7 @@ def plot_probe_suite(runs, title, out_path, control, reference=None, field="rela
     fig, ax = plt.subplots(figsize=(8, 5))
     plotted = 0
     for run in runs:
-        probe = load_probe_series(run, field)
+        probe = load_probe_series(run, 0, field)
         if probe is None:
             continue
         plotted += 1
@@ -172,12 +172,11 @@ def plot_probe_suite(runs, title, out_path, control, reference=None, field="rela
         return
     ax.set_ylabel(f"probe {field} [MPa]")
     ax.set_xlabel("time [Myr]")
-    ax.grid(True, alpha=0.3)
-    ax.legend(fontsize=8, loc="best")
+    ax.legend(fontsize=11, loc="upper right", frameon=False)
     fig.suptitle(title)
     fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path, dpi=110)
+    fig.savefig(out_path, dpi=300)
     plt.close(fig)
 
 

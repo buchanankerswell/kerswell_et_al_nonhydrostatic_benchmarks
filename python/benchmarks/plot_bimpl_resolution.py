@@ -20,7 +20,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from common import apply_bench_style
+
 RESULTS = Path("simulation/results")
+
+apply_bench_style()
 
 
 def load(suite):
@@ -52,8 +56,7 @@ def panel_rate_vs_res(ax, df, title):
     ax.set_xlabel("global refinement (Res)")
     ax.set_ylabel("final max |rate| [1/s]")
     ax.set_title(title)
-    ax.grid(True, alpha=0.3, which="both")
-    ax.legend(fontsize=8, loc="best")
+    ax.legend(fontsize=11, loc="upper right", frameon=False)
 
 
 def panel_history(ax, df, title, damp_pat="Bimpl1e21"):
@@ -71,8 +74,7 @@ def panel_history(ax, df, title, damp_pat="Bimpl1e21"):
     ax.set_xlabel("output timestep")
     ax.set_ylabel("max |rate| [1/s]")
     ax.set_title(title)
-    ax.grid(True, alpha=0.3, which="both")
-    ax.legend(fontsize=8, loc="best")
+    ax.legend(fontsize=11, loc="upper right", frameon=False)
 
 
 def main():
@@ -103,7 +105,7 @@ def main():
         fig.suptitle(f"{suite}: implicit-bulk resolution robustness")
         fig.tight_layout()
         out = figdir / f"bimpl_resolution_{suite}.png"
-        fig.savefig(out, dpi=110)
+        fig.savefig(out, dpi=300)
         plt.close(fig)
         print(f"wrote -> {out}")
 

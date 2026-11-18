@@ -9,6 +9,45 @@ import numpy as np
 
 RESULTS = Path("simulation/results")
 
+BENCH_FACECOLOR = "0.92"
+BENCH_DPI = 300
+
+
+def apply_bench_style():
+    """Match R theme_bench: grey92 panels, no grid, tick marks off, dpi 300."""
+    import matplotlib as mpl
+
+    mpl.rcParams.update(
+        {
+            "figure.dpi": BENCH_DPI,
+            "savefig.dpi": BENCH_DPI,
+            "savefig.bbox": "tight",
+            "axes.facecolor": BENCH_FACECOLOR,
+            "figure.facecolor": "white",
+            "axes.grid": False,
+            "xtick.direction": "out",
+            "ytick.direction": "out",
+            "legend.frameon": False,
+            "legend.fontsize": 11,
+            "font.size": 14,
+        }
+    )
+
+
+def parse_uid_columns(run):
+    """Split a UID into suite/damp/dynp/z/res columns for summary tables."""
+    suite = "sink" if run.startswith("NH_Sink_") else "box" if run.startswith("NH_Box_") else ""
+    damp_match = DAMP_RE.search(run)
+    damp = (damp_match.group(1) + damp_match.group(2)) if damp_match else ""
+    dynp_match = re.search(r"_Dynp(On|Off)_", run)
+    dynp = 1 if dynp_match and dynp_match.group(1) == "On" else 0
+    res_match = re.search(r"_Res(\d+)", run)
+    res = int(res_match.group(1)) if res_match else None
+    z_match = re.search(r"_Z([\d.e+-]+)", run)
+    z = z_match.group(1) if z_match else ""
+    return {"suite": suite, "damp": damp, "dynp": dynp, "res": res, "z": z}
+
+
 DAMP_RE = re.compile(r"_Damp([A-Za-z]+)([\d.e+-]*)")
 UID_DAMP_RE = re.compile(r"_Damp[A-Za-z]+[\d.e+-]*")
 
