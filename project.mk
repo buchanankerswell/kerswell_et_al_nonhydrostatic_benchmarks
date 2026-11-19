@@ -33,7 +33,6 @@ PLOT_BOX_RUNS    = $(filter %_Z$(Z_MID)_Res5,$(UIDS_BOX_SUITE))
 PLOT_SINK_RUNS   = $(filter %_Z$(Z_MID)_Res6,$(UIDS_SINK_SUITE))
 # One step list for sync + mesh: 21 run outputs, 9 sparse steps processed.
 TIMESTEPS := 000 002 004 006 008 012 016 019 020
-FORCE_SYNC     := 0
 FORCE_DOWNLOAD := 0
 ZENODO_DATASET_DOI := TODO-no-dataset-yet
 ZENODO_FILES       := TODO-no-files-yet

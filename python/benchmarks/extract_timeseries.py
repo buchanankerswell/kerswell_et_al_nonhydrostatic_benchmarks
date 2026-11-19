@@ -124,6 +124,9 @@ def main():
         print(f"warn {args.run_dir}: no statistics file, skipping stats-timeseries.csv")
 
     pvtu = sorted(f for f in os.listdir(sol_dir) if f.endswith(".pvtu"))
+    if not pvtu:
+        print(f"skip {args.run_dir}: no solution outputs to tabulate")
+        return
     rows = []
     for f in pvtu:
         base = f[: -len(".pvtu")]
