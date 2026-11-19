@@ -152,8 +152,8 @@ namespace aspect
           const double   P_ref_adiabatic = this->get_adiabatic_conditions().pressure(position);
           const double   T_ref = this->get_adiabatic_conditions().temperature(position);
 
-          // Ambient reference: subtract the static block load baked into the
-          // 1D adiabat, so P_ref is ambient mantle.
+          // Ambient reference: subtract the static block load that the
+          // 1D adiabat includes, so P_ref is ambient mantle.
           double P_ref = P_ref_adiabatic;
           if (use_ambient_reference_column && block_density_excess != 0.0)
             {
@@ -430,47 +430,47 @@ namespace aspect
           }
           prm.leave_subsection();
 
-          prm.declare_entry("Viscosity", "1e21", Patterns::Double(0.), "Reference viscosity (Pa s)");
-          prm.declare_entry("Minimum viscosity", "1e19", Patterns::Double(0.), "Viscosity floor (Pa s)");
-          prm.declare_entry("Maximum viscosity", "1e24", Patterns::Double(0.), "Viscosity ceiling (Pa s)");
-          prm.declare_entry("Thermal viscosity exponent", "0.0", Patterns::Double(0.), "Exponent A in exp(-A*(T-T_ref)/T_ref)");
+          prm.declare_entry("Viscosity", "1e21", Patterns::Double(0.), "Reference viscosity. Units: Pa s");
+          prm.declare_entry("Minimum viscosity", "1e19", Patterns::Double(0.), "Viscosity floor. Units: Pa s");
+          prm.declare_entry("Maximum viscosity", "1e24", Patterns::Double(0.), "Viscosity ceiling. Units: Pa s");
+          prm.declare_entry("Thermal viscosity exponent", "0.0", Patterns::Double(0.), "Exponent A in exp(-A*(T-T_ref)/T_ref). Units: none");
           prm.declare_entry("Phase viscosity prefactors",
                             "1.0, 1.0",
                             Patterns::List(Patterns::Double(0.)),
-                            "Per-phase prefactors, one per phase.");
+                            "Per-phase prefactors, one per phase. Units: none");
           prm.declare_entry("Gibbs viscosity width",
                             "1000.0",
                             Patterns::Double(0.),
-                            "Tanh width in Gibbs energy (J/mol)");
+                            "Tanh width in Gibbs energy. Units: J/mol");
 
-          prm.declare_entry("Thermal conductivity", "4.0", Patterns::Double(0.), "Thermal conductivity (W/m/K)");
+          prm.declare_entry("Thermal conductivity", "4.0", Patterns::Double(0.), "Thermal conductivity. Units: W/m/K");
 
-          prm.declare_entry("Use dynamic pressure correction for density", "true", Patterns::Bool(), "Apply driving pressure to density.");
+          prm.declare_entry("Use dynamic pressure correction for density", "true", Patterns::Bool(), "Apply driving pressure to density. Units: none");
           prm.declare_entry("Use dynamic pressure correction for gibbs",
                             "false",
                             Patterns::Bool(),
-                            "Apply driving pressure to Gibbs energy.");
+                            "Apply driving pressure to Gibbs energy. Units: none");
 
           prm.declare_entry("Relaxation time for dynamic pressure",
                             "0.0",
                             Patterns::Double(0.),
-                            "Low-pass time for the relaxed pressure field (s, 0 disables).");
+                            "Low-pass time for the relaxed pressure field. Units: s. Zero disables it.");
           prm.declare_entry("Explicit bulk viscosity",
                             "0.0",
                             Patterns::Double(0.),
-                            "Bulk viscosity for the extra Stokes force (Pa s, 0 disables).");
+                            "Bulk viscosity for the extra Stokes force. Units: Pa s. Zero disables it.");
           prm.declare_entry("Maximum dynamic pressure correction",
                             "0.0",
                             Patterns::Double(0.),
-                            "Cap on the driving pressure (Pa, <=0 disables).");
+                            "Cap on the driving pressure. Units: Pa. Zero or negative disables it.");
           prm.declare_entry("Block density excess",
                             "0.0",
                             Patterns::Double(),
-                            "Extra density where the 'block' field is 1 (kg/m^3, 0 disables).");
+                            "Extra density where the block field is 1. Units: kg/m^3. Zero disables it.");
           prm.declare_entry("Use ambient reference column",
                             "true",
                             Patterns::Bool(),
-                            "Subtract the block load baked into the 1D adiabat. No effect without block.");
+                            "Subtract the static block load that the 1D adiabat includes. Units: none. No effect without block.");
           prm.declare_entry("Ambient block top y",
                             "875000.0",
                             Patterns::Double(),

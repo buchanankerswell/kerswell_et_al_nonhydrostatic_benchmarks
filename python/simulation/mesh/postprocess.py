@@ -123,7 +123,7 @@ class MeshPostProcessor:
             search_window: Half-width (m) of the depth window around rxn_depth within which the inferred transition must lie. Default 80 km.
 
         Returns:
-            (trans_depth, displacement, width) in metres, or (nan, nan, nan) if the profile is too corrupt, no valid crossings are found,
+            (trans_depth, displacement, width) in meters, or (nan, nan, nan) if the profile is too corrupt, no valid crossings are found,
             or the inferred transition location fails the proximity check.
         """
 
@@ -243,7 +243,7 @@ class MeshPostProcessor:
         Repair monotonicity violations in a phase fraction profile near a known reaction depth.
 
         Only the subset of points within search_window of rxn_depth is inspected and repaired using the Pool Adjacent Violators Algorithm (PAVA).
-        Non-monotonic artefacts outside this window are ignored entirely, preventing unrelated mesh noise elsewhere in the depth column from
+        Non-monotonic artifacts outside this window are ignored entirely, preventing unrelated mesh noise elsewhere in the depth column from
         triggering rejection or corrupting the repair.
 
         Within the window, PAVA pools adjacent violating points into blocks and replaces each block with its mean. Pools are formed where the
@@ -252,7 +252,7 @@ class MeshPostProcessor:
         Args:
             values:        Phase fraction array (expected to be broadly 0 -> 1).
             depths:        Depth array (m), sorted ascending, aligned with values.
-            rxn_depth:     Nominal reaction depth (m) used to centre the search window.
+            rxn_depth:     Nominal reaction depth (m) used to center the search window.
             search_window: Half-width (m) of the depth window around rxn_depth within which monotonicity is enforced. Default 80 km.
             bounds:        Optional (lo, hi) index range to repair, overriding the search window.
 

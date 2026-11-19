@@ -67,8 +67,8 @@ SEISMIC_SINK_SUITE  := $(ASPECT_RESULTS)/seismic_profiles_sink
 DATA_MESH_BOX_SUITE  := $(addprefix $(ASPECT_RESULTS)/,structure-summary-box.csv structure-cache-box.pkl seismic-profile-cache-box.pkl seismic_profiles_box)
 DATA_MESH_SINK_SUITE := $(addprefix $(ASPECT_RESULTS)/,structure-summary-sink.csv structure-cache-sink.pkl seismic-profile-cache-sink.pkl seismic_profiles_sink)
 
-# Box main runs: damping matrix at Z_MID Res5. DynpOff+DampNone is the
-# no-feedback reference; DynpOn+DampNone the bare wave run.
+# Box main runs: every damping type at Z_MID Res5. DynpOff+DampNone is the
+# reference with no feedback; DynpOn+DampNone the wave run with no damping.
 ID_B1 := NH_Box_DynpOn_DampNone_Z4.44e-04_Res5
 ID_B2 := NH_Box_DynpOff_DampNone_Z4.44e-04_Res5
 ID_B3 := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res5
@@ -136,7 +136,7 @@ CFL_SINK := 5e-01
 GRAVITY  := 9.81
 
 # Ambient hydrostatic reference (can edit). The 1D adiabatic profile is
-# integrated down a column through the initial block, baking ~589 MPa of
+# integrated down a column through the initial block, adding ~589 MPa of
 # block weight into P_ref; the plugin subtracts that static load when
 # AMBIENT_REF is true so kinetics see ambient mantle. Box has no block, so
 # the correction is a no-op there. Geometry must match {block-expr} below.
@@ -172,15 +172,13 @@ DEPTH_CORRECTION_OL_WD := 5e+03
 TRANSITION_Y_OL_WD := 6.408e+05
 
 # Model depth (m) where ASPECT pressure equals the profile equilibrium
-# (14.324 GPa). SINK400 was 362700 under the old reference; now STALE —
-# ambient reference moves the control front to ~383 km at Res4, re-derive
-# from the Res6 S2 re-run after the sweep. BOX still STALE (old g = 10
-# value, control ID_B2 not yet synced — re-derive on arrival).
+# (14.324 GPa). Placeholders until the new runs land: sink should come out
+# near 383 km, box still needs its no-feedback control run.
 NOMINAL_410_BOX     := 373100
 NOMINAL_410_SINK400 := 362700
 
-# Fixed vertical lines each suite is sampled along (m): box centre, sink
-# block centre. Both suites are isothermal, so there is no hotspot to follow.
+# Fixed vertical lines each suite is sampled along (m): box center, sink
+# block center. Both suites are isothermal, so there is no hotspot to follow.
 TRACE_X_BOX  := 150000
 TRACE_X_SINK := 500000
 

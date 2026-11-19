@@ -1,4 +1,4 @@
-# Minimal benchmark set: paper damping matrix at Z_MID (box Res5, sink Res6)
+# Minimal benchmark set: the main damping runs at Z_MID (box Res5, sink Res6)
 # plus one timestep-scaling pair per suite (undamped, half and double CFL).
 # REGISTER_NH_BOX takes: list dynp dampkind dampval z res [cfl].
 # REGISTER_NH_SINK takes: list dynp dampkind dampval block z res [cfl].

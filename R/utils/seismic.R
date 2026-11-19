@@ -1,7 +1,6 @@
 # 410 reference depths (km). Sink default mirrors project.mk
-# NOMINAL_410_SINK400, re-derived under g = 9.81 from the Barkla2
-# no-feedback control run ID_S2. Box default still STALE (g = 10 era);
-# re-derive from control ID_B2 before trusting absolute box depths.
+# NOMINAL_410_SINK400; both numbers are placeholders until the new runs
+# land (sink should come out near 383 km). Passed explicitly by R/seismic.R.
 nominal_410_box_km <- 373.1
 nominal_410_sink_km <- 362.7
 

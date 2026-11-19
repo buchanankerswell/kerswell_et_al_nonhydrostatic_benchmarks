@@ -6,7 +6,7 @@ on the phase transition with a per-figure shared symmetric color scale
 computed from band data only, so the spotty pressure wave sets the scale.
 
 For sinking-block runs the pressure/density panels show the TRUE ambient-
-referenced driver: the file values plus the static block load baked into
+referenced driver: the file values plus the static block load included in
 the 1D adiabatic reference (must match BLOCK_Y_TOP/BLOCK_Y_BOT and GRAVITY
 in project.mk). Box runs have no block field and are unaffected.
 

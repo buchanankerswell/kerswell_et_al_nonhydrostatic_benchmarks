@@ -242,7 +242,7 @@ class MeshPlotter:
             depths:      Depth coordinate array (m).
             x_positions: x-coordinate of the maximum-anomaly point at each depth (m).
             y_max:       Mesh upper-boundary y-coordinate, used to convert depth to y.
-            color:       Line colour.  Defaults to config.trace_line_color if available, otherwise 'white'.
+            color:       Line color.  Defaults to config.trace_line_color if available, otherwise 'white'.
             line_width:  Rendered line width in pixels.
             alpha:       Line opacity.
         """

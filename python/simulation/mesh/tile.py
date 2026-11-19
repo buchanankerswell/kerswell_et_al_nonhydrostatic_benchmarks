@@ -67,7 +67,7 @@ class ImageTiler:
         """Return a list of three per-panel tag characters (or None) from self.tags.
 
         Pads with None if self.tags has fewer than three characters. Whitespace
-        padding characters are normalised to None so they do not appear in
+        padding characters are normalized to None so they do not appear in
         annotations or filenames.
         """
         if self.tags is None:

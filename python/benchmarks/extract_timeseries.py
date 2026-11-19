@@ -18,7 +18,7 @@ import sys
 import numpy as np
 
 # Ambient-reference block-load correction (must match project.mk BLOCK_Y_TOP,
-# BLOCK_Y_BOT and GRAVITY): the 1D adiabatic reference baked the initial
+# BLOCK_Y_BOT and GRAVITY): the 1D adiabatic reference includes the initial
 # block weight in, so the true ambient-referenced driving pressure is the
 # file value plus the static load below the block column.
 AMBIENT_BLOCK_TOP_Y = 875e3

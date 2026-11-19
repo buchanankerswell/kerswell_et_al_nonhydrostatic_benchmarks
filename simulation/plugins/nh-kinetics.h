@@ -85,9 +85,6 @@ namespace aspect
         std::string data_directory;
         std::vector<std::string> data_file_names;
 
-        /**
-         * Per-phase material property column indices.
-         */
         // Table column indices, resolved in initialize().
         std::vector<unsigned int> rho_idx, alpha_idx, beta_idx, cp_idx;
         std::vector<unsigned int> Vp_idx, Vs_idx, dVp_dT_idx, dVs_dT_idx;
@@ -96,43 +93,50 @@ namespace aspect
         // Indices of the reaction progress fields.
         std::vector<unsigned int> reaction_field_indices;
 
-        // Viscosity and its cutoffs (Pa s), temperature exponent (none),
-        // per-phase prefactors (none), tanh width (J/mol), conductivity.
+        // Reference viscosity. Units: Pa s
         double viscosity;
 
+        // Viscosity floor and ceiling. Units: Pa s
         double minimum_viscosity;
         double maximum_viscosity;
 
+        // Exponent in exp(-A*(T-T_ref)/T_ref). Units: none
         double thermal_viscosity_exponent;
 
+        // Per-phase prefactors. Units: none
         std::vector<double> phase_viscosity_prefactors;
 
+        // Tanh transition width in Gibbs energy. Units: J/mol
         double gibbs_viscosity_width;
 
+        // Reference thermal conductivity. Units: W/m/K
         double k;
 
         bool use_dynamic_pressure_correction_for_density;
         bool use_dynamic_pressure_correction_for_gibbs;
 
-        // Relaxation time (s, 0 disables), explicit bulk viscosity (Pa s,
-        // 0 disables), pressure cap (Pa, <=0 disables).
+        // Relaxation time. Units: s. Zero disables it.
         double relaxation_time_dynamic_pressure;
 
+        // Explicit bulk viscosity. Units: Pa s. Zero disables it.
         double bulk_viscosity_explicit;
 
+        // Cap on the driving pressure. Units: Pa. Zero or negative disables it.
         double max_dynamic_pressure_correction;
 
-        // Extra density where the 'block' field is 1 (kg/m^3, 0 disables).
+        // Extra density where the block field is 1. Units: kg/m^3.
+        // Zero disables it.
         double block_density_excess;
 
-        // Block-free reference: subtract the static block load baked into
-        // the 1D adiabat (no-op when the excess above is zero).
+        // Ambient (block-free) reference: subtract the static block load
+        // that the 1D adiabat includes. No effect when the excess above is zero.
         bool use_ambient_reference_column;
 
-        // Block top/bottom y (m, must match the initial composition).
-        // Gravity (m/s^2) for the load correction.
+        // Block top and bottom y. Units: m. Must match the initial composition.
         double ambient_block_top_y;
         double ambient_block_bottom_y;
+
+        // Gravity for the load correction. Units: m/s^2
         double gravity_magnitude;
     };
 
