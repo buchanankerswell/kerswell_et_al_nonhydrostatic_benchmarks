@@ -152,11 +152,8 @@ namespace aspect
           const double   P_ref_adiabatic = this->get_adiabatic_conditions().pressure(position);
           const double   T_ref = this->get_adiabatic_conditions().temperature(position);
 
-          // Ambient reference: remove the initial block load baked into the
-          // 1D adiabatic profile (integrated down a column through the block
-          // at startup), so P_ref is ambient hydrostatic mantle. The
-          // correction is static: the ambient column never changes as the
-          // block sinks. P_ref_ambient = P_ref - excess * g * overlap.
+          // Ambient reference: subtract the static block load baked into the
+          // 1D adiabat, so P_ref is ambient mantle.
           double P_ref = P_ref_adiabatic;
           if (use_ambient_reference_column && block_density_excess != 0.0)
             {
@@ -170,10 +167,8 @@ namespace aspect
             }
           const Point<1> profile_pos(P_ref);
 
-          // Non-hydrostatic driving pressure (relaxed-pressure variant):
-          // reactions see the low-pass-filtered pressure when enabled, else
-          // the instantaneous Stokes pressure. The deviation from the adiabat
-          // is capped (capped-pressure variant) when requested.
+          // Driving pressure: relaxed pressure when enabled, else Stokes
+          // pressure, minus reference; capped when requested.
           double p_drive = P;
           if (relaxed_pressure_idx != numbers::invalid_unsigned_int)
             p_drive = in.composition[q][relaxed_pressure_idx];
@@ -183,10 +178,7 @@ namespace aspect
                                           -max_dynamic_pressure_correction,
                                           max_dynamic_pressure_correction);
 
-          // Explicit bulk-viscosity damping force (explicit-bulk variant).
-          // Penalty on the divergence rate: rhs_p = +(zeta/eta_ref)*div(u_old),
-          // assembled into the continuity equation. Requires strain-rate
-          // input; silently does nothing without it.
+          // Explicit bulk-viscosity force on the divergence rate.
           if (stokes_rhs_out != nullptr && bulk_viscosity_explicit > 0.0 && in.requests_property(MaterialProperties::additional_outputs))
             {
               double div_u = 0.0;
@@ -343,15 +335,8 @@ namespace aspect
               out.viscosities[q]                 = std::min(std::max(eta, minimum_viscosity), maximum_viscosity);
             }
 
-          // Evaluate reaction rates and driving energies.
-          //
-          // NOTE on units: the chain returns SI rates (s^-1) and the operator
-          // splitter integrates in seconds, so kinetic prefactors Z are
-          // entered directly in SI units (e.g. Z = 4.44e-04 1/s/K gives the
-          // same effective kinetics as the cookbook's Z = 1.4e+04 divided by
-          // year_in_seconds). No time conversion is applied here; the
-          // cookbook's division is arguably a units bug, flagged for a
-          // separate upstream fix.
+          // Reaction rates and driving energies. Rates are SI (1/s), used
+          // as-is: no time conversion.
           if (reaction_rate_out != nullptr &&
               (in.requests_property(MaterialProperties::reaction_rates) ||
                in.requests_property(MaterialProperties::additional_outputs)))
@@ -378,20 +363,18 @@ namespace aspect
             out.reaction_terms[q][c] = 0.0;
         }
 
-      // Calculate projected density reaction terms
+      // Projected density terms.
       if (projected_density_idx != numbers::invalid_unsigned_int)
         for (unsigned int q = 0; q < in.n_evaluation_points(); ++q)
           out.reaction_terms[q][projected_density_idx] = out.densities[q] - in.composition[q][projected_density_idx];
 
-      // Relax the dynamic pressure field toward the instantaneous Stokes
-      // pressure: d(p_bar)/dt = (P - p_bar) / tau_rel, integrated by the
-      // operator-splitting reaction solver like the xi fields.
+      // Relax the pressure field toward Stokes pressure.
       if (relaxed_pressure_idx != numbers::invalid_unsigned_int && reaction_rate_out != nullptr)
         for (unsigned int q = 0; q < in.n_evaluation_points(); ++q)
           reaction_rate_out->reaction_rates[q][relaxed_pressure_idx] =
             (in.pressure[q] - in.composition[q][relaxed_pressure_idx]) / relaxation_time_dynamic_pressure;
 
-      // Update projected density field
+      // Projected density field carries the new densities forward.
       if (prescribed_field_out != nullptr && projected_density_idx != numbers::invalid_unsigned_int)
         for (unsigned int i = 0; i < in.position.size(); ++i)
           prescribed_field_out->prescribed_field_outputs[i][projected_density_idx] = out.densities[i];
@@ -447,69 +430,59 @@ namespace aspect
           }
           prm.leave_subsection();
 
-          prm.declare_entry("Viscosity", "1e21", Patterns::Double(0.), "Reference viscosity. Units: Pa s");
-          prm.declare_entry("Minimum viscosity", "1e19", Patterns::Double(0.), "Minimum viscosity cutoff. Units: Pa s");
-          prm.declare_entry("Maximum viscosity", "1e24", Patterns::Double(0.), "Maximum viscosity cutoff. Units: Pa s");
-          prm.declare_entry("Thermal viscosity exponent", "0.0", Patterns::Double(0.), "Exponent A in exp(-A*(T-T_ref)/T_ref). Dimensionless.");
+          prm.declare_entry("Viscosity", "1e21", Patterns::Double(0.), "Reference viscosity (Pa s)");
+          prm.declare_entry("Minimum viscosity", "1e19", Patterns::Double(0.), "Viscosity floor (Pa s)");
+          prm.declare_entry("Maximum viscosity", "1e24", Patterns::Double(0.), "Viscosity ceiling (Pa s)");
+          prm.declare_entry("Thermal viscosity exponent", "0.0", Patterns::Double(0.), "Exponent A in exp(-A*(T-T_ref)/T_ref)");
           prm.declare_entry("Phase viscosity prefactors",
                             "1.0, 1.0",
                             Patterns::List(Patterns::Double(0.)),
-                            "Comma-separated list of dimensionless viscosity prefactors, one per phase (n_reactions + 1).");
+                            "Per-phase prefactors, one per phase.");
           prm.declare_entry("Gibbs viscosity width",
                             "1000.0",
                             Patterns::Double(0.),
-                            "Width of the tanh viscosity transition in Gibbs free energy space. Units: J/mol");
+                            "Tanh width in Gibbs energy (J/mol)");
 
-          prm.declare_entry("Thermal conductivity", "4.0", Patterns::Double(0.), "Reference thermal conductivity. Units: W/m/K");
+          prm.declare_entry("Thermal conductivity", "4.0", Patterns::Double(0.), "Thermal conductivity (W/m/K)");
 
-          prm.declare_entry("Use dynamic pressure correction for density", "true", Patterns::Bool(), "Apply dynamic pressure correction to density.");
+          prm.declare_entry("Use dynamic pressure correction for density", "true", Patterns::Bool(), "Apply driving pressure to density.");
           prm.declare_entry("Use dynamic pressure correction for gibbs",
                             "false",
                             Patterns::Bool(),
-                            "Apply dynamic pressure correction to Gibbs free energy.");
+                            "Apply driving pressure to Gibbs energy.");
 
           prm.declare_entry("Relaxation time for dynamic pressure",
                             "0.0",
                             Patterns::Double(0.),
-                            "Relaxation time tau_rel for the low-pass-filtered dynamic pressure (relaxed-pressure variant). "
-                            "Reactions are driven by the relaxed pressure field 'relaxed_pressure', which must be "
-                            "defined as a compositional field. Units: s. Zero disables relaxation.");
+                            "Low-pass time for the relaxed pressure field (s, 0 disables).");
           prm.declare_entry("Explicit bulk viscosity",
                             "0.0",
                             Patterns::Double(0.),
-                            "Explicit bulk viscosity zeta for the lagged Stokes RHS damping force (explicit-bulk variant). "
-                            "Requires 'Enable additional Stokes RHS' in the Formulation section. "
-                            "Stable for zeta below the shear viscosity. Units: Pa s. Zero disables the force.");
+                            "Bulk viscosity for the extra Stokes force (Pa s, 0 disables).");
           prm.declare_entry("Maximum dynamic pressure correction",
                             "0.0",
                             Patterns::Double(0.),
-                            "Magnitude cap on (P_drive - P_ref) applied to density and Gibbs energy (capped-pressure variant). "
-                            "Units: Pa. Zero or negative disables capping.");
+                            "Cap on the driving pressure (Pa, <=0 disables).");
           prm.declare_entry("Block density excess",
                             "0.0",
                             Patterns::Double(),
-                            "Density excess added wherever the compositional 'block' field is 1 "
-                            "(sinking-block benchmark scaffolding). Units: kg/m^3. Zero disables it.");
+                            "Extra density where the 'block' field is 1 (kg/m^3, 0 disables).");
           prm.declare_entry("Use ambient reference column",
                             "true",
                             Patterns::Bool(),
-                            "Subtract the initial block load baked into the 1D adiabatic profile so the "
-                            "reference pressure is ambient hydrostatic mantle. No effect when 'Block density "
-                            "excess' is zero. Units: none.");
+                            "Subtract the block load baked into the 1D adiabat. No effect without block.");
           prm.declare_entry("Ambient block top y",
                             "875000.0",
                             Patterns::Double(),
-                            "Model y-coordinate of the top of the initial dense block along the reference column. "
-                            "Must match the block region in the initial composition function. Units: m.");
+                            "Block top y (m, must match the initial composition).");
           prm.declare_entry("Ambient block bottom y",
                             "725000.0",
                             Patterns::Double(),
-                            "Model y-coordinate of the bottom of the initial dense block along the reference column. "
-                            "Must match the block region in the initial composition function. Units: m.");
+                            "Block bottom y (m, must match the initial composition).");
           prm.declare_entry("Gravity magnitude",
                             "9.81",
                             Patterns::Double(0.),
-                            "Gravitational acceleration used for the ambient block-load correction. Units: m/s^2");
+                            "Gravity for the load correction (m/s^2)");
         }
         prm.leave_subsection();
       }

@@ -16,9 +16,8 @@ from vtkmodules.vtkCommonCore import vtkLogger
 
 vtkLogger.SetStderrVerbosity(vtkLogger.VERBOSITY_ERROR)
 
-# Each figure builds and tears down an off-screen render window, which makes
-# macOS report a benign "Context leak detected" notice straight to stderr and
-# into the middle of the progress bar. Drop it at the descriptor level.
+# Off-screen renders trip a harmless macOS notice on stderr; the
+# descriptor-level filter in utils/logging.py drops it.
 if sys.platform == "darwin":
     install_stderr_filter()
 

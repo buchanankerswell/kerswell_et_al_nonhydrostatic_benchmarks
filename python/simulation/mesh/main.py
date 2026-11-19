@@ -143,8 +143,8 @@ def main():
     fields_for_seismic_profiles = ["density", "seismic_Vp", "seismic_Vs"]
 
     # Isothermal suites: no thermal anomaly to follow, viscosity is uniform.
-    # Set A (buoyancy response): dyn pressure + density anomaly + vertical velocity.
-    # Set B (kinetic feedback): driving energy + reaction rate + phase fraction.
+    # First tile row: dynamic pressure + density anomaly + vertical velocity.
+    # Second tile row: driving energy + reaction rate + phase fraction.
     fields_to_plot = [
         "nonadiabatic_pressure",
         "nonadiabatic_density",

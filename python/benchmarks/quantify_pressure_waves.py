@@ -3,9 +3,9 @@
 Reads per-run timeseries.csv and writes a summary CSV plus comparison plots.
 Runs and plot sets arrive from the Makefiles (project.mk UID lists); without
 them the script discovers NH_* runs and derives paper plot sets by UID suffix.
-Each variant is measured against twins derived from its own UID: the undamped
-control (Damp token -> DampNone) and the no-feedback equilibrium (DynpOn ->
-DynpOff). Positive reduction = damped; positive error = overshoot vs equilibrium.
+Each run is measured against paired runs from its own UID: the undamped
+control (Damp token -> DampNone) and the no-feedback control (DynpOn ->
+DynpOff). Positive reduction = damped; positive error = overshoot vs no feedback.
 
 Usage (repo root):
   PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
@@ -33,11 +33,11 @@ RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 apply_bench_style()
 
 
-def undamped_twin(run):
+def undamped_control(run):
     return UID_DAMP_RE.sub("_DampNone", run, count=1)
 
 
-def no_feedback_twin(run):
+def no_feedback_control(run):
     return run.replace("_DynpOn_", "_DynpOff_", 1)
 
 
@@ -71,7 +71,7 @@ def summarize(run, peaks):
     p2p = s["pmax"] - s["pmin"]
     i = int(np.argmax(p2p))
     peak = float(p2p[i])
-    ctrl, nod = undamped_twin(run), no_feedback_twin(run)
+    ctrl, nod = undamped_control(run), no_feedback_control(run)
     cp, np_ = peaks.get(ctrl), peaks.get(nod)
     return {
         "run": run,

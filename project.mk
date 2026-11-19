@@ -28,7 +28,7 @@ FORCE_REWRITE         := true
 # Recursive (=): expands after local.mk registers UIDS_* below.
 RESULTS_BOX_SUITE  = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_BOX_SUITE))
 RESULTS_SINK_SUITE = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_SINK_SUITE))
-# Plot sets (paper matrix at Z_MID) selected from the registered UIDs.
+# Plot lists (main Z_MID runs) selected from the registered UIDs.
 PLOT_BOX_RUNS    = $(filter %_Z$(Z_MID)_Res5,$(UIDS_BOX_SUITE))
 PLOT_SINK_RUNS   = $(filter %_Z$(Z_MID)_Res6,$(UIDS_SINK_SUITE))
 # One step list for sync + mesh: 21 run outputs, 5 steps covering the
@@ -67,8 +67,8 @@ SEISMIC_SINK_SUITE  := $(ASPECT_RESULTS)/seismic_profiles_sink
 DATA_MESH_BOX_SUITE  := $(addprefix $(ASPECT_RESULTS)/,structure-summary-box.csv structure-cache-box.pkl seismic-profile-cache-box.pkl seismic_profiles_box)
 DATA_MESH_SINK_SUITE := $(addprefix $(ASPECT_RESULTS)/,structure-summary-sink.csv structure-cache-sink.pkl seismic-profile-cache-sink.pkl seismic_profiles_sink)
 
-# Box paper set: damping matrix at Z_MID Res5. DynpOff+DampNone is the
-# no-feedback reference; DynpOn+DampNone the undamped demonstrator.
+# Box main runs: damping matrix at Z_MID Res5. DynpOff+DampNone is the
+# no-feedback reference; DynpOn+DampNone the bare wave run.
 ID_B1 := NH_Box_DynpOn_DampNone_Z4.44e-04_Res5
 ID_B2 := NH_Box_DynpOff_DampNone_Z4.44e-04_Res5
 ID_B3 := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res5
@@ -171,23 +171,21 @@ DEPTH_CORRECTION_OL_WD := 5e+03
 # within ~0.1 Myr; final states are unaffected.
 TRANSITION_Y_OL_WD := 6.408e+05
 
-# Runtime-adiabat 410 nominal per suite (m, model depth where ASPECT P_ad
-# equals the profile P_eq = 14.324 GPa). SINK400 was 362700 under the old
-# contaminated reference; now STALE — ambient reference moves the twin
-# front to ~383 km at Res4, re-derive from the Res6 S2 re-run after the
-# sweep. BOX still STALE (measured under g = 10, twin ID_B2 not yet
-# synced — re-derive on arrival).
+# Model depth (m) where ASPECT pressure equals the profile equilibrium
+# (14.324 GPa). SINK400 was 362700 under the old reference; now STALE —
+# ambient reference moves the control front to ~383 km at Res4, re-derive
+# from the Res6 S2 re-run after the sweep. BOX still STALE (old g = 10
+# value, control ID_B2 not yet synced — re-derive on arrival).
 NOMINAL_410_BOX     := 373100
 NOMINAL_410_SINK400 := 362700
 
-# Representative-trace x per suite (m, model coords). Both suites are
-# isothermal, so anomaly-following degenerates to the far field; use fixed
-# vertical traces instead: box domain centre, sink block centre.
+# Fixed vertical lines each suite is sampled along (m): box centre, sink
+# block centre. Both suites are isothermal, so there is no hotspot to follow.
 TRACE_X_BOX  := 150000
 TRACE_X_SINK := 500000
 
-# Point-values probes (x, y in model m; y = 1e6 - depth). Coords are baked
-# into finished runs; do not move.
+# Probe points (x, y in model m; y = 1e6 - depth). Baked into finished
+# runs; do not move.
 POINTS_BOX  := 1.5e+05, 6.358e+05; 1.5e+05, 4.358e+05
 POINTS_SINK := 5.0e+05, 6.358e+05; 5.0e+05, 8.00e+05
 

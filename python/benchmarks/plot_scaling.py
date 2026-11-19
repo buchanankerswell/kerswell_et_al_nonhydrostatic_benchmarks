@@ -2,7 +2,7 @@
 
 Reads the wave summary plus the postprocessed front table and draws two
 figures: peak wave size against mesh resolution, and against the CFL
-timestep. Front error is measured against the no-feedback twin at the
+timestep. Front error is measured against the no-feedback control at the
 same resolution. Panels with fewer than two points print a note instead
 of a line.
 
@@ -43,7 +43,7 @@ def read_rows(path, want):
 
 def front_error(post, suite, z_mid):
     err = {}
-    twins = {}
+    controls = {}
     for r in post:
         if r["suite"] != suite or r["z"] != z_mid:
             continue
@@ -52,12 +52,12 @@ def front_error(post, suite, z_mid):
         except ValueError:
             continue
         if r["dynp"] == "0" and r["damp"] == "None":
-            twins[r["res"]] = disp
+            controls[r["res"]] = disp
         err.setdefault(r["run"] if "run" in r else r["model_id"], (r, disp))
     out = {}
     for run, (r, disp) in err.items():
-        twin = twins.get(r["res"])
-        out[run] = disp - twin if twin is not None else float("nan")
+        control = controls.get(r["res"])
+        out[run] = disp - control if control is not None else float("nan")
     return out
 
 
@@ -141,7 +141,7 @@ def main():
         sel = [r for r in waves if r["suite"] == suite and r["z"] == args.z_mid and r["damp"] == "None"]
         xs = [[float(r["cfl"])] for r in sel]
         ys = [[float(r["peak_p2p_MPa"])] for r in sel]
-        labs = [uid_label(r["run"]) + (" (twin)" if str(r["dynp"]) == "0" else "") for r in sel]
+        labs = [uid_label(r["run"]) + (" (no feedback)" if str(r["dynp"]) == "0" else "") for r in sel]
         panel(ax[i], xs, ys, labs, "CFL number", "peak wave size (MPa)", suite + ": wave size vs timestep")
     fig.tight_layout()
     fig.savefig(outdir / "scaling_dt.png", dpi=300)
@@ -154,7 +154,7 @@ def main():
             xs = [[float(r.get("cfl") or base_cfl[suite])] for r in sel]
             ys = [[err.get(r["run"], float("nan"))] for r in sel]
             labs = [uid_label(r["run"]) for r in sel]
-            panel(ax[i], xs, ys, labs, "CFL number", "front error vs twin (km)", suite + ": front error vs timestep")
+            panel(ax[i], xs, ys, labs, "CFL number", "front error vs control (km)", suite + ": front error vs timestep")
         fig.tight_layout()
         fig.savefig(outdir / "scaling_dt_error.png", dpi=300)
         plt.close(fig)
