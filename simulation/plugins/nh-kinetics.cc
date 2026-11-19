@@ -149,8 +149,25 @@ namespace aspect
           const double P = in.pressure[q];
           const double T = in.temperature[q];
 
-          const double   P_ref = this->get_adiabatic_conditions().pressure(position);
+          const double   P_ref_adiabatic = this->get_adiabatic_conditions().pressure(position);
           const double   T_ref = this->get_adiabatic_conditions().temperature(position);
+
+          // Ambient reference: remove the initial block load baked into the
+          // 1D adiabatic profile (integrated down a column through the block
+          // at startup), so P_ref is ambient hydrostatic mantle. The
+          // correction is static: the ambient column never changes as the
+          // block sinks. P_ref_ambient = P_ref - excess * g * overlap.
+          double P_ref = P_ref_adiabatic;
+          if (use_ambient_reference_column && block_density_excess != 0.0)
+            {
+              const double y = position[dim - 1];
+              double overlap = 0.0;
+              if (y < ambient_block_bottom_y)
+                overlap = ambient_block_top_y - ambient_block_bottom_y;
+              else if (y < ambient_block_top_y)
+                overlap = y - ambient_block_bottom_y;
+              P_ref -= block_density_excess * gravity_magnitude * overlap;
+            }
           const Point<1> profile_pos(P_ref);
 
           // Non-hydrostatic driving pressure (relaxed-pressure variant):
@@ -473,6 +490,26 @@ namespace aspect
                             Patterns::Double(),
                             "Density excess added wherever the compositional 'block' field is 1 "
                             "(sinking-block benchmark scaffolding). Units: kg/m^3. Zero disables it.");
+          prm.declare_entry("Use ambient reference column",
+                            "true",
+                            Patterns::Bool(),
+                            "Subtract the initial block load baked into the 1D adiabatic profile so the "
+                            "reference pressure is ambient hydrostatic mantle. No effect when 'Block density "
+                            "excess' is zero. Units: none.");
+          prm.declare_entry("Ambient block top y",
+                            "875000.0",
+                            Patterns::Double(),
+                            "Model y-coordinate of the top of the initial dense block along the reference column. "
+                            "Must match the block region in the initial composition function. Units: m.");
+          prm.declare_entry("Ambient block bottom y",
+                            "725000.0",
+                            Patterns::Double(),
+                            "Model y-coordinate of the bottom of the initial dense block along the reference column. "
+                            "Must match the block region in the initial composition function. Units: m.");
+          prm.declare_entry("Gravity magnitude",
+                            "9.81",
+                            Patterns::Double(0.),
+                            "Gravitational acceleration used for the ambient block-load correction. Units: m/s^2");
         }
         prm.leave_subsection();
       }
@@ -526,6 +563,10 @@ namespace aspect
           bulk_viscosity_explicit                     = prm.get_double("Explicit bulk viscosity");
           max_dynamic_pressure_correction             = prm.get_double("Maximum dynamic pressure correction");
           block_density_excess                        = prm.get_double("Block density excess");
+          use_ambient_reference_column                = prm.get_bool("Use ambient reference column");
+          ambient_block_top_y                         = prm.get_double("Ambient block top y");
+          ambient_block_bottom_y                      = prm.get_double("Ambient block bottom y");
+          gravity_magnitude                           = prm.get_double("Gravity magnitude");
         }
         prm.leave_subsection();
       }

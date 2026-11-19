@@ -67,7 +67,11 @@ def uid_label(run):
 
 
 def load_vtu_series(run):
-    """Per-output vtu extrema from timeseries.csv: t (Myr), pmax/pmin (MPa), xir."""
+    """Per-output vtu extrema from timeseries.csv: t (Myr), pmax/pmin (MPa), xir.
+
+    Prefers ambient-referenced extrema when present (sinking-block runs
+    under the ambient reference column), falling back to raw file values.
+    """
     path = RESULTS / run / "timeseries.csv"
     if not path.exists():
         return None
@@ -75,8 +79,17 @@ def load_vtu_series(run):
     with open(path) as f:
         for r in csv.DictReader(f):
             t.append(float(r["time_yr"]) / 1e6)
-            pmax.append(float(r["nonadiabatic_pressure_max"]) / 1e6)
-            pmin.append(float(r["nonadiabatic_pressure_min"]) / 1e6)
+
+            def pick(*names):
+                for n in names:
+                    try:
+                        return float(r[n])
+                    except (KeyError, ValueError):
+                        continue
+                return float("nan")
+
+            pmax.append(pick("ambient_pressure_max", "nonadiabatic_pressure_max") / 1e6)
+            pmin.append(pick("ambient_pressure_min", "nonadiabatic_pressure_min") / 1e6)
             try:
                 xir.append(float(r["xi_ol_wd_max"]) - float(r["xi_ol_wd_min"]))
             except (KeyError, ValueError):

@@ -32,7 +32,7 @@ RESULTS_SINK_SUITE = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_SINK_SUITE))
 PLOT_BOX_RUNS    = $(filter %_Z$(Z_MID)_Res5,$(UIDS_BOX_SUITE))
 PLOT_SINK_RUNS   = $(filter %_Z$(Z_MID)_Res6,$(UIDS_SINK_SUITE))
 # One step list for sync + mesh: 21 run outputs, 9 sparse steps processed.
-TIMESTEPS := 000 002 004 006 008 012 016 019 020
+TIMESTEPS := 000 002 004 006 008 010 012 014 016 018 020
 FORCE_DOWNLOAD := 0
 ZENODO_DATASET_DOI := TODO-no-dataset-yet
 ZENODO_FILES       := TODO-no-files-yet
@@ -149,6 +149,15 @@ CFL_BOX  := 7e-01
 CFL_SINK := 5e-01
 GRAVITY  := 9.81
 
+# Ambient hydrostatic reference (can edit). The 1D adiabatic profile is
+# integrated down a column through the initial block, baking ~589 MPa of
+# block weight into P_ref; the plugin subtracts that static load when
+# AMBIENT_REF is true so kinetics see ambient mantle. Box has no block, so
+# the correction is a no-op there. Geometry must match {block-expr} below.
+AMBIENT_REF := true
+BLOCK_Y_TOP := 875e3
+BLOCK_Y_BOT := 725e3
+
 # Kinetic prefactors (ReactionChain N=1, SI 1/s/K). Anchors for the three-Z
 # sweep (Z_LO/Z_MID/Z_HI below); the future N=3 set still needs 520 values
 # (410-nominal reference ~2.22e0).
@@ -179,9 +188,10 @@ DEPTH_CORRECTION_OL_WD := 5e+03
 TRANSITION_Y_OL_WD := 6.408e+05
 
 # Runtime-adiabat 410 nominal per suite (m, model depth where ASPECT P_ad
-# equals the profile P_eq = 14.324 GPa). SINK400 re-derived under g = 9.81
-# as dG = 0 on the Barkla2 no-feedback twin ID_S2 (362.7 km, static across
-# outputs); BOX still STALE (measured under g = 10, twin ID_B2 not yet
+# equals the profile P_eq = 14.324 GPa). SINK400 was 362700 under the old
+# contaminated reference; now STALE — ambient reference moves the twin
+# front to ~383 km at Res4, re-derive from the Res6 S2 re-run after the
+# sweep. BOX still STALE (measured under g = 10, twin ID_B2 not yet
 # synced — re-derive on arrival).
 NOMINAL_410_BOX     := 373100
 NOMINAL_410_SINK400 := 362700
@@ -286,6 +296,9 @@ define GENERATE_NH_PRM
 	  "explicit-zeta=$(if $(filter Bexpl,$(PARAM_dampkind_$(2))),$(PARAM_dampval_$(2)),0.0)" \
 	  "max-cap=$(if $(filter Cap,$(PARAM_dampkind_$(2))),$(PARAM_dampval_$(2)),0.0)" \
 	  "block-excess=$(if $(filter sink,$(PARAM_suite_$(2))),$(PARAM_block_$(2)).0,0.0)" \
+  "ambient-reference=$(AMBIENT_REF)" \
+  "block-top-y=$(BLOCK_Y_TOP)" \
+  "block-bottom-y=$(BLOCK_Y_BOT)" \
 	  "block-expr=$(if $(filter sink,$(PARAM_suite_$(2))),$(if $(filter 0,$(PARAM_block_$(2))),0,(x>4.25e+05 && x<5.75e+05 && y>7.25e+05 && y<8.75e+05) ? 1 : 0),0)" \
 	  "mg-num=$(MG_NUM)" \
 	  "transition-ol-wd=$(TRANSITION_Y_OL_WD)" \

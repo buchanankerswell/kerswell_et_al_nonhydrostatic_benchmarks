@@ -189,6 +189,33 @@ namespace aspect
          * sinks through the phase horizon). Units: kg/m^3. Zero disables it.
          */
         double block_density_excess;
+
+        /**
+         * Use a block-free (ambient) hydrostatic reference instead of the
+         * raw adiabatic pressure. ASPECT builds its 1D adiabatic profile by
+         * integrating down a single column with the initial composition, so
+         * for the sinking-block suite the reference bakes the block's own
+         * weight in (~590 MPa uniform offset below the block). When enabled,
+         * the analytic block load along the reference column is subtracted,
+         * so the driving pressure is measured against ambient mantle.
+         * Has no effect when 'Block density excess' is zero (box suite).
+         */
+        bool use_ambient_reference_column;
+
+        /**
+         * Model y-coordinates bounding the initial dense block along the
+         * reference column (must match the block region in the initial
+         * composition function). Units: m. Only used when 'Use ambient
+         * reference column' is true.
+         */
+        double ambient_block_top_y;
+        double ambient_block_bottom_y;
+
+        /**
+         * Gravitational acceleration used for the ambient block-load
+         * correction. Units: m/s^2.
+         */
+        double gravity_magnitude;
     };
 
 

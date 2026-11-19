@@ -17,6 +17,14 @@ import sys
 
 import numpy as np
 
+# Ambient-reference block-load correction (must match project.mk BLOCK_Y_TOP,
+# BLOCK_Y_BOT and GRAVITY): the 1D adiabatic reference baked the initial
+# block weight in, so the true ambient-referenced driving pressure is the
+# file value plus the static load below the block column.
+AMBIENT_BLOCK_TOP_Y = 875e3
+AMBIENT_BLOCK_BOT_Y = 725e3
+AMBIENT_GRAVITY = 9.81
+
 
 def parse_statistics(path):
     """Return {viz_base: time_years} for rows that wrote visualization output."""
@@ -138,6 +146,20 @@ def main():
                 p = np.asarray(mesh[name]).ravel()
                 row[f"{name}_min"] = float(np.min(p))
                 row[f"{name}_max"] = float(np.max(p))
+        if "nonadiabatic_pressure" in mesh.array_names:
+            bm = re.search(r"Block(\d+)", args.run_dir)
+            excess = float(bm.group(1)) if bm else 0.0
+            if excess:
+                nad = np.asarray(mesh["nonadiabatic_pressure"]).ravel()
+                y = np.asarray(mesh.points)[:, 1]
+                overlap = np.where(
+                    y < AMBIENT_BLOCK_BOT_Y,
+                    AMBIENT_BLOCK_TOP_Y - AMBIENT_BLOCK_BOT_Y,
+                    np.where(y < AMBIENT_BLOCK_TOP_Y, y - AMBIENT_BLOCK_BOT_Y, 0.0),
+                )
+                amb = nad + excess * AMBIENT_GRAVITY * overlap
+                row["ambient_pressure_min"] = float(np.min(amb))
+                row["ambient_pressure_max"] = float(np.max(amb))
         if "velocity" in mesh.array_names:
             v = np.asarray(mesh["velocity"]).reshape(-1, 3)
             row["velocity_rms"] = float(np.sqrt(np.mean(np.sum(v**2, axis=1))))
