@@ -36,7 +36,7 @@ def apply_bench_style():
 
 
 def parse_uid_columns(run):
-    """Split a UID into suite/damp/dynp/z/res columns for summary tables."""
+    """Split a UID into suite/damp/dynp/z/res/cfl columns for summary tables."""
     suite = "sink" if run.startswith("NH_Sink_") else "box" if run.startswith("NH_Box_") else ""
     damp_match = DAMP_RE.search(run)
     damp = (damp_match.group(1) + damp_match.group(2)) if damp_match else ""
@@ -46,7 +46,9 @@ def parse_uid_columns(run):
     res = int(res_match.group(1)) if res_match else None
     z_match = re.search(r"_Z([\d.e+-]+)", run)
     z = z_match.group(1) if z_match else ""
-    return {"suite": suite, "damp": damp, "dynp": dynp, "res": res, "z": z}
+    cfl_match = re.search(r"_CFL([\d.]+)", run)
+    cfl = float(cfl_match.group(1)) if cfl_match else None
+    return {"suite": suite, "damp": damp, "dynp": dynp, "res": res, "z": z, "cfl": cfl}
 
 
 DAMP_RE = re.compile(r"_Damp([A-Za-z]+)([\d.e+-]*)")
@@ -54,7 +56,7 @@ UID_DAMP_RE = re.compile(r"_Damp[A-Za-z]+[\d.e+-]*")
 
 
 def uid_label(run):
-    """Compact label from a UID: damping + dynp state + res + Z tag."""
+    """Compact label from a UID: damping + dynp state + res + Z tag + CFL tag."""
     m = DAMP_RE.search(run)
     damp = (m.group(1) + m.group(2)) if m else run
     mo = re.search(r"_Dynp(On|Off)_", run)
@@ -63,7 +65,9 @@ def uid_label(run):
     res = f"r{mr.group(1)}" if mr else ""
     mz = re.search(r"_Z([\d.e+-]+)", run)
     z = f" Z{mz.group(1)}" if mz else ""
-    return f"{damp}{dyn} [{res}{z}]".replace("[ ", "[")
+    mc = re.search(r"_CFL([\d.]+)", run)
+    cfl = f" CFL{mc.group(1)}" if mc else ""
+    return f"{damp}{dyn} [{res}{z}{cfl}]".replace("[ ", "[")
 
 
 def load_vtu_series(run):

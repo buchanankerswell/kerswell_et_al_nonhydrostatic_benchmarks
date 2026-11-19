@@ -6,7 +6,7 @@ suite_lab_box <- "Box"
 suite_lab_sink <- "Sink"
 suite_shapes <- c("Box" = 21, "Sink" = 22)
 z_levels <- c("9.51e-08", "4.44e-04", "1.4e+04")
-z_pal <- c("frozen" = "#7FB3D5", "matrix" = "#E41A1C", "instant" = "#4D148C")
+z_pal <- c("sluggish" = "#7FB3D5", "intermediate" = "#E41A1C", "quasi-equilibrium" = "#4D148C")
 
 damp_family <- function(damp) {
   str_extract(damp, "^[A-Za-z]+")
@@ -46,12 +46,12 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
       # so level matching must happen in numeric space, not on strings.
       z = factor(
         case_when(
-          abs(as.numeric(z) - 9.51e-08) < 1e-14 ~ "frozen",
-          abs(as.numeric(z) - 4.44e-04) < 1e-10 ~ "matrix",
-          abs(as.numeric(z) - 1.4e+04) < 1 ~ "instant",
+          abs(as.numeric(z) - 9.51e-08) < 1e-14 ~ "sluggish",
+          abs(as.numeric(z) - 4.44e-04) < 1e-10 ~ "intermediate",
+          abs(as.numeric(z) - 1.4e+04) < 1 ~ "quasi-equilibrium",
           TRUE ~ NA_character_
         ),
-        levels = c("frozen", "matrix", "instant")
+        levels = c("sluggish", "intermediate", "quasi-equilibrium")
       ),
       damp_family = damp_family(damp),
       damp_num = damp_value(damp),

@@ -22,7 +22,7 @@ CLEAN := $(PYTHON)/**/__pycache__ \
 	 $(POSTPROCESSED_CSV) \
 	 $(SIMULATION)/results/pressure-wave-summary.csv
 
-.PHONY: all visualize sync-barkla postprocess timeseries pressure-waves diagnostics setup adiabat meshes meshes-box-suite meshes-sink-suite clean help
+.PHONY: all visualize sync-barkla postprocess timeseries pressure-waves diagnostics scaling setup adiabat meshes meshes-box-suite meshes-sink-suite clean help
 
 all: visualize
 visualize: meshes setup
@@ -78,6 +78,14 @@ pressure-waves: timeseries
 
 diagnostics: postprocess
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_bimpl_resolution.py --fig-dir $(FIGS)/benchmarks
+	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
+
+scaling: pressure-waves postprocess
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_scaling.py \
+	  --summary $(SIMULATION)/results/pressure-wave-summary.csv \
+	  --postprocessed $(POSTPROCESSED_CSV) \
+	  --out-dir $(FIGS)/benchmarks \
+	  --z-mid $(Z_MID) --cfl-box $(CFL_BOX) --cfl-sink $(CFL_SINK)
 	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
 meshes: meshes-box-suite meshes-sink-suite
@@ -137,5 +145,6 @@ help:
 	$(call LOG_DETAIL,timeseries         Extract per-run pressure/front/stats timeseries from solutions)
 	$(call LOG_DETAIL,pressure-waves     Quantify waves: vtu peaks + RMS/probe/joint plots)
 	$(call LOG_DETAIL,diagnostics        Supplement: implicit-bulk resolution robustness (needs postprocess))
+	$(call LOG_DETAIL,scaling            Mesh + timestep scaling: wave size vs Res and CFL)
 	$(call LOG_DETAIL,setup              Draw setup domain sketches (initial + boundary conditions))
 	$(call LOG_DETAIL,clean              Remove generated files (safe))
