@@ -180,11 +180,12 @@ DEPTH_CORRECTION_OL_WD := 5e+03
 TRANSITION_Y_OL_WD := 6.408e+05
 
 # Runtime-adiabat 410 nominal per suite (m, model depth where ASPECT P_ad
-# equals the profile P_eq = 14.324 GPa). STALE under g = 9.81: measured as
-# dG = 0 on no-feedback twins under g = 10; re-derive from the Barkla2
-# no-feedback twins before use.
+# equals the profile P_eq = 14.324 GPa). SINK400 re-derived under g = 9.81
+# as dG = 0 on the Barkla2 no-feedback twin ID_S2 (362.7 km, static across
+# outputs); BOX still STALE (measured under g = 10, twin ID_B2 not yet
+# synced — re-derive on arrival).
 NOMINAL_410_BOX     := 373100
-NOMINAL_410_SINK400 := 355700
+NOMINAL_410_SINK400 := 362700
 
 # Representative-trace x per suite (m, model coords). Both suites are
 # isothermal, so anomaly-following degenerates to the far field; use fixed

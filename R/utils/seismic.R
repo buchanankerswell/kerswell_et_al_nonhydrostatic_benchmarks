@@ -1,9 +1,10 @@
-# Runtime-adiabat 410 reference depths (km). Defaults mirror project.mk
-# NOMINAL_410_BOX/SINK400, STALE under g = 9.81 like everything downstream
-# of the no-feedback twins; re-derive from Barkla2 runs before trusting
-# absolute displacements. Passed explicitly by R/seismic.R.
+# Runtime-adiabat 410 reference depths (km). Sink default mirrors project.mk
+# NOMINAL_410_SINK400, re-derived under g = 9.81 as dG = 0 on the Barkla2
+# no-feedback twin ID_S2. Box default still STALE (g = 10 era); re-derive
+# from twin ID_B2 before trusting absolute box displacements. Passed
+# explicitly by R/seismic.R.
 nominal_410_box_km <- 373.1
-nominal_410_sink_km <- 355.7
+nominal_410_sink_km <- 362.7
 
 # Shared damping palette (family-grouped hues; same families as the
 # structure panels). Per-value shades keep twin Bimpl/Rel values distinct.
