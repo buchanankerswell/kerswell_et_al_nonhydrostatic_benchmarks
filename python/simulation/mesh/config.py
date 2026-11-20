@@ -5,10 +5,9 @@ from typing import Any
 import matplotlib
 
 # Single source of truth for all per-field display configuration
-# Columns: file_id, cmap, clim, label, fmt, scaling, edges, transition_contours, representative_trace
+# Columns: file_id, cmap, clim, label, fmt, scaling, edges, transition_contours, trace
+# fmt: off
 _FIELD_DEFAULTS: dict[str, tuple] = {
-    # fmt: off
-    # Columns: file_id, cmap, clim, label, fmt, scaling, edges, transition_contours, trace
     "T":                         ("temperature-full",          "magma",    "auto",        "$T$ (K)",                    "%.0f", 1,         False, False, False),
     "nonadiabatic_temperature":  ("temperature-nonadiabatic", "seismic",  (-1e3, 1e3),    "$\\hat{T}$ (K)",             "%.0f", 1,         True,  False, False),
     "p":                         ("pressure-full",             "Oranges",  "auto",        "$P$ (GPa)",                  "%.0f", 1e-9,      False, False, False),
@@ -23,8 +22,8 @@ _FIELD_DEFAULTS: dict[str, tuple] = {
     "viscosity":                 ("viscosity",                 "bone_r",   (19, 24),      "Log $\\eta$ (Pa s)",         "%.0f", 1,         True,  True,  True),
     "xi_ol_wd":                  ("xi-ol-wd",                  "GnBu",     (0.0, 1.0),    "$\\xi$ (-)",                 "%.1f", 1,         False, True,  True),
     "reaction_rate_C0":          ("reaction-rate-ol-wd",       "RdGy_r",   "auto",        "Log $\\dot{X}$ (1/Ma)",      "%.2f", 3.154e13,  True,  True,  True),
-    # fmt: on
 }
+# fmt: on
 
 
 @dataclass
