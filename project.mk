@@ -176,8 +176,7 @@ TRANSITION_Y_OL_WD := 6.408e+05
 # near 383 km, box still needs its no-feedback control run.
 NOMINAL_410_BOX     := 373100
 NOMINAL_410_SINK400 := 362700
-# Profile-reference 410 (m, true depth): dG = 0 in the BurnMan isentrope
-# sits at 422554 m. Seismic panels center their reference band here.
+# Profile-reference 410 in true depth (profile dG = 0 at 422554 m).
 PROFILE_REF_410_M := 422600
 
 # Fixed vertical lines each suite is sampled along (m): box center, sink

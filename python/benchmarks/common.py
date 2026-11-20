@@ -1,8 +1,4 @@
-"""Shared run-data loaders for the benchmark figure scripts.
-
-Figure style, colors, and labels live in simulation/mesh/config.py (single
-source of truth); this module only parses UIDs and reads per-run outputs.
-"""
+"""Shared run-data loaders for the benchmark figure scripts."""
 
 import csv
 import os

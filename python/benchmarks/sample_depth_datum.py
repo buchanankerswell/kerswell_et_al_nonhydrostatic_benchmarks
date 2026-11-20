@@ -22,9 +22,6 @@ import pyvista as pv
 
 from simulation.params.transitions import read_dG_profile
 
-# Defaults mirror project.mk (BLOCK_Y_TOP/BLOCK_Y_BOT, GRAVITY); override
-# with CLI flags to sample under different constants.
-
 
 def level_adiabat(run_dir):
     """Mean adiabatic pressure per height level (the reference is 1D)."""

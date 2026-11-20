@@ -34,11 +34,9 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 from simulation.params.transitions import load_depth_datum, model_to_true_km
 
-# Ambient-reference block-load correction (block geometry and gravity come
-# from project.mk BLOCK_Y_TOP/BLOCK_Y_BOT and GRAVITY via CLI flags).
-# The 1D adiabatic reference includes the initial block load in, so the
-# true ambient-referenced driver is the file value plus the static load
-# below the block column. Box runs have no block field and are unaffected.
+# Ambient-reference block-load correction: the 1D adiabatic reference
+# includes the initial block load, so add the static load back below
+# the block column. Box runs have no block field and are unaffected.
 
 RESULTS = os.path.join(os.environ.get("PROJECT_ROOT", "."), "simulation/results")
 

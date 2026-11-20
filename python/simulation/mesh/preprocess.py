@@ -9,11 +9,8 @@ from utils.logging import log_warn
 @dataclass
 class MeshPreProcessor:
     verbosity: int = 0
-    # Ambient-reference block-load correction, passed from project.mk
-    # (BLOCK_Y_TOP/BLOCK_Y_BOT, GRAVITY) via the pipeline. The 1D adiabatic
-    # reference includes the initial block weight, so ambient-referenced
-    # driving pressure adds the static load back below the block column.
-    # Box runs have no block field and are unaffected.
+    # Ambient-reference correction: the 1D adiabat includes the block
+    # weight, added back below the block column here.
     block_top_m: float = 875e3
     block_bot_m: float = 725e3
     gravity: float = 9.81

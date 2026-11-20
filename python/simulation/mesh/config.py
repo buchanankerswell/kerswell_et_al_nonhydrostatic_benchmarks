@@ -135,11 +135,7 @@ class MeshConfig:
             matplotlib.rcParams.update(self.plot_rcParams)
 
 
-# ---------------------------------------------------------------------------
-# Shared benchmark figure style (single source of truth for every
-# python/benchmarks plot script; run-data loaders stay in benchmarks/common)
-# ---------------------------------------------------------------------------
-
+# Single source of truth for benchmark figure style (colors, labels).
 BENCH_FACECOLOR = "0.92"
 BENCH_DPI = 300
 

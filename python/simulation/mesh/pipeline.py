@@ -45,8 +45,6 @@ class BasePipeline:
     suite_tag: str = ""
     trace_x: float | None = None
     depth_datum: dict | None = None
-    # Ambient-reference block-load correction, passed from project.mk
-    # (BLOCK_Y_TOP/BLOCK_Y_BOT, GRAVITY) via the mesh driver.
     block_top_m: float = 875e3
     block_bot_m: float = 725e3
     gravity: float = 9.81

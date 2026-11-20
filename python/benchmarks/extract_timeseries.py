@@ -17,11 +17,9 @@ import sys
 
 import numpy as np
 
-# Ambient-reference block-load correction (block geometry and gravity come
-# from project.mk BLOCK_Y_TOP/BLOCK_Y_BOT and GRAVITY via CLI flags): the
-# 1D adiabatic reference includes the initial block weight in, so the true
-# ambient-referenced driving pressure is the file value plus the static
-# load below the block column.
+# Ambient-reference block-load correction: the 1D adiabatic reference
+# includes the initial block load, so add the static load back below
+# the block column.
 
 
 def parse_statistics(path):
