@@ -22,10 +22,10 @@ CLEAN := $(PYTHON)/**/__pycache__ \
 	 $(POSTPROCESSED_CSV) \
 	 $(SIMULATION)/results/pressure-history-summary.csv
 
-.PHONY: all visualize sync-barkla postprocess timeseries pressure-history diagnostics scaling setup adiabat meshes meshes-box-suite meshes-sink-suite clean help
+.PHONY: all visualize sync-barkla postprocess timeseries pressure-history diagnostics scaling depth-window setup adiabat meshes meshes-box-suite meshes-sink-suite clean help
 
 all: visualize
-visualize: meshes setup
+visualize: meshes setup pressure-history diagnostics scaling depth-window
 
 setup:
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/setup/domains.py --suite box --width-m $(MODEL_WIDTH_BOX) --height-m $(MODEL_HEIGHT_BOX) \
@@ -90,6 +90,47 @@ scaling: pressure-history postprocess
 
 meshes: meshes-box-suite meshes-sink-suite
 
+# Depth-window composition figures (one per run per field set: set0 is
+# pressure/density/vertical-flow, set1 is drive/rate/fraction). Steps and
+# nominals match the existing figures. Runs without synced solutions are
+# skipped, so this works before and after sync-barkla.
+DEPTH_WINDOW_STEPS := 00000 00002 00006 00012
+DEPTH_WINDOW_RUNS := \
+	$(ID_B1):box-undamped \
+	$(ID_B2):box-dynpoff \
+	$(ID_B3):box-bimpl \
+	$(ID_B4):box-bexpl \
+	$(ID_B5):box-rel \
+	$(ID_B6):box-cap \
+	$(ID_BCFL035):box-undamped-cfl035 \
+	$(ID_BCFL14):box-undamped-cfl14 \
+	$(ID_S1):sink-undamped \
+	$(ID_S2):sink-dynpoff \
+	$(ID_S3):sink-bimpl19 \
+	$(ID_S4):sink-bimpl20 \
+	$(ID_S5):sink-bexpl \
+	$(ID_S6):sink-rel10 \
+	$(ID_S7):sink-rel11 \
+	$(ID_S8):sink-cap \
+	$(ID_SCFL025):sink-undamped-cfl025 \
+	$(ID_SCFL10):sink-undamped-cfl10
+
+depth-window:
+	@for pair in $(DEPTH_WINDOW_RUNS); do \
+	  model=$${pair%%:*}; short=$${pair##*:}; \
+	  case $$model in *_Box_*) nom=$(NOMINAL_410_BOX);; *) nom=$(NOMINAL_410_SINK400);; esac; \
+	  ok=1; for st in $(DEPTH_WINDOW_STEPS); do \
+	    [ -f $(SIMULATION)/results/$$model/solution/solution-$$st.pvtu ] || ok=0; \
+	  done; \
+	  if [ $$ok -eq 0 ]; then echo "skip $$model (solutions missing)"; continue; fi; \
+	  for s in set0 set1; do \
+	    PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_window.py \
+	      --model $$model --steps $(DEPTH_WINDOW_STEPS) --nominal-410-m $$nom \
+	      --out $(FIGS)/benchmarks/depth-window-$$short-$$s.png --set $$s; \
+	  done; \
+	done
+	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
+
 # Shared mesh recipe: $(1)=suite tag, $(2)=models, $(3)=visualize ids,
 # $(4)=fig dir, $(5)=410 nominal [m], $(6)=trace x [m], $(7)=model height [m].
 define MESH_SUITE
@@ -135,7 +176,7 @@ clean:
 
 help:
 	$(call LOG_INFO,Available targets:)
-	$(call LOG_DETAIL,visualize          Visualize all results (box + sink meshes))
+	$(call LOG_DETAIL,visualize          Visualize all results (meshes, setup, benchmark figures))
 	$(call LOG_DETAIL,sync-barkla        Fetch simulation results from Barkla2 (delegates to bash))
 	$(call LOG_DETAIL,adiabat            Build PerpleX phase profiles + adiabat figures)
 	$(call LOG_DETAIL,meshes             Visualize ASPECT models (box + sink))
@@ -146,5 +187,6 @@ help:
 	$(call LOG_DETAIL,pressure-history  Summarize range: vtu extrema + flow/point/depth plots)
 	$(call LOG_DETAIL,diagnostics        Supplement: bulk-damping resolution check (needs postprocess))
 	$(call LOG_DETAIL,scaling            Mesh + step sensitivity: range vs refinement and step size)
+	$(call LOG_DETAIL,depth-window       Draw depth-window compositions for all runs with solutions)
 	$(call LOG_DETAIL,setup              Draw setup domain sketches (initial + boundary conditions))
 	$(call LOG_DETAIL,clean              Remove generated files (safe))

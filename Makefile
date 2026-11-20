@@ -54,7 +54,7 @@ help:
 	$(call LOG_DETAIL,build          Fetch data and reproduce figures and manuscript)
 	$(call LOG_DETAIL,models         Run all NH benchmark models (needs aspect/dealii links))
 	$(call LOG_DETAIL,sync-barkla    Sync data from Barkla2 (box + sink suites))
-	$(call LOG_DETAIL,visualize      Visualize all results (meshes + postprocess + R))
+	$(call LOG_DETAIL,visualize      Visualize all results (all python + R figures))
 	$(call LOG_DETAIL,manuscript     Render manuscript + SI + response)
 	$(call LOG_DETAIL,download       Fetch archived datasets from Zenodo)
 	$(call LOG_DETAIL,environments   Create Conda environments)
