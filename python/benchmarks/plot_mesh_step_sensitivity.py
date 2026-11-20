@@ -25,7 +25,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import apply_bench_style, uid_label
+from common import apply_bench_style, bench_color, bench_label
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
@@ -61,9 +61,9 @@ def boundary_offset(post, suite, z_mid):
     return out
 
 
-def panel(ax, xs, ys, labels, xlabel, ylabel, logx=False):
+def panel(ax, xs, ys, runs, xlabel, ylabel, logx=False, colors=None):
     seen = False
-    for x, y, lab in zip(xs, ys, labels):
+    for x, y, run in zip(xs, ys, runs):
         x = np.asarray(x, dtype=float)
         y = np.asarray(y, dtype=float)
         keep = np.isfinite(x) & np.isfinite(y)
@@ -71,14 +71,15 @@ def panel(ax, xs, ys, labels, xlabel, ylabel, logx=False):
             continue
         seen = True
         o = np.argsort(x[keep])
-        ax.plot(x[keep][o], y[keep][o], "o-", label=lab)
+        ax.plot(x[keep][o], y[keep][o], "o-", label=bench_label(run), color=bench_color(run) if colors is None else colors)
     if not seen:
         ax.text(0.5, 0.5, "no data yet", transform=ax.transAxes, ha="center")
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     if logx:
         ax.set_xscale("log", base=2)
-    ax.legend(fontsize=9, frameon=False)
+    if seen:
+        ax.legend(fontsize=9, loc="best", frameon=True, facecolor="white", framealpha=0.9)
 
 
 def main():
@@ -125,7 +126,7 @@ def main():
             ax[i],
             [v[0] for v in by_damp.values()],
             [v[1] for v in by_damp.values()],
-            [uid_label(v[2][0]) for v in by_damp.values()],
+            [v[2][0] for v in by_damp.values()],
             "Mesh Refinement Level",
             "Largest $\\hat{P}$ Range (MPa)",
             logx=True,
@@ -139,8 +140,8 @@ def main():
         sel = [r for r in records if r["suite"] == suite and r["z"] == args.z_mid and r["damp"] == "None"]
         xs = [[float(r["cfl"])] for r in sel]
         ys = [[float(r["largest_range_MPa"])] for r in sel]
-        labs = [uid_label(r["run"]) + (" (no feedback)" if str(r["dynp"]) == "0" else "") for r in sel]
-        panel(ax[i], xs, ys, labs, "Time Step (CFL Number)", "Largest $\\hat{P}$ Range (MPa)")
+        runs = [r["run"] for r in sel]
+        panel(ax[i], xs, ys, runs, "Time Step (CFL Number)", "Largest $\\hat{P}$ Range (MPa)")
     fig.tight_layout()
     fig.savefig(outdir / "step-sensitivity.png", dpi=300)
     plt.close(fig)
@@ -151,8 +152,8 @@ def main():
             sel = [r for r in records if r["suite"] == suite and r["z"] == args.z_mid]
             xs = [[float(r.get("cfl") or base_cfl[suite])] for r in sel]
             ys = [[offsets.get(r["run"], float("nan"))] for r in sel]
-            labs = [uid_label(r["run"]) for r in sel]
-            panel(ax[i], xs, ys, labs, "Time Step (CFL Number)", "Boundary Offset From Control (km)")
+            runs = [r["run"] for r in sel]
+            panel(ax[i], xs, ys, runs, "Time Step (CFL Number)", "Boundary Offset From Control (km)")
         fig.tight_layout()
         fig.savefig(outdir / "step-boundary-error.png", dpi=300)
         plt.close(fig)

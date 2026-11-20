@@ -1,7 +1,7 @@
 """Bulk-damping resolution check.
 
 Reads the mesh structure summaries and focuses on the implicit-bulk damping
-across resolutions: final-step highest reaction rate against mesh refinement,
+across resolutions: final-step max reaction rate against mesh refinement,
 plus the rate history that exposes the Res6 transient spike.
 
 Usage (repo root):
@@ -11,7 +11,6 @@ Usage (repo root):
 
 import argparse
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -21,7 +20,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from common import apply_bench_style
+from common import apply_bench_style, bench_color, bench_label
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
@@ -56,31 +55,40 @@ def load(suite):
 def panel_rate_vs_res(ax, df):
     sub = df[df["damp"].str.contains("Bimpl|None", na=False)]
     final = sub.sort_values("timestep").groupby("model_id").tail(1)
+    if final.empty:
+        ax.text(0.5, 0.5, "no Bimpl/None data yet", transform=ax.transAxes, ha="center")
+        ax.set_xlabel("Mesh Refinement Level")
+        ax.set_ylabel("Final Max $\\dot{X}$ (1/s)")
+        return
     for (damp, z), grp in final.groupby(["damp", "z"]):
         grp = grp.sort_values("res")
         kw = dict(lw=2.5) if damp == "None" else dict(lw=1.2, marker="o")
-        ax.plot(grp["res"], grp["rate"], label=f"{damp} Z{z}", **kw)
+        for mid, g2 in grp.groupby("model_id"):
+            style = dict(kw, color=bench_color(mid))
+            ax.plot(g2["res"], g2["rate"], label=bench_label(mid), **style)
     ax.set_yscale("log")
     ax.set_xlabel("Mesh Refinement Level")
-    ax.set_ylabel("Final Highest $\\dot{X}$ (1/s)")
-    ax.legend(fontsize=11, loc="upper right", frameon=False)
+    ax.set_ylabel("Final Max $\\dot{X}$ (1/s)")
+    ax.yaxis.set_major_formatter(plt.FormatStrFormatter("%.2f"))
+    ax.yaxis.set_minor_formatter(plt.FormatStrFormatter("%.2f"))
+    ax.legend(fontsize=11, loc="lower right", frameon=True, facecolor="white", framealpha=0.9)
 
 
 def panel_history(ax, df, damp_pat="Bimpl1e21"):
     sub = df[df["damp"] == damp_pat].copy()
     if sub.empty:
         sub = df[df["damp"].str.contains("Bimpl", na=False)].copy()
+    if sub.empty:
+        ax.text(0.5, 0.5, "no Bimpl data yet", transform=ax.transAxes, ha="center")
+        ax.set_xlabel("Output Step")
+        ax.set_ylabel("Max $\\dot{X}$ (1/s)")
+        return
     for mid, grp in sub.groupby("model_id"):
-        m = re.search(r"_Res(\d+)", mid)
-        mz = re.search(r"_Z([\d.e+-]+)", mid)
-        tag = f"Level {m.group(1)}" if m else mid
-        if mz:
-            tag += f" Z{mz.group(1)}"
-        ax.plot(grp["timestep"], grp["rate"], label=tag, lw=1.5)
+        ax.plot(grp["timestep"], grp["rate"], label=bench_label(mid), color=bench_color(mid), lw=1.5)
     ax.set_yscale("log")
     ax.set_xlabel("Output Step")
-    ax.set_ylabel("Highest $\\dot{X}$ (1/s)")
-    ax.legend(fontsize=11, loc="upper right", frameon=False)
+    ax.set_ylabel("Max $\\dot{X}$ (1/s)")
+    ax.legend(fontsize=11, loc="best", frameon=True, facecolor="white", framealpha=0.9)
 
 
 def main():
@@ -96,7 +104,7 @@ def main():
             continue
         final = df.sort_values("timestep").groupby("model_id").tail(1)
         bulk = final[final["damp"].str.contains("Bimpl", na=False)].sort_values(["damp", "res"])
-        print(f"--- {suite} bulk-damping final highest rate vs resolution ---")
+        print(f"--- {suite} bulk-damping final max rate vs resolution ---")
         for _, r in bulk.iterrows():
             print(f"  {r['model_id']}: {r['rate']:.3e} 1/s")
         ctrl = final[final["damp"] == "None"].sort_values("res")

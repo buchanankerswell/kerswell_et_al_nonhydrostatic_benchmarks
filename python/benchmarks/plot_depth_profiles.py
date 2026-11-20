@@ -2,7 +2,7 @@
 
 Reads the mesh representative cache (final step) and overlays the
 profile nominal 410 against the runtime dG = 0 crossing, locating the
-highest reaction rate in depth. Prints the offset numbers that separate
+max reaction rate in depth. Prints the offset numbers that separate
 the static nominal-vs-runtime frame shift from dynamic-pressure effects.
 
 Usage (repo root):
@@ -24,7 +24,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import apply_bench_style, uid_label
+from common import apply_bench_style, bench_color, bench_label
 from simulation.params.transitions import (
     find_surface_depth_offset,
     find_transition,
@@ -86,7 +86,8 @@ def main():
     nominal = args.nominal_km if args.nominal_km is not None else prof_eq + args.depth_corr_ol_wd / 1e3
     print(f"profile dG=0 at model {prof_eq:.1f} km, P_eq = {prof_peq / 1e9:.3f} GPa, gamma = {gamma:.3e} Pa/K; nominal {nominal:.1f} km")
 
-    fig, ax = plt.subplots(1, 4, figsize=(11, 5), sharey=True)
+    fig, ax = plt.subplots(1, 4, figsize=(10, 5), sharey=True)
+    fig.subplots_adjust(wspace=0.08)
     for run in args.runs:
         try:
             rep, ts = load_rep(run, args.suite_tag)
@@ -98,7 +99,7 @@ def main():
         zr, rate = clean(rep["reaction_rate_C0"])
         zp, p = clean(rep["p"])
         za, pa = clean(rep["adiabatic_pressure"])
-        kw = dict(lw=2.2, alpha=0.9, label=uid_label(run))
+        kw = dict(lw=2.2, alpha=0.9, label=bench_label(run), color=bench_color(run))
         ax[0].plot(xi, zx, **kw)
         ax[1].plot(dg / 1e3, zd, **kw)
         ax[2].plot(rate, zr, **kw)
@@ -111,20 +112,23 @@ def main():
         pmod0 = float(np.interp(rt0, zp, p)) if rt else float("nan")
         j = int(np.nanargmax(np.abs(rate))) if np.isfinite(rate).any() else -1
         print(
-            f"{uid_label(run)}: dG=0 at {rt0:.1f} km (P={pmod0:.3f} GPa vs prof {prof_peq / 1e9:.3f}), "
+            f"{bench_label(run)}: dG=0 at {rt0:.1f} km (P={pmod0:.3f} GPa vs prof {prof_peq / 1e9:.3f}), "
             f"xi0.5 at {xihalf:.1f} km, max|rate| {rate[j]:.3g}/Ma at {zr[j]:.1f} km"
         )
     for a in ax:
         a.axhline(nominal, color="grey", lw=1.5, ls="--")
         a.invert_yaxis()
         a.set_ylim(500, 250)
-    ax[0].set_xlabel("$\\xi$ (-)")
+    for a in ax[1:]:
+        a.tick_params(labelleft=False)
+    ax[0].set_xlabel("$\\xi$ (dimensionless)")
     ax[0].set_xlim(-0.05, 1.05)
     ax[1].set_xlabel("$dG$ (kJ/mol)")
     ax[2].set_xlabel("$\\dot{X}$ (1/Ma)")
     ax[3].set_xlabel("$\\hat{P}$ (GPa)")
     ax[0].set_ylabel("Depth (km)")
-    ax[0].legend(fontsize=10, loc="lower left", frameon=False)
+    handles, labels = ax[0].get_legend_handles_labels()
+    ax[0].legend(handles, labels, fontsize=10, loc="lower left", frameon=True, facecolor="white", framealpha=0.9)
     fig.tight_layout()
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.out, dpi=300)

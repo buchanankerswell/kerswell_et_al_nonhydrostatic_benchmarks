@@ -26,7 +26,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import UID_DAMP_RE, apply_bench_style, load_point_series, load_stats_series, load_vtu_series, parse_uid_columns, uid_label
+from common import UID_DAMP_RE, apply_bench_style, bench_color, bench_label, load_point_series, load_stats_series, load_vtu_series, parse_uid_columns
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
@@ -104,17 +104,17 @@ def plot_suite(runs, out_path, control, reference=None):
         if s is None:
             continue
         if run == control:
-            kw = dict(lw=2.5)
+            kw = dict(lw=2.5, color=bench_color(run))
         elif reference is not None and run == reference:
             kw = dict(lw=1.5, ls="--", color="grey")
         else:
-            kw = dict(lw=1.2, alpha=0.85)
-        ax[0].plot(s["t"], s["pmax"] - s["pmin"], label=uid_label(run), **kw)
-        ax[1].plot(s["t"], s["pmin"], label=uid_label(run), **kw)
+            kw = dict(lw=1.2, alpha=0.85, color=bench_color(run))
+        ax[0].plot(s["t"], s["pmax"] - s["pmin"], label=bench_label(run), **kw)
+        ax[1].plot(s["t"], s["pmin"], label=bench_label(run), **kw)
     ax[0].set_ylabel("$\\hat{P}$ Range (MPa)")
     ax[1].set_ylabel("Minimum $\\hat{P}$ (MPa)")
     ax[1].set_xlabel("Time (Myr)")
-    ax[0].legend(fontsize=11, loc="upper right", frameon=False)
+    ax[0].legend(fontsize=11, loc="best", frameon=True, facecolor="white", framealpha=0.9)
     fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300)
@@ -130,20 +130,20 @@ def plot_mean_flow_suite(runs, out_path, control, reference=None):
             continue
         plotted += 1
         if run == control:
-            kw = dict(lw=2.5)
+            kw = dict(lw=2.5, color=bench_color(run))
         elif reference is not None and run == reference:
             kw = dict(lw=1.5, ls="--", color="grey")
         else:
-            kw = dict(lw=1.2, alpha=0.85)
-        ax.plot(stats["time_myr"], stats["flow"], label=uid_label(run), **kw)
+            kw = dict(lw=1.2, alpha=0.85, color=bench_color(run))
+        ax.plot(stats["time_myr"], stats["flow"], label=bench_label(run), **kw)
     if plotted == 0:
         print(f"skip {out_path.name}: no stats-timeseries.csv found", file=sys.stderr)
         plt.close(fig)
         return
-    ax.set_yscale("log")
     ax.set_ylabel("$u_\\mathrm{rms}$ (m/yr)")
     ax.set_xlabel("Time (Myr)")
-    ax.legend(fontsize=11, loc="upper right", frameon=False)
+    ax.ticklabel_format(style="plain", axis="y", useOffset=False)
+    ax.legend(fontsize=11, loc="best", frameon=True, facecolor="white", framealpha=0.9)
     fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300)
@@ -162,19 +162,19 @@ def plot_point_suite(runs, out_path, control, reference=None, field="pressure"):
         values = point["values"] - point["values"][0]
         plotted += 1
         if run == control:
-            kw = dict(lw=2.5)
+            kw = dict(lw=2.5, color=bench_color(run))
         elif reference is not None and run == reference:
             kw = dict(lw=1.5, ls="--", color="grey")
         else:
-            kw = dict(lw=1.2, alpha=0.85)
-        ax.plot(point["time_myr"], values, label=uid_label(run), **kw)
+            kw = dict(lw=1.2, alpha=0.85, color=bench_color(run))
+        ax.plot(point["time_myr"], values, label=bench_label(run), **kw)
     if plotted == 0:
         print(f"skip {out_path.name}: no point_values.txt found", file=sys.stderr)
         plt.close(fig)
         return
     ax.set_ylabel("Point $\\Delta P$ (MPa)")
     ax.set_xlabel("Time (Myr)")
-    ax.legend(fontsize=11, loc="upper right", frameon=False)
+    ax.legend(fontsize=11, loc="best", frameon=True, facecolor="white", framealpha=0.9)
     fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300)

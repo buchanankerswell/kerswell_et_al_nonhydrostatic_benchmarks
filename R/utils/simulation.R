@@ -86,7 +86,7 @@ visualize_benchmark_structure <- function(df, out_path, force_rewrite = FALSE) {
   ensure_output_dir(out_path)
   p_disp <- structure_strip(df, "disp410_km", "410 Displacement (km)")
   p_width <- structure_strip(df, "width410_km", "410 Width (km)")
-  p_rate <- structure_strip(df, "rate410", expression(Highest~dot(X)~"(1/Ma)"))
+  p_rate <- structure_strip(df, "rate410", expression(Max~dot(X)~"(1/Ma)"))
   p_kin <- structure_strip(df, "kin410_km", "Kinetic Contribution (km)", show_legend = TRUE)
   p <- (p_disp | p_width) / (p_rate | p_kin) +
     plot_layout(guides = "collect") &

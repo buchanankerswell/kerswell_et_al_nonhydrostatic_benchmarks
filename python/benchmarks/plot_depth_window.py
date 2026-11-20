@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pyvista as pv
 from matplotlib import patches
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 # Ambient-reference block-load correction (must match BLOCK_Y_TOP/BLOCK_Y_BOT
 # and GRAVITY in project.mk).
@@ -47,7 +48,7 @@ SETS = {
     "set1": [
         ("dG_driving_0", "PuOr_r", 1e-3, "$dG$ (kJ/mol)", "sym"),
         ("reaction_rate_C0", "RdGy_r", 3.154e13, "$\\dot{X}$ (1/Ma)", "signedlog"),
-        ("xi_ol_wd", "GnBu", 1.0, "$\\xi$ (-)", "fixed01"),
+        ("xi_ol_wd", "GnBu", 1.0, "$\\xi$ (dimensionless)", "fixed01"),
     ],
 }
 
@@ -143,7 +144,7 @@ def render_window_panel(data, field, cmap, scale, mode, clim, yc, half, cx, doma
     return img
 
 
-def draw_particle_path(ax, time_myr, nominal_y, yc, half, x0, x1):
+def draw_particle_path(ax, time_myr, nominal_y, yc, half, x0, x1, ticks=True):
     face = "#E5E5E5"
     ax.set_facecolor(face)
     ax.set_xlim(x0, x1)
@@ -160,10 +161,14 @@ def draw_particle_path(ax, time_myr, nominal_y, yc, half, x0, x1):
         arrowprops=dict(arrowstyle="->", color="black", lw=1.5),
     )
     ax.plot([PARTICLE_X_M], [y_now], marker="o", color="#B36B00", markeredgecolor="black", ms=7, zorder=5)
-    set_depth_ticks(ax)
+    if ticks:
+        set_depth_ticks(ax)
+    else:
+        ax.set_xticks([])
+        ax.set_yticks([])
 
 
-def draw_block_shape(ax, data, nominal_y, yc, half, x0, x1):
+def draw_block_shape(ax, data, nominal_y, yc, half, x0, x1, ticks=True):
     face = "#E5E5E5"
     ax.set_facecolor(face)
     ax.set_xlim(x0, x1)
@@ -176,7 +181,11 @@ def draw_block_shape(ax, data, nominal_y, yc, half, x0, x1):
         if pts.shape[0]:
             stride = max(pts.shape[0] // 2000, 1)
             ax.scatter(pts[::stride, 0], pts[::stride, 1], s=4, color="#B36B00", edgecolors="none", zorder=4)
-    set_depth_ticks(ax)
+    if ticks:
+        set_depth_ticks(ax)
+    else:
+        ax.set_xticks([])
+        ax.set_yticks([])
 
 
 def set_depth_ticks(ax):
@@ -194,6 +203,7 @@ def main():
     ap.add_argument("--nominal-410-m", type=float, default=362700.0)
     ap.add_argument("--window-half-km", type=float, default=50.0)
     ap.add_argument("--set", choices=["set0", "set1"], default="set0")
+    ap.add_argument("--clims-json", default=None, help="Standardized color limits from compute_window_clims.py; overrides per-figure scaling")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
     fields = SETS[args.set]
@@ -204,7 +214,15 @@ def main():
 
     steps_data = [read_step(args.model, s) for s in args.steps]
     times = [step_time_myr(args.model, s) for s in args.steps]
-    clims = {f[0]: window_clim(steps_data, f[0], f[2], f[4], yc, half) for f in fields}
+    if args.clims_json:
+        import json
+
+        with open(args.clims_json) as f:
+            std = json.load(f)
+        suite = "sink" if args.model.startswith("NH_Sink_") else "box"
+        clims = {f[0]: tuple(std[suite][args.set][f[0]]) for f in fields}
+    else:
+        clims = {f[0]: window_clim(steps_data, f[0], f[2], f[4], yc, half) for f in fields}
 
     # Domain extent from the mesh itself, so narrow (box) and square (sink)
     # setups frame correctly instead of assuming a fixed width.
@@ -214,17 +232,16 @@ def main():
     is_sink = "block" in steps_data[0]
 
     # Panel widths follow the data aspect so screenshots fill their axes
-    # with no stretching and no empty margins; the context column stays
-    # narrow and snug against the third data column.
+    # with no stretching and no empty margins. The model-domain schematic
+    # rides as a small inset in each third-column panel.
     r = domain_w_m / (2 * half)
-    c = 1.6
-    fig_w = min(1.55 * (3 * r + c) + 1.0, 20.0)
+    fig_w = min(1.55 * (3 * r) + 1.0, 20.0)
     fig = plt.figure(figsize=(fig_w, 8.5))
     gs = fig.add_gridspec(
         5,
-        4,
+        3,
         height_ratios=[1, 1, 1, 1, 0.12],
-        width_ratios=[r, r, r, c],
+        width_ratios=[r, r, r],
         hspace=0.08,
         wspace=0.06,
     )
@@ -253,22 +270,21 @@ def main():
                 ax.set_yticks([])
             ax.set_xticks([])
             if i == 0:
-                ax.set_title(label, fontsize=12)
-        axc = fig.add_subplot(gs[i, 3])
-        if is_sink:
-            draw_block_shape(axc, data, nominal_y, yc, half, x0, x1)
-            if i == 0:
-                axc.set_title("Block Shape", fontsize=12)
-        else:
-            draw_particle_path(axc, t, nominal_y, yc, half, x0, x1)
-            if i == 0:
-                axc.set_title("Particle Path", fontsize=12)
+                ax.set_title(label, fontsize=14, fontweight="bold")
+            if j == 2:
+                ax_in = inset_axes(ax, width="10%", height="45%", loc="lower right", borderpad=0.8)
+                if is_sink:
+                    draw_block_shape(ax_in, data, nominal_y, yc, half, x0, x1, ticks=False)
+                else:
+                    draw_particle_path(ax_in, t, nominal_y, yc, half, x0, x1, ticks=False)
+                if i == 0:
+                    ax_in.set_title("Model Domain", fontsize=9, fontweight="bold", pad=2)
 
     for j, (field, cmap, scale, label, mode) in enumerate(fields):
         ax = fig.add_subplot(gs[4, j])
         ax.set_axis_off()
         sm = plt.cm.ScalarMappable(cmap=plt.get_cmap(cmap), norm=plt.Normalize(*clims[field]))
-        plt.colorbar(sm, ax=ax, orientation="horizontal", fraction=1.0, aspect=30)
+        plt.colorbar(sm, ax=ax, orientation="horizontal", fraction=1.0, aspect=30, shrink=0.5)
 
     fig.savefig(args.out, dpi=150, bbox_inches="tight")
     print("wrote " + args.out)

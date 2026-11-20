@@ -82,7 +82,6 @@ visualize_seismic_comparison <- function(data_dir_box, data_dir_sink, out_path, 
       scale_x_continuous(limits = lim_vp, breaks = c(8, 9, 10, 11, 12)) +
       scale_color_manual(values = damp_pal, drop = TRUE, na.value = "grey50", name = "Damping") +
       scale_linetype_manual(values = c("On" = "solid", "Off" = "dashed"), drop = FALSE, name = "Feedback") +
-      scale_linetype_manual(values = c("On" = "solid", "Off" = "dashed"), drop = FALSE, name = "Feedback") +
       labs(x = expression(V[p] ~ "(km/s)"), y = "Depth (km)") +
       theme_bw(base_size = 20) +
       theme_profile_comparison()
@@ -94,7 +93,8 @@ visualize_seismic_comparison <- function(data_dir_box, data_dir_sink, out_path, 
 
   p <- seismic_suite_panel("Box", df_init_box, nominal_box_km) |
     (seismic_suite_panel("Sink", df_init_sink, nominal_sink_km) + theme(axis.text.y = element_blank(), axis.title.y = element_blank()))
-  ggsave(out_path, plot = p, width = 10, height = 6, dpi = 300, bg = "white", create.dir = TRUE)
+  p <- p + theme(legend.position = "right")
+  ggsave(out_path, plot = p, width = 12, height = 6, dpi = 300, bg = "white", create.dir = TRUE)
   log_artifact(out_path)
 }
 
@@ -108,9 +108,8 @@ theme_profile_comparison <- function() {
     plot.margin = margin(5, 5, 5, 5),
     plot.title = element_text(hjust = 0.5, size = 22, face = "bold", margin = margin(0, 0, 10, 0)),
     axis.ticks = element_blank(),
-    legend.position = "inside",
-    legend.position.inside = c(0.02, 0.02),
-    legend.justification = c(0, 0),
+    legend.position = "right",
+    legend.justification = NULL,
     legend.direction = "vertical",
     legend.key.height = unit(0.8, "lines"),
     legend.key.width = unit(1.2, "lines"),

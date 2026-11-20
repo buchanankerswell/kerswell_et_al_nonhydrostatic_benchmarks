@@ -98,6 +98,8 @@ meshes: meshes-box-suite meshes-sink-suite
 DEPTH_WINDOW_STEPS := 00000 00002 00006 00012
 
 depth-window:
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/compute_window_clims.py \
+	  --models $(UIDS_BOX_SUITE) $(UIDS_SINK_SUITE) --out $(SIMULATION)/results/depth-window-clims.json
 	@for model in $(UIDS_BOX_SUITE) $(UIDS_SINK_SUITE); do \
 	  case $$model in *_Box_*) nom=$(NOMINAL_410_BOX);; *) nom=$(NOMINAL_410_SINK400);; esac; \
 	  ok=1; for st in $(DEPTH_WINDOW_STEPS); do \
@@ -107,6 +109,7 @@ depth-window:
 	  for s in set0 set1; do \
 	    PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_window.py \
 	      --model $$model --steps $(DEPTH_WINDOW_STEPS) --nominal-410-m $$nom \
+	      --clims-json $(SIMULATION)/results/depth-window-clims.json \
 	      --out $(FIGS)/benchmarks/depth-window-$$model-$$s.png --set $$s; \
 	  done; \
 	done
