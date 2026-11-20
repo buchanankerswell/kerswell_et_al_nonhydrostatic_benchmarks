@@ -69,17 +69,17 @@ def write_stats_timeseries(stats_path, out_path):
     if velocity_columns and "(m/s)" in velocity_columns[0]:
         velocity_scale = YR_S
     wanted_columns = {
-        "rms_velocity_m_yr": None,
-        "max_velocity_m_yr": None,
+        "mean_flow_speed_m_yr": None,
+        "max_flow_speed_m_yr": None,
         "T_min_K": "Minimal temperature (K)",
         "T_avg_K": "Average temperature (K)",
         "T_max_K": "Maximal temperature (K)",
     }
     for c in velocity_columns:
         if c.startswith("RMS"):
-            wanted_columns["rms_velocity_m_yr"] = c
+            wanted_columns["mean_flow_speed_m_yr"] = c
         elif c.startswith("Max."):
-            wanted_columns["max_velocity_m_yr"] = c
+            wanted_columns["max_flow_speed_m_yr"] = c
     rows = []
     with open(stats_path) as f:
         for line in f:

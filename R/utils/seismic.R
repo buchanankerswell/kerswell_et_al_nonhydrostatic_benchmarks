@@ -82,7 +82,8 @@ visualize_seismic_comparison <- function(data_dir_box, data_dir_sink, out_path, 
       scale_x_continuous(limits = lim_vp, breaks = c(8, 9, 10, 11, 12)) +
       scale_color_manual(values = damp_pal, drop = TRUE, na.value = "grey50", name = "Damping") +
       scale_linetype_manual(values = c("On" = "solid", "Off" = "dashed"), drop = FALSE, name = "Feedback") +
-      labs(title = suite_label, x = expression(V[p] ~ (km / s)), y = "Depth (km)") +
+      scale_linetype_manual(values = c("On" = "solid", "Off" = "dashed"), drop = FALSE, name = "Feedback") +
+      labs(x = "P Wave Speed (km/s)", y = "Depth (km)") +
       theme_bw(base_size = 20) +
       theme_profile_comparison()
     if (!is.null(init_df)) {

@@ -42,8 +42,8 @@ def draw_domain(suite, width, height, trans_y, trace_x, nominal, probes, out):
     ax.set_xlim(-0.08 * width, 1.12 * width)
     ax.set_ylim(-0.05 * height, 1.05 * height)
     ax.set_aspect("equal")
-    ax.set_xlabel("x [km]")
-    ax.set_ylabel("model y [km]")
+    ax.set_xlabel("Distance (km)")
+    ax.set_ylabel("Height (km)")
 
     ax.add_patch(Rectangle((0, 0), width, height, fill=False, edgecolor="black", lw=2))
 
@@ -75,7 +75,6 @@ def draw_domain(suite, width, height, trans_y, trace_x, nominal, probes, out):
         ax.text(width * 1.02, height / 2, "sides/bottom:\nno normal flow", fontsize=10, va="center")
         ax.text(width / 2, -height * 0.02, f"{width / 1e3:.0f} x {height / 1e3:.0f} km", ha="center", fontsize=10)
 
-    ax.set_title(f"{suite}: initial and boundary conditions")
     ax.set_xticks([0, width / 2, width])
     ax.set_xticklabels([0, f"{width / 2 / 1e3:.0f}", f"{width / 1e3:.0f}"])
     out.parent.mkdir(parents=True, exist_ok=True)

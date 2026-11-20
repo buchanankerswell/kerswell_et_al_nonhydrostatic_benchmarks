@@ -31,9 +31,9 @@ RESULTS_SINK_SUITE = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_SINK_SUITE))
 # Plot lists (main Z_MID runs) selected from the registered UIDs.
 PLOT_BOX_RUNS    = $(filter %_Z$(Z_MID)_Res5,$(UIDS_BOX_SUITE))
 PLOT_SINK_RUNS   = $(filter %_Z$(Z_MID)_Res6,$(UIDS_SINK_SUITE))
-# One step list for sync + mesh: 21 run outputs, 5 steps covering the
-# wave arc (init, rise, peak, decayed, final).
-TIMESTEPS := 000 002 006 012 020
+# One step list for sync + mesh: all 21 run outputs so time-history
+# figures draw full-resolution curves.
+TIMESTEPS := 000 001 002 003 004 005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020
 FORCE_DOWNLOAD := 0
 ZENODO_DATASET_DOI := TODO-no-dataset-yet
 ZENODO_FILES       := TODO-no-files-yet

@@ -102,26 +102,26 @@ def load_vtu_series(run):
 
 
 def load_stats_series(run):
-    """Full-resolution velocity series from stats-timeseries.csv (m/yr, Myr)."""
+    """Full-resolution flow-speed series from stats-timeseries.csv (m/yr, Myr)."""
     path = RESULTS / run / "stats-timeseries.csv"
     if not path.exists():
         return None
-    times, rms_values, max_values = [], [], []
+    times, mean_values, max_values = [], [], []
     with open(path) as f:
         for r in csv.DictReader(f):
             try:
                 times.append(float(r["time_yr"]) / 1e6)
-                rms_values.append(float(r["rms_velocity_m_yr"]))
-                max_values.append(float(r["max_velocity_m_yr"]))
+                mean_values.append(float(r["mean_flow_speed_m_yr"]))
+                max_values.append(float(r["max_flow_speed_m_yr"]))
             except (KeyError, ValueError):
                 continue
     if len(times) < 2:
         return None
-    return {"time_myr": np.array(times), "rms": np.array(rms_values), "vmax": np.array(max_values)}
+    return {"time_myr": np.array(times), "flow": np.array(mean_values), "fastest": np.array(max_values)}
 
 
-def load_probe_series(run, probe=0, field="relaxed_pressure"):
-    """Probe-N field series from point_values.txt (MPa, Myr)."""
+def load_point_series(run, point=0, field="pressure"):
+    """Point-N field series from point_values.txt (MPa, Myr)."""
     path = RESULTS / run / "point_values.txt"
     if not path.exists():
         return None
@@ -142,12 +142,12 @@ def load_probe_series(run, probe=0, field="relaxed_pressure"):
         time_blocks.append(block_rows)
     if not time_blocks or column_names is None or field not in column_names:
         return None
-    if probe >= len(time_blocks[0]):
-        print(f"skip {run}: probe {probe} missing", file=sys.stderr)
+    if point >= len(time_blocks[0]):
+        print(f"skip {run}: point {point} missing", file=sys.stderr)
         return None
     field_index = column_names.index(field)
     times = np.array([b[0][0] for b in time_blocks]) / 1e6
-    values = np.array([b[probe][field_index] for b in time_blocks]) / 1e6
+    values = np.array([b[point][field_index] for b in time_blocks]) / 1e6
     return {"time_myr": times, "values": values}
 
 

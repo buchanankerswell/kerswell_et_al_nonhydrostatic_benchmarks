@@ -1066,9 +1066,8 @@ class DrivingForceProfile:
         axes[0].set_ylim(ymax, ymin)
         axes[0].clabel(contour_P, fmt="%.1f", fontsize=10)
         axes[0].clabel(contour_0_P, fmt={0: "$\\Delta{G}$ = 0"}, fontsize=10)
-        axes[0].set_xlabel("$\\hat{P}$ (GPa)")
+        axes[0].set_xlabel("Pressure Change (GPa)")
         axes[0].set_ylabel("Depth (km)")
-        axes[0].set_title("$\\hat{T}$ = 0 K")
         axes[0].tick_params(axis="both", which="both", length=0)
 
         _ = axes[1].contourf(dT_grid, depths_grid_T / 1e3, driving_force_grid_T / 1e3, levels=np.round(levels_T / 1e3, 1), cmap="PuOr_r")
@@ -1081,8 +1080,7 @@ class DrivingForceProfile:
         axes[1].set_ylim(ymax, ymin)
         axes[1].clabel(contour_T, fmt="%.1f", fontsize=10)
         axes[1].clabel(contour_0_T, fmt={0: "$\\Delta{G}$ = 0"}, fontsize=10)
-        axes[1].set_xlabel("$\\hat{T}$ (K)")
-        axes[1].set_title("$\\hat{P}$ = 0 GPa")
+        axes[1].set_xlabel("Temperature Change (K)")
         axes[1].tick_params(axis="both", which="both", length=0)
 
         plt.tight_layout()

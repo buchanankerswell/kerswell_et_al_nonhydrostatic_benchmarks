@@ -20,9 +20,9 @@ CLEAN := $(PYTHON)/**/__pycache__ \
 	 $(DATA_MESH_BOX_SUITE) \
 	 $(DATA_MESH_SINK_SUITE) \
 	 $(POSTPROCESSED_CSV) \
-	 $(SIMULATION)/results/pressure-wave-summary.csv
+	 $(SIMULATION)/results/pressure_history_summary.csv
 
-.PHONY: all visualize sync-barkla postprocess timeseries pressure-waves diagnostics scaling setup adiabat meshes meshes-box-suite meshes-sink-suite clean help
+.PHONY: all visualize sync-barkla postprocess timeseries pressure-history diagnostics scaling setup adiabat meshes meshes-box-suite meshes-sink-suite clean help
 
 all: visualize
 visualize: meshes setup
@@ -59,30 +59,30 @@ timeseries:
 	  PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/extract_timeseries.py $(SIMULATION)/results/$$run; \
 	done
 
-pressure-waves: timeseries
-	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/quantify_pressure_waves.py \
+pressure-history: timeseries
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/summarize_pressure_history.py \
 	  --runs $(UIDS_BOX_SUITE) $(UIDS_SINK_SUITE) \
 	  --plot-box $(PLOT_BOX_RUNS) \
 	  --plot-sink $(PLOT_SINK_RUNS) \
-	  --out-csv $(SIMULATION)/results/pressure-wave-summary.csv \
+	  --out-csv $(SIMULATION)/results/pressure_history_summary.csv \
 	  --fig-dir $(FIGS)/benchmarks
-	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_joint_profiles.py \
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_profiles.py \
 	  --runs $(PLOT_BOX_RUNS) --suite-tag box --profile $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
 	  --model-height $(MODEL_HEIGHT_BOX) --surface-pressure $(SURFACE_PRESSURE) \
-	  --nominal-km $(shell echo $(NOMINAL_410_BOX) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/joint_profiles_box.png --title "Box joint 410 profiles"
-	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_joint_profiles.py \
+	  --nominal-km $(shell echo $(NOMINAL_410_BOX) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/depth_profiles_box.png
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_profiles.py \
 	  --runs $(PLOT_SINK_RUNS) --suite-tag sink --profile $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
 	  --model-height $(MODEL_HEIGHT_SINK) --surface-pressure $(SURFACE_PRESSURE) \
-	  --nominal-km $(shell echo $(NOMINAL_410_SINK400) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/joint_profiles_sink.png --title "Sink joint 410 profiles"
+	  --nominal-km $(shell echo $(NOMINAL_410_SINK400) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/depth_profiles_sink.png
 	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
 diagnostics: postprocess
-	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_bimpl_resolution.py --fig-dir $(FIGS)/benchmarks
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_bulk_damping_check.py --fig-dir $(FIGS)/benchmarks
 	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
-scaling: pressure-waves postprocess
-	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_scaling.py \
-	  --summary $(SIMULATION)/results/pressure-wave-summary.csv \
+scaling: pressure-history postprocess
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_mesh_step_sensitivity.py \
+	  --summary $(SIMULATION)/results/pressure_history_summary.csv \
 	  --postprocessed $(POSTPROCESSED_CSV) \
 	  --out-dir $(FIGS)/benchmarks \
 	  --z-mid $(Z_MID) --cfl-box $(CFL_BOX) --cfl-sink $(CFL_SINK)
@@ -142,9 +142,9 @@ help:
 	$(call LOG_DETAIL,meshes-box-suite   Visualize NH box benchmarks)
 	$(call LOG_DETAIL,meshes-sink-suite  Visualize NH sinking-block benchmarks)
 	$(call LOG_DETAIL,postprocess        Export postprocessed table (thermal-kinetic split at 410))
-	$(call LOG_DETAIL,timeseries         Extract per-run pressure/front/stats timeseries from solutions)
-	$(call LOG_DETAIL,pressure-waves     Quantify waves: vtu peaks + RMS/probe/joint plots)
-	$(call LOG_DETAIL,diagnostics        Supplement: implicit-bulk resolution robustness (needs postprocess))
-	$(call LOG_DETAIL,scaling            Mesh + timestep scaling: wave size vs Res and CFL)
+	$(call LOG_DETAIL,timeseries         Extract per-run pressure/boundary/stats histories from solutions)
+	$(call LOG_DETAIL,pressure-history  Summarize range: vtu extrema + flow/point/depth plots)
+	$(call LOG_DETAIL,diagnostics        Supplement: bulk-damping resolution check (needs postprocess))
+	$(call LOG_DETAIL,scaling            Mesh + step sensitivity: range vs refinement and step size)
 	$(call LOG_DETAIL,setup              Draw setup domain sketches (initial + boundary conditions))
 	$(call LOG_DETAIL,clean              Remove generated files (safe))

@@ -18,12 +18,12 @@ damp_value <- function(damp) {
 
 damp_display <- function(damp, dynp) {
   case_when(
-    damp == "None" & dynp == 0 ~ "equilibrium (no feedback)",
-    damp == "None" ~ "undamped",
-    damp_family(damp) == "Bimpl" ~ paste0("implicit bulk \u03b6=", str_extract(damp, "[\\d.e+-]+$")),
-    damp_family(damp) == "Bexpl" ~ paste0("explicit bulk \u03b6=", str_extract(damp, "[\\d.e+-]+$")),
-    damp_family(damp) == "Rel" ~ paste0("relaxed \u03c4=", str_extract(damp, "[\\d.e+-]+$"), " s"),
-    damp_family(damp) == "Cap" ~ paste0("capped ", str_extract(damp, "[\\d.e+-]+$"), " Pa"),
+    damp == "None" & dynp == 0 ~ "Equilibrium (No Feedback)",
+    damp == "None" ~ "No Damping",
+    damp_family(damp) == "Bimpl" ~ paste0("Implicit Bulk ", str_extract(damp, "[\\d.e+-]+$"), " (Pa s)"),
+    damp_family(damp) == "Bexpl" ~ paste0("Explicit Bulk ", str_extract(damp, "[\\d.e+-]+$"), " (Pa s)"),
+    damp_family(damp) == "Rel" ~ paste0("Relaxed ", str_extract(damp, "[\\d.e+-]+$"), " (s)"),
+    damp_family(damp) == "Cap" ~ paste0("Capped ", str_extract(damp, "[\\d.e+-]+$"), " (Pa)"),
     TRUE ~ damp
   )
 }
@@ -66,10 +66,10 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
 structure_strip <- function(data, y_var, y_label, show_legend = FALSE) {
   ggplot(data, aes(x = damp_display, y = !!sym(y_var))) +
     geom_point(aes(fill = z, shape = suite), size = 4, color = "black", stroke = 0.5, alpha = 0.9, show.legend = show_legend) +
-    scale_fill_manual(values = z_pal, drop = FALSE, name = "Z") +
+    scale_fill_manual(values = z_pal, drop = FALSE, name = "Reaction Speed") +
     scale_shape_manual(values = suite_shapes, drop = FALSE, name = "Suite") +
     guides(fill = guide_legend(override.aes = list(size = 3.5, shape = 21))) +
-    facet_wrap(~res, nrow = 1, labeller = label_both) +
+    facet_wrap(~res, nrow = 1, labeller = as_labeller(function(x) paste("Resolution", x))) +
     labs(y = y_label, x = NULL) +
     theme_bw(base_size = 14) +
     theme_bench() +
@@ -84,10 +84,10 @@ visualize_benchmark_structure <- function(df, out_path, force_rewrite = FALSE) {
     return(invisible())
   }
   ensure_output_dir(out_path)
-  p_disp <- structure_strip(df, "disp410_km", "410 displacement (km)")
-  p_width <- structure_strip(df, "width410_km", "410 width (km)")
-  p_rate <- structure_strip(df, "rate410", "Max reaction rate (1/Ma)")
-  p_kin <- structure_strip(df, "kin410_km", "Kinetic contribution (km)", show_legend = TRUE)
+  p_disp <- structure_strip(df, "disp410_km", "410 Displacement (km)")
+  p_width <- structure_strip(df, "width410_km", "410 Width (km)")
+  p_rate <- structure_strip(df, "rate410", "Highest Reaction Rate (1/Ma)")
+  p_kin <- structure_strip(df, "kin410_km", "Kinetic Contribution (km)", show_legend = TRUE)
   p <- (p_disp | p_width) / (p_rate | p_kin) +
     plot_layout(guides = "collect") &
     theme(legend.position = "right")

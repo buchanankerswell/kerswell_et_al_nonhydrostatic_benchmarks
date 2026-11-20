@@ -32,9 +32,10 @@ the ambient driver. `NOMINAL_410_SINK400` stale (~383 km expected at Res6).
 Wiped local results/configs/figs/generated data. Sweep is 18 runs: paper 6
 box Res5 + 8 sink Res6 (Z_MID only) + 4 timestep-scaling runs (undamped,
 half/double CFL per suite). Per-model CFL via `PARAM_cfl_*` + optional `_CFL`
-UID suffix. `TIMESTEPS` cut to the 5-step wave arc (000 002 006 012 020).
+UID suffix. `TIMESTEPS` covers all 21 run outputs (000-020) so time-history
+figures draw full-resolution curves.
 Z labels renamed sluggish/intermediate/quasi-equilibrium. New `make scaling`
-(`plot_scaling.py`: wave size vs Res and vs CFL, front error vs control).
+(`plot_mesh_step_sensitivity.py`: range vs Res and vs CFL, boundary offset vs control).
 Download threshold 18. `AGENTS.md` rewritten (local-only: the file is
 gitignored, does not travel on pull/push).
 

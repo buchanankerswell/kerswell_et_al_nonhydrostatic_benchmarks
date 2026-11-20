@@ -1,17 +1,17 @@
-"""Quantify dynamic-pressure wave magnitude across NH benchmarks.
+"""Pressure history across NH benchmarks.
 
 Reads per-run timeseries.csv and writes a summary CSV plus comparison plots.
-Runs and plot sets arrive from the Makefiles (project.mk UID lists); without
-them the script discovers NH_* runs and derives paper plot sets by UID suffix.
-Each run is measured against paired runs from its own UID: the undamped
-control (Damp token -> DampNone) and the no-feedback control (DynpOn ->
-DynpOff). Positive reduction = damped; positive error = overshoot vs no feedback.
+Runs and plot lists come from the Makefiles; without them the script finds
+NH_* runs and picks main runs by UID suffix. Each run is measured against
+paired runs from its own UID: the undamped control (Damp token -> DampNone)
+and the no-feedback control (DynpOn -> DynpOff). Positive reduction = damped;
+positive error = overshoot vs no feedback.
 
 Usage (repo root):
   PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/benchmarks/quantify_pressure_waves.py --runs <uid ...> \\
+    python/benchmarks/summarize_pressure_history.py --runs <uid ...> \\
       --plot-box <uid ...> --plot-sink <uid ...> \\
-      --out-csv simulation/results/pressure-wave-summary.csv --fig-dir figs/benchmarks
+      --out-csv simulation/results/pressure_history_summary.csv --fig-dir figs/benchmarks
 """
 
 import argparse
@@ -26,7 +26,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import UID_DAMP_RE, apply_bench_style, load_probe_series, load_stats_series, load_vtu_series, parse_uid_columns, uid_label
+from common import UID_DAMP_RE, apply_bench_style, load_point_series, load_stats_series, load_vtu_series, parse_uid_columns, uid_label
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
@@ -49,51 +49,51 @@ def discover(prefix):
     return runs
 
 
-def peak_of(run):
+def largest_of(run):
     s = load_vtu_series(run)
     if s is None or len(s["t"]) < 2:
         return None
     return float((s["pmax"] - s["pmin"]).max())
 
 
-def summarize(run, peaks):
+def summarize(run, by_run):
     s = load_vtu_series(run)
     if s is None or len(s["t"]) < 2:
-        print(f"skip {run}: single output, no wave history", file=sys.stderr)
+        print(f"skip {run}: single output, no history to compare", file=sys.stderr)
         return None
     stats = load_stats_series(run)
-    if stats is not None and np.isfinite(stats["rms"]).any():
-        peak_rms = float(np.nanmax(stats["rms"]))
-        final_rms = float(stats["rms"][np.isfinite(stats["rms"])][-1])
-        diminishment = round((peak_rms - final_rms) / peak_rms, 3) if peak_rms > 0 else None
+    if stats is not None and np.isfinite(stats["flow"]).any():
+        highest_flow = float(np.nanmax(stats["flow"]))
+        final_flow = float(stats["flow"][np.isfinite(stats["flow"])][-1])
+        diminishment = round((highest_flow - final_flow) / highest_flow, 3) if highest_flow > 0 else None
     else:
-        peak_rms, final_rms, diminishment = None, None, None
+        highest_flow, final_flow, diminishment = None, None, None
     p2p = s["pmax"] - s["pmin"]
     i = int(np.argmax(p2p))
-    peak = float(p2p[i])
-    ctrl, nod = undamped_control(run), no_feedback_control(run)
-    cp, np_ = peaks.get(ctrl), peaks.get(nod)
+    largest = float(p2p[i])
+    ctrl, nofb = undamped_control(run), no_feedback_control(run)
+    cp, np_ = by_run.get(ctrl), by_run.get(nofb)
     return {
         "run": run,
         "control_run": ctrl,
         "n_outputs": len(s["t"]),
-        "peak_p2p_MPa": round(peak, 1),
-        "tstep_peak": int(i),
-        "t_peak_Myr": round(float(s["t"][i]), 3),
-        "final_p2p_MPa": round(float(p2p[-1]), 1),
-        "initial_p2p_MPa": round(float(p2p[0]), 1),
+        "largest_range_MPa": round(largest, 1),
+        "step_largest": int(i),
+        "time_largest_Myr": round(float(s["t"][i]), 3),
+        "final_range_MPa": round(float(p2p[-1]), 1),
+        "initial_range_MPa": round(float(p2p[0]), 1),
         "max_xi_range": round(float(np.nanmax(s["xir"])), 3),
-        "peak_rms_velocity_m_yr": (round(peak_rms, 3) if peak_rms is not None else None),
-        "final_rms_velocity_m_yr": (round(final_rms, 3) if final_rms is not None else None),
-        "rms_diminishment": diminishment,
-        "reduction_vs_control": (round((cp - peak) / cp, 3) if cp else None),
-        "nodynp_run": nod,
-        "rel_err_vs_nodynp": (round((peak - np_) / np_, 3) if np_ else None),
+        "highest_flow_speed_m_yr": (round(highest_flow, 3) if highest_flow is not None else None),
+        "final_flow_speed_m_yr": (round(final_flow, 3) if final_flow is not None else None),
+        "flow_diminishment": diminishment,
+        "reduction_vs_control": (round((cp - largest) / cp, 3) if cp else None),
+        "nofeedback_run": nofb,
+        "rel_err_vs_nofeedback": (round((largest - np_) / np_, 3) if np_ else None),
         **parse_uid_columns(run),
     }
 
 
-def plot_suite(runs, title, out_path, control, reference=None):
+def plot_suite(runs, out_path, control, reference=None):
     runs = [r for r in runs if load_vtu_series(r) is not None]
     if not runs:
         print(f"skip {out_path.name}: no timeseries.csv found", file=sys.stderr)
@@ -111,18 +111,17 @@ def plot_suite(runs, title, out_path, control, reference=None):
             kw = dict(lw=1.2, alpha=0.85)
         ax[0].plot(s["t"], s["pmax"] - s["pmin"], label=uid_label(run), **kw)
         ax[1].plot(s["t"], s["pmin"], label=uid_label(run), **kw)
-    ax[0].set_ylabel("peak-to-peak dyn. pressure [MPa]")
-    ax[1].set_ylabel("min dyn. pressure [MPa]")
-    ax[1].set_xlabel("time [Myr]")
+    ax[0].set_ylabel("Dynamic Pressure Range (MPa)")
+    ax[1].set_ylabel("Lowest Dynamic Pressure (MPa)")
+    ax[1].set_xlabel("Time (Myr)")
     ax[0].legend(fontsize=11, loc="upper right", frameon=False)
-    fig.suptitle(title)
     fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300)
     plt.close(fig)
 
 
-def plot_rms_suite(runs, title, out_path, control, reference=None):
+def plot_mean_flow_suite(runs, out_path, control, reference=None):
     fig, ax = plt.subplots(figsize=(8, 5))
     plotted = 0
     for run in runs:
@@ -136,32 +135,31 @@ def plot_rms_suite(runs, title, out_path, control, reference=None):
             kw = dict(lw=1.5, ls="--", color="grey")
         else:
             kw = dict(lw=1.2, alpha=0.85)
-        ax.plot(stats["time_myr"], stats["rms"], label=uid_label(run), **kw)
+        ax.plot(stats["time_myr"], stats["flow"], label=uid_label(run), **kw)
     if plotted == 0:
         print(f"skip {out_path.name}: no stats-timeseries.csv found", file=sys.stderr)
         plt.close(fig)
         return
     ax.set_yscale("log")
-    ax.set_ylabel("RMS velocity [m/yr]")
-    ax.set_xlabel("time [Myr]")
+    ax.set_ylabel("Average Flow Speed (m/yr)")
+    ax.set_xlabel("Time (Myr)")
     ax.legend(fontsize=11, loc="upper right", frameon=False)
-    fig.suptitle(title)
     fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300)
     plt.close(fig)
 
 
-def plot_probe_suite(runs, title, out_path, control, reference=None, field="pressure"):
+def plot_point_suite(runs, out_path, control, reference=None, field="pressure"):
     fig, ax = plt.subplots(figsize=(8, 5))
     plotted = 0
     for run in runs:
-        probe = load_probe_series(run, 0, field)
-        if probe is None:
+        point = load_point_series(run, 0, field)
+        if point is None:
             continue
-        # Absolute probe pressure is dominated by the hydrostatic background
-        # (~14 GPa); subtract the initial value so the wave is visible.
-        values = probe["values"] - probe["values"][0]
+        # Absolute point pressure is dominated by the hydrostatic background
+        # (~14 GPa); subtract the initial value so the variation is visible.
+        values = point["values"] - point["values"][0]
         plotted += 1
         if run == control:
             kw = dict(lw=2.5)
@@ -169,15 +167,14 @@ def plot_probe_suite(runs, title, out_path, control, reference=None, field="pres
             kw = dict(lw=1.5, ls="--", color="grey")
         else:
             kw = dict(lw=1.2, alpha=0.85)
-        ax.plot(probe["time_myr"], values, label=uid_label(run), **kw)
+        ax.plot(point["time_myr"], values, label=uid_label(run), **kw)
     if plotted == 0:
         print(f"skip {out_path.name}: no point_values.txt found", file=sys.stderr)
         plt.close(fig)
         return
-    ax.set_ylabel(f"probe {field} change [MPa]")
-    ax.set_xlabel("time [Myr]")
+    ax.set_ylabel("Point Pressure Change (MPa)")
+    ax.set_xlabel("Time (Myr)")
     ax.legend(fontsize=11, loc="upper right", frameon=False)
-    fig.suptitle(title)
     fig.tight_layout()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300)
@@ -193,30 +190,30 @@ def main():
     ap.add_argument("--runs", nargs="*", default=None, help="UIDs to include in the CSV (default: discover NH_* runs)")
     ap.add_argument("--plot-box", nargs="*", default=None)
     ap.add_argument("--plot-sink", nargs="*", default=None)
-    ap.add_argument("--out-csv", default="simulation/results/pressure-wave-summary.csv")
+    ap.add_argument("--out-csv", default="simulation/results/pressure_history_summary.csv")
     ap.add_argument("--fig-dir", default="figs/benchmarks")
     args = ap.parse_args()
 
     box = [r for r in (args.runs or discover("NH_Box_")) if r.startswith("NH_Box_")]
     sink = [r for r in (args.runs or discover("NH_Sink_")) if r.startswith("NH_Sink_")]
-    peaks = {}
+    largest = {}
     for r in box + sink:
-        p = peak_of(r)
+        p = largest_of(r)
         if p is not None:
-            peaks[r] = p
+            largest[r] = p
 
     rows = []
     for r in box:
-        row = summarize(r, peaks)
+        row = summarize(r, largest)
         if row:
             rows.append({"suite": "box", **row})
     for r in sink:
-        row = summarize(r, peaks)
+        row = summarize(r, largest)
         if row:
             rows.append({"suite": "sink", **row})
 
     if not rows:
-        print("no NH_* runs with timeseries.csv found; nothing to quantify", file=sys.stderr)
+        print("no NH_* runs with timeseries.csv found; nothing to summarize", file=sys.stderr)
         return
 
     out_csv = Path(args.out_csv)
@@ -232,18 +229,15 @@ def main():
     sink_paper = args.plot_sink if args.plot_sink is not None else paper_set(sink, 6)
     und = next((r for r in box_paper if "_DynpOn_DampNone_" in r), None)
     nod = next((r for r in box_paper if "_DynpOff_DampNone_" in r), None)
-    plot_suite(box_paper, "Box 1-reaction: pressure-wave magnitude", figdir / "pressure_waves_box.png", und, reference=nod)
+    plot_suite(box_paper, figdir / "pressure_history_box.png", und, reference=nod)
     und = next((r for r in sink_paper if "_DynpOn_DampNone_" in r), None)
     nod = next((r for r in sink_paper if "_DynpOff_DampNone_" in r), None)
-    plot_suite(sink_paper, "Sink block (full-res): pressure-wave magnitude", figdir / "pressure_waves_sink.png", und, reference=nod)
-    for runs, tag, title in (
-        (box_paper, "box", "Box 1-reaction"),
-        (sink_paper, "sink", "Sink block (full-res)"),
-    ):
+    plot_suite(sink_paper, figdir / "pressure_history_sink.png", und, reference=nod)
+    for runs, tag in ((box_paper, "box"), (sink_paper, "sink")):
         und = next((r for r in runs if "_DynpOn_DampNone_" in r), None)
         nod = next((r for r in runs if "_DynpOff_DampNone_" in r), None)
-        plot_rms_suite(runs, f"{title}: RMS velocity (per-step statistics)", figdir / f"rms_velocity_{tag}.png", und, reference=nod)
-        plot_probe_suite(runs, f"{title}: 410 probe driving pressure (per-step)", figdir / f"probe_pressure_{tag}.png", und, reference=nod)
+        plot_mean_flow_suite(runs, figdir / f"mean_flow_speed_{tag}.png", und, reference=nod)
+        plot_point_suite(runs, figdir / f"point_pressure_{tag}.png", und, reference=nod)
     print(f"plots -> {figdir}/")
 
 
