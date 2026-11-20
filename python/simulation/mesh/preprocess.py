@@ -6,18 +6,17 @@ import pyvista as pv
 from utils.logging import log_warn
 
 
-# Ambient-reference block-load correction (must match BLOCK_Y_TOP/BLOCK_Y_BOT
-# and GRAVITY in project.mk). The 1D adiabatic reference includes the initial
-# block weight, so ambient-referenced driving pressure adds the static load
-# back below the block column. Box runs have no block field and are unaffected.
-AMBIENT_BLOCK_TOP_Y = 875e3
-AMBIENT_BLOCK_BOT_Y = 725e3
-AMBIENT_GRAVITY = 9.81
-
-
 @dataclass
 class MeshPreProcessor:
     verbosity: int = 0
+    # Ambient-reference block-load correction, passed from project.mk
+    # (BLOCK_Y_TOP/BLOCK_Y_BOT, GRAVITY) via the pipeline. The 1D adiabatic
+    # reference includes the initial block weight, so ambient-referenced
+    # driving pressure adds the static load back below the block column.
+    # Box runs have no block field and are unaffected.
+    block_top_m: float = 875e3
+    block_bot_m: float = 725e3
+    gravity: float = 9.81
 
     # Derived field recipes: field_name -> (required_source_fields, compute_fn)
     _DERIVED_FIELDS: ClassVar[dict[str, tuple[tuple[str, ...], Callable]]] = {
@@ -66,13 +65,13 @@ class MeshPreProcessor:
         y = np.asarray(mesh.points[:, 1])
         if field == "nonadiabatic_pressure":
             overlap = np.where(
-                y < AMBIENT_BLOCK_BOT_Y,
-                AMBIENT_BLOCK_TOP_Y - AMBIENT_BLOCK_BOT_Y,
-                np.where(y < AMBIENT_BLOCK_TOP_Y, y - AMBIENT_BLOCK_BOT_Y, 0.0),
+                y < self.block_bot_m,
+                self.block_top_m - self.block_bot_m,
+                np.where(y < self.block_top_m, y - self.block_bot_m, 0.0),
             )
-            mesh[field] = np.asarray(mesh[field]) + excess * AMBIENT_GRAVITY * overlap
+            mesh[field] = np.asarray(mesh[field]) + excess * self.gravity * overlap
         else:
-            in_block = (y >= AMBIENT_BLOCK_BOT_Y) & (y <= AMBIENT_BLOCK_TOP_Y)
+            in_block = (y >= self.block_bot_m) & (y <= self.block_top_m)
             mesh[field] = np.asarray(mesh[field]) + excess * in_block
 
     def check_mesh(self, mesh: pv.UnstructuredGrid, field: str) -> bool:

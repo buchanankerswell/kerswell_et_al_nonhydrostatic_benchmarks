@@ -4,7 +4,7 @@ main <- function() {
   args <- commandArgs(trailingOnly = TRUE)
 
   if (length(args) < 4) {
-    cat(" !! Warning: Usage: simulation.R [util_dir] [postprocessed_csv] [out_dir] [force_rewrite]\n")
+    cat(" !! Warning: Usage: simulation.R [util_dir] [postprocessed_csv] [out_dir] [force_rewrite] [z_lo] [z_mid] [z_hi]\n")
     return(invisible())
   }
 
@@ -15,6 +15,11 @@ main <- function() {
   lapply(list.files(util_dir, pattern = "\\.R$", full.names = TRUE), source)
 
   force_rewrite <- if (length(args) >= 4) parse_logical(args[4]) else FALSE
+  # Reaction-rate anchors from project.mk (Z_LO/Z_MID/Z_HI); override the
+  # defaults in utils/simulation.R when provided.
+  if (length(args) >= 7) {
+    z_levels <<- c(args[5], args[6], args[7])
+  }
 
   df <- read_benchmark_postprocessed(postprocessed_csv)
   if (is.null(df) || !nrow(df)) {

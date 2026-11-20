@@ -24,7 +24,6 @@ from simulation.params.transitions import (
 from utils.logging import log_artifact, log_info
 
 RHO = 4100.0
-GRAV = 9.81
 
 UID_RE = re.compile(
     r"^NH_(?P<suite>Box|Sink)_Dynp(?P<dynp>On|Off)_Damp(?P<dampkind>[A-Za-z]+)(?P<dampval>[\d.e]*)"
@@ -42,6 +41,7 @@ def parse_arguments():
     parser.add_argument("--depth-corr-ol-wd", type=float, default=0.0)
     parser.add_argument("--nominal-410-box", type=float, default=None, help="Runtime-adiabat 410 nominal [m], box")
     parser.add_argument("--nominal-410-sink400", type=float, default=None, help="Runtime-adiabat 410 nominal [m], sink")
+    parser.add_argument("--gravity", type=float, default=9.81, help="Gravity [m/s^2] (project.mk GRAVITY)")
     parser.add_argument("--force", action="store_true", help="Overwrite output.")
     return parser.parse_args()
 
@@ -114,7 +114,7 @@ def main():
             disp410 = float(r["displacement_410"])
             rxn = nominal_410_for_uid(mid, *nominals) if use_runtime_nominal else rxn410
             hatT410 = interp_at(rep, "nonadiabatic_temperature", rxn + disp410)
-            therm410 = gamma410 * hatT410 / (RHO * GRAV)
+            therm410 = gamma410 * hatT410 / (RHO * args.gravity)
             dampkind = m.group("dampkind")
             dampval = m.group("dampval") or "0"
             rows.append(

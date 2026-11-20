@@ -33,6 +33,10 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
     log_error(paste("missing postprocessed output:", postprocessed_csv, "(run `make -C python postprocess` first)"))
     return(invisible())
   }
+  # Reaction-rate anchors from project.mk (Z_LO/Z_MID/Z_HI); the CSV
+  # round-trips z through numeric formatting, so level matching must
+  # happen in numeric space, not on strings.
+  z_vals <- suppressWarnings(as.numeric(z_levels))
   df <- suppressWarnings(read_csv(postprocessed_csv, show_col_types = FALSE)) |>
     mutate(
       suite = factor(case_when(
@@ -41,14 +45,11 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
         TRUE ~ suite
       ), levels = c(suite_lab_box, suite_lab_sink)),
       res = factor(res, levels = c(4, 5, 6, 7)),
-      # z round-trips through the CSV as a number, and as.character() on a
-      # numeric vector formats 4.44e-04 as "0.000444" / 1.4e+04 as "14000",
-      # so level matching must happen in numeric space, not on strings.
       z = factor(
         case_when(
-          abs(as.numeric(z) - 9.51e-08) < 1e-14 ~ "sluggish",
-          abs(as.numeric(z) - 4.44e-04) < 1e-10 ~ "intermediate",
-          abs(as.numeric(z) - 1.4e+04) < 1 ~ "quasi-equilibrium",
+          abs(as.numeric(z) - z_vals[1]) < 1e-14 ~ "sluggish",
+          abs(as.numeric(z) - z_vals[2]) < 1e-10 ~ "intermediate",
+          abs(as.numeric(z) - z_vals[3]) < 1 ~ "quasi-equilibrium",
           TRUE ~ NA_character_
         ),
         levels = c("sluggish", "intermediate", "quasi-equilibrium")

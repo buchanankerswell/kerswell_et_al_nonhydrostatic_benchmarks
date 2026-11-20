@@ -17,13 +17,11 @@ import sys
 
 import numpy as np
 
-# Ambient-reference block-load correction (must match project.mk BLOCK_Y_TOP,
-# BLOCK_Y_BOT and GRAVITY): the 1D adiabatic reference includes the initial
-# block weight in, so the true ambient-referenced driving pressure is the
-# file value plus the static load below the block column.
-AMBIENT_BLOCK_TOP_Y = 875e3
-AMBIENT_BLOCK_BOT_Y = 725e3
-AMBIENT_GRAVITY = 9.81
+# Ambient-reference block-load correction (block geometry and gravity come
+# from project.mk BLOCK_Y_TOP/BLOCK_Y_BOT and GRAVITY via CLI flags): the
+# 1D adiabatic reference includes the initial block weight in, so the true
+# ambient-referenced driving pressure is the file value plus the static
+# load below the block column.
 
 
 def parse_statistics(path):
@@ -112,6 +110,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("run_dir", help="simulation/results/<run> directory")
     ap.add_argument("-o", "--output", default=None)
+    ap.add_argument("--block-top-m", type=float, default=875e3, help="Block top [m] (project.mk BLOCK_Y_TOP)")
+    ap.add_argument("--block-bottom-m", type=float, default=725e3, help="Block bottom [m] (project.mk BLOCK_Y_BOT)")
+    ap.add_argument("--gravity", type=float, default=9.81, help="Gravity [m/s^2] (project.mk GRAVITY)")
     args = ap.parse_args()
 
     import pyvista as pv
@@ -153,11 +154,11 @@ def main():
                 nad = np.asarray(mesh["nonadiabatic_pressure"]).ravel()
                 y = np.asarray(mesh.points)[:, 1]
                 overlap = np.where(
-                    y < AMBIENT_BLOCK_BOT_Y,
-                    AMBIENT_BLOCK_TOP_Y - AMBIENT_BLOCK_BOT_Y,
-                    np.where(y < AMBIENT_BLOCK_TOP_Y, y - AMBIENT_BLOCK_BOT_Y, 0.0),
+                    y < args.block_bottom_m,
+                    args.block_top_m - args.block_bottom_m,
+                    np.where(y < args.block_top_m, y - args.block_bottom_m, 0.0),
                 )
-                amb = nad + excess * AMBIENT_GRAVITY * overlap
+                amb = nad + excess * args.gravity * overlap
                 row["ambient_pressure_min"] = float(np.min(amb))
                 row["ambient_pressure_max"] = float(np.max(amb))
         if "velocity" in mesh.array_names:

@@ -51,12 +51,14 @@ $(POSTPROCESSED_CSV):
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
 	  --nominal-410-box=$(NOMINAL_410_BOX) \
 	  --nominal-410-sink400=$(NOMINAL_410_SINK400) \
+	  --gravity=$(GRAVITY) \
 	  --force
 	$(call LOG_ARTIFACT,$@)
 
 timeseries:
 	@for run in $(UIDS_BOX_SUITE) $(UIDS_SINK_SUITE); do \
-	  PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/extract_timeseries.py $(SIMULATION)/results/$$run; \
+	  PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/extract_timeseries.py $(SIMULATION)/results/$$run \
+	    --block-top-m=$(BLOCK_Y_TOP) --block-bottom-m=$(BLOCK_Y_BOT) --gravity=$(GRAVITY); \
 	done
 
 pressure-history: timeseries
@@ -69,10 +71,12 @@ pressure-history: timeseries
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_profiles.py \
 	  --runs $(PLOT_BOX_RUNS) --suite-tag box --profile $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
 	  --model-height $(MODEL_HEIGHT_BOX) --surface-pressure $(SURFACE_PRESSURE) \
+	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
 	  --nominal-km $(shell echo $(NOMINAL_410_BOX) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/depth-profiles-box.png
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_profiles.py \
 	  --runs $(PLOT_SINK_RUNS) --suite-tag sink --profile $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
 	  --model-height $(MODEL_HEIGHT_SINK) --surface-pressure $(SURFACE_PRESSURE) \
+	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
 	  --nominal-km $(shell echo $(NOMINAL_410_SINK400) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/depth-profiles-sink.png
 	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
@@ -99,7 +103,9 @@ DEPTH_WINDOW_STEPS := 00000 00002 00006 00012
 
 depth-window:
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/compute_window_clims.py \
-	  --models $(UIDS_BOX_SUITE) $(UIDS_SINK_SUITE) --out $(SIMULATION)/results/depth-window-clims.json
+	  --models $(UIDS_BOX_SUITE) $(UIDS_SINK_SUITE) --out $(SIMULATION)/results/depth-window-clims.json \
+	  --nominal-box-m=$(NOMINAL_410_BOX) --nominal-sink-m=$(NOMINAL_410_SINK400) \
+	  --block-top-m=$(BLOCK_Y_TOP) --block-bottom-m=$(BLOCK_Y_BOT) --gravity=$(GRAVITY)
 	@for model in $(UIDS_BOX_SUITE) $(UIDS_SINK_SUITE); do \
 	  case $$model in *_Box_*) nom=$(NOMINAL_410_BOX);; *) nom=$(NOMINAL_410_SINK400);; esac; \
 	  ok=1; for st in $(DEPTH_WINDOW_STEPS); do \
@@ -109,6 +115,7 @@ depth-window:
 	  for s in set0 set1; do \
 	    PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_window.py \
 	      --model $$model --steps $(DEPTH_WINDOW_STEPS) --nominal-410-m $$nom \
+	      --block-top-m=$(BLOCK_Y_TOP) --block-bottom-m=$(BLOCK_Y_BOT) --gravity=$(GRAVITY) \
 	      --clims-json $(SIMULATION)/results/depth-window-clims.json \
 	      --out $(FIGS)/benchmarks/depth-window-$$model-$$s.png --set $$s; \
 	  done; \
@@ -135,6 +142,9 @@ define MESH_SUITE
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
 	  --nominal-410=$(5) \
 	  --trace-x=$(6) \
+	  --block-top-m=$(BLOCK_Y_TOP) \
+	  --block-bottom-m=$(BLOCK_Y_BOT) \
+	  --gravity=$(GRAVITY) \
 	  --mode=$(POSTPROCESS_MODE) \
 	  --save-csv=$(SAVE_CSV) \
 	  --force-reprocess=$(FORCE_REPROCESS) \
@@ -152,7 +162,7 @@ adiabat: $(PROFILES)
 
 $(PROFILES): $(SIMULATION)/data/olivine-wadsleyite-profile-Mg%.tsv:
 	@for model in $(PERPLEX_MODELS); do \
-	  cd $(PERPLEX)/$$model && PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/adiabat/main.py $$model $* $(SIMULATION)/data $(FIGS)/adiabat; \
+	  cd $(PERPLEX)/$$model && PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/adiabat/main.py $$model $* $(SIMULATION)/data $(FIGS)/adiabat --surface-gravity $(GRAVITY); \
 	done
 
 clean:

@@ -17,8 +17,6 @@ import sys
 from pathlib import Path
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
-
-NOMINAL_M = {"box": 373100.0, "sink": 362700.0}
 WINDOW_HALF_KM = 50.0
 
 
@@ -28,8 +26,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", nargs="+", required=True)
     ap.add_argument("--steps", nargs=4, default=["00000", "00002", "00006", "00012"])
+    ap.add_argument("--nominal-box-m", type=float, default=373100.0, help="Box nominal [m] (project.mk NOMINAL_410_BOX)")
+    ap.add_argument("--nominal-sink-m", type=float, default=362700.0, help="Sink nominal [m] (project.mk NOMINAL_410_SINK400)")
+    ap.add_argument("--block-top-m", type=float, default=875e3, help="Block top [m] (project.mk BLOCK_Y_TOP)")
+    ap.add_argument("--block-bottom-m", type=float, default=725e3, help="Block bottom [m] (project.mk BLOCK_Y_BOT)")
+    ap.add_argument("--gravity", type=float, default=9.81, help="Gravity [m/s^2] (project.mk GRAVITY)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
+
+    nominal_m = {"box": args.nominal_box_m, "sink": args.nominal_sink_m}
 
     half = WINDOW_HALF_KM * 1e3
     grouped = {"box": [], "sink": []}
@@ -38,15 +43,15 @@ def main():
         if not all((RESULTS / model / "solution" / f"solution-{s}.pvtu").exists() for s in args.steps):
             print(f"skip {model}: solutions missing", file=sys.stderr)
             continue
-        yc = 1e6 - NOMINAL_M[suite]
-        grouped[suite].append([read_step(model, s) for s in args.steps])
+        yc = 1e6 - nominal_m[suite]
+        grouped[suite].append([read_step(model, s, args.block_top_m, args.block_bottom_m, args.gravity) for s in args.steps])
         print(f"read {model} ({suite}, yc={1e6 - yc:.0f} m)")
 
     out = {}
     for suite, runs in grouped.items():
         if not runs:
             continue
-        yc = 1e6 - NOMINAL_M[suite]
+        yc = 1e6 - nominal_m[suite]
         steps_all = [d for run in runs for d in run]
         out[suite] = {}
         for setname, fields in SETS.items():
