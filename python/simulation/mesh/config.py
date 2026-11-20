@@ -9,20 +9,20 @@ import matplotlib
 _FIELD_DEFAULTS: dict[str, tuple] = {
     # fmt: off
     # Columns: file_id, cmap, clim, label, fmt, scaling, edges, transition_contours, trace
-    "T": ("temperature-full", "magma", "auto", "$T$ (K)", "%.0f", 1, False, False, False),
-    "nonadiabatic_temperature": ("temperature-nonadiabatic", "seismic", (-1e3, 1e3), "$\\hat{T}$ (K)", "%.0f", 1, True, False, False),
-    "p": ("pressure-full", "Oranges", "auto", "$P$ (GPa)", "%.0f", 1e-9, False, False, False),
-    "nonadiabatic_pressure": ("pressure-nonadiabatic", "PuOr_r", "auto", "$\\hat{P}$ (MPa)", "%.0f", 1e-6, False, False, False),
-    "density": ("density-full", "Purples", "auto", "$\\rho$ (g/cm$^3$)", "%.1f", 1e-3, False, False, False),
-    "nonadiabatic_density": ("density-nonadiabatic", "BrBG", "auto", "$\\hat{\\rho}$ (g/cm$^3$)", "%.1f", 1e-3, True, False, False),
-    "dG_driving_0": ("dg-driving-ol-wd", "PuOr_r", "auto", "$dG$ (kJ/mol)", "%.1f", 1e-3, False, False, True),
-    "seismic_Vp": ("vp", "copper_r", "auto", "$V_p$ (km/s)", "%.1f", 1e-3, False, False, False),
-    "seismic_Vs": ("vs", "copper_r", "auto", "$V_s$ (km/s)", "%.1f", 1e-3, False, False, False),
-    "velocity": ("velocity-cart", "PiYG", "auto", "$\\vec{u}$ (cm/yr)", "%.1f", 1e2, False, False, False),
-    "velocity_vertical": ("velocity-vertical", "PiYG", "auto", "$\\vec{u}_y$ (cm/yr)", "%.1f", 1e2, True, False, False),
-    "viscosity": ("viscosity", "bone_r", (19, 24), "Log $\\eta$ (Pa s)", "%.0f", 1, True, True, True),
-    "xi_ol_wd": ("xi-ol-wd", "GnBu", (0.0, 1.0), "$\\xi$ (-)", "%.1f", 1, False, True, True),
-    "reaction_rate_C0": ("reaction-rate-ol-wd", "RdGy_r", "auto", "Log $\\dot{X}$ (1/Ma)", "%.2f", 3.154e13, True, True, True),
+    "T":                         ("temperature-full",          "magma",    "auto",        "$T$ (K)",                    "%.0f", 1,         False, False, False),
+    "nonadiabatic_temperature":  ("temperature-nonadiabatic", "seismic",  (-1e3, 1e3),    "$\\hat{T}$ (K)",             "%.0f", 1,         True,  False, False),
+    "p":                         ("pressure-full",             "Oranges",  "auto",        "$P$ (GPa)",                  "%.0f", 1e-9,      False, False, False),
+    "nonadiabatic_pressure":     ("pressure-nonadiabatic",    "PuOr_r",   "auto",         "$\\hat{P}$ (MPa)",           "%.0f", 1e-6,      False, False, False),
+    "density":                   ("density-full",              "Purples",  "auto",        "$\\rho$ (g/cm$^3$)",         "%.1f", 1e-3,      False, False, False),
+    "nonadiabatic_density":      ("density-nonadiabatic",     "BrBG",     "auto",         "$\\hat{\\rho}$ (g/cm$^3$)",  "%.1f", 1e-3,      True,  False, False),
+    "dG_driving_0":              ("dg-driving-ol-wd",          "PuOr_r",   "auto",        "$dG$ (kJ/mol)",              "%.1f", 1e-3,      False, False, True),
+    "seismic_Vp":                ("vp",                        "copper_r", "auto",        "$V_p$ (km/s)",               "%.1f", 1e-3,      False, False, False),
+    "seismic_Vs":                ("vs",                        "copper_r", "auto",        "$V_s$ (km/s)",               "%.1f", 1e-3,      False, False, False),
+    "velocity":                  ("velocity-cart",             "PiYG",     "auto",        "$\\vec{u}$ (cm/yr)",         "%.1f", 1e2,       False, False, False),
+    "velocity_vertical":         ("velocity-vertical",         "PiYG",     "auto",        "$\\vec{u}_y$ (cm/yr)",       "%.1f", 1e2,       True,  False, False),
+    "viscosity":                 ("viscosity",                 "bone_r",   (19, 24),      "Log $\\eta$ (Pa s)",         "%.0f", 1,         True,  True,  True),
+    "xi_ol_wd":                  ("xi-ol-wd",                  "GnBu",     (0.0, 1.0),    "$\\xi$ (-)",                 "%.1f", 1,         False, True,  True),
+    "reaction_rate_C0":          ("reaction-rate-ol-wd",       "RdGy_r",   "auto",        "Log $\\dot{X}$ (1/Ma)",      "%.2f", 3.154e13,  True,  True,  True),
     # fmt: on
 }
 

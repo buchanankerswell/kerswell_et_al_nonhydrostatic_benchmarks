@@ -5,6 +5,8 @@ target-version = "py311"
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+# Hand-aligned display table; ruff format would collapse the columns.
+exclude = ["python/simulation/mesh/config.py"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F"]
