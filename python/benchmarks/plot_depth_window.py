@@ -21,6 +21,7 @@ import argparse
 import os
 import re
 import sys
+from pathlib import Path
 
 import matplotlib
 
@@ -31,11 +32,13 @@ import pyvista as pv
 from matplotlib import patches
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-# Ambient-reference block-load correction (must match BLOCK_Y_TOP/BLOCK_Y_BOT
-# and GRAVITY in project.mk).
-AMBIENT_BLOCK_TOP_Y = 875e3
-AMBIENT_BLOCK_BOT_Y = 725e3
-AMBIENT_GRAVITY = 9.81
+from simulation.params.transitions import load_depth_datum, model_to_true_km
+
+# Ambient-reference block-load correction (block geometry and gravity come
+# from project.mk BLOCK_Y_TOP/BLOCK_Y_BOT and GRAVITY via CLI flags).
+# The 1D adiabatic reference includes the initial block load in, so the
+# true ambient-referenced driver is the file value plus the static load
+# below the block column. Box runs have no block field and are unaffected.
 
 RESULTS = os.path.join(os.environ.get("PROJECT_ROOT", "."), "simulation/results")
 
@@ -67,7 +70,7 @@ def transform(values, mode):
     return values
 
 
-def read_step(model, step):
+def read_step(model, step, block_top_m=875e3, block_bot_m=725e3, gravity=9.81):
     step = step.zfill(5)
     path = os.path.join(RESULTS, model, "solution", "solution-" + step + ".pvtu")
     m = pv.read(path)
@@ -86,13 +89,13 @@ def read_step(model, step):
         if excess:
             y = out["points"][:, 1]
             overlap = np.where(
-                y < AMBIENT_BLOCK_BOT_Y,
-                AMBIENT_BLOCK_TOP_Y - AMBIENT_BLOCK_BOT_Y,
-                np.where(y < AMBIENT_BLOCK_TOP_Y, y - AMBIENT_BLOCK_BOT_Y, 0.0),
+                y < block_bot_m,
+                block_top_m - block_bot_m,
+                np.where(y < block_top_m, y - block_bot_m, 0.0),
             )
-            out["nonadiabatic_pressure"] = out["nonadiabatic_pressure"] + excess * AMBIENT_GRAVITY * overlap
+            out["nonadiabatic_pressure"] = out["nonadiabatic_pressure"] + excess * gravity * overlap
             depth = 1e6 - y
-            in_window = (depth > 1e6 - AMBIENT_BLOCK_TOP_Y) & (depth < 1e6 - AMBIENT_BLOCK_BOT_Y)
+            in_window = (depth > 1e6 - block_top_m) & (depth < 1e6 - block_bot_m)
             out["nonadiabatic_density"] = out["nonadiabatic_density"] + excess * in_window
     for name in ("dG_driving_0", "reaction_rate_C0", "xi_ol_wd"):
         if name in m.point_data:
@@ -203,6 +206,9 @@ def main():
     ap.add_argument("--nominal-410-m", type=float, default=362700.0)
     ap.add_argument("--window-half-km", type=float, default=50.0)
     ap.add_argument("--set", choices=["set0", "set1"], default="set0")
+    ap.add_argument("--block-top-m", type=float, default=875e3, help="Block top [m] (project.mk BLOCK_Y_TOP)")
+    ap.add_argument("--block-bottom-m", type=float, default=725e3, help="Block bottom [m] (project.mk BLOCK_Y_BOT)")
+    ap.add_argument("--gravity", type=float, default=9.81, help="Gravity [m/s^2] (project.mk GRAVITY)")
     ap.add_argument("--clims-json", default=None, help="Standardized color limits from compute_window_clims.py; overrides per-figure scaling")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
@@ -212,14 +218,16 @@ def main():
     yc = nominal_y
     half = args.window_half_km * 1e3
 
-    steps_data = [read_step(args.model, s) for s in args.steps]
+    steps_data = [read_step(args.model, s, args.block_top_m, args.block_bottom_m, args.gravity) for s in args.steps]
     times = [step_time_myr(args.model, s) for s in args.steps]
+    suite = "sink" if args.model.startswith("NH_Sink_") else "box"
+    datum = load_depth_datum(str(Path(RESULTS).parent / "data" / "depth-datum.tsv"))
+    true_ticks = ["%.0f" % v for v in model_to_true_km((1e6 - (yc + half), 1e6 - yc, 1e6 - (yc - half)), datum, suite)]
     if args.clims_json:
         import json
 
         with open(args.clims_json) as f:
             std = json.load(f)
-        suite = "sink" if args.model.startswith("NH_Sink_") else "box"
         clims = {f[0]: tuple(std[suite][args.set][f[0]]) for f in fields}
     else:
         clims = {f[0]: window_clim(steps_data, f[0], f[2], f[4], yc, half) for f in fields}
@@ -262,10 +270,7 @@ def main():
             )
             if j == 0:
                 ax.set_yticks([yc - half, yc, yc + half])
-                ax.set_yticklabels(
-                    ["%.0f" % ((1e6 - y) / 1e3) for y in (yc - half, yc, yc + half)],
-                    fontsize=8,
-                )
+                ax.set_yticklabels(true_ticks, fontsize=8)
             else:
                 ax.set_yticks([])
             ax.set_xticks([])

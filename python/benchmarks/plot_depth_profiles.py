@@ -28,10 +28,13 @@ from simulation.mesh.config import apply_bench_style, bench_color, bench_label
 from simulation.params.transitions import (
     find_surface_depth_offset,
     find_transition,
+    load_depth_datum,
+    model_to_true_km,
     read_dG_profile,
 )
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
+DATUM = RESULTS.parent / "data" / "depth-datum.tsv"
 
 apply_bench_style()
 
@@ -85,6 +88,10 @@ def main():
     prof_eq, prof_peq, gamma = profile_equilibrium(args.profile, args.model_height, args.surface_pressure)
     nominal = args.nominal_km if args.nominal_km is not None else prof_eq + args.depth_corr_ol_wd / 1e3
     print(f"profile dG=0 at model {prof_eq:.1f} km, P_eq = {prof_peq / 1e9:.3f} GPa, gamma = {gamma:.3e} Pa/K; nominal {nominal:.1f} km")
+    datum = load_depth_datum(str(DATUM))
+    suite = args.suite_tag
+    nominal_true = float(model_to_true_km(nominal, datum, suite))
+    print(f"true depth: nominal {nominal_true:.1f} km (model {nominal:.1f} km)")
 
     fig, ax = plt.subplots(1, 4, figsize=(10, 5), sharey=True)
     fig.subplots_adjust(wspace=0.08)
@@ -99,26 +106,28 @@ def main():
         zr, rate = clean(rep["reaction_rate_C0"])
         zp, p = clean(rep["p"])
         za, pa = clean(rep["adiabatic_pressure"])
+        tx = model_to_true_km(zx, datum, suite)
+        tr = model_to_true_km(zr, datum, suite)
         kw = dict(lw=2.2, alpha=0.9, label=bench_label(run), color=bench_color(run))
-        ax[0].plot(xi, zx, **kw)
-        ax[1].plot(dg / 1e3, zd, **kw)
-        ax[2].plot(rate, zr, **kw)
+        ax[0].plot(xi, tx, **kw)
+        ax[1].plot(dg / 1e3, model_to_true_km(zd, datum, suite), **kw)
+        ax[2].plot(rate, tr, **kw)
         pmod = np.interp(zx, zp, p)
         pad = np.interp(zx, za, pa) / 1e9
-        ax[3].plot(pmod - pad, zx, **kw)
+        ax[3].plot(pmod - pad, tx, **kw)
         rt = zero_cross(zd, dg)
         xihalf = float(np.interp(0.5, xi, zx)) if xi.min() < 0.5 < xi.max() else float("nan")
         rt0 = rt[0] if rt else float("nan")
         pmod0 = float(np.interp(rt0, zp, p)) if rt else float("nan")
         j = int(np.nanargmax(np.abs(rate))) if np.isfinite(rate).any() else -1
         print(
-            f"{bench_label(run)}: dG=0 at {rt0:.1f} km (P={pmod0:.3f} GPa vs prof {prof_peq / 1e9:.3f}), "
-            f"xi0.5 at {xihalf:.1f} km, max|rate| {rate[j]:.3g}/Ma at {zr[j]:.1f} km"
+            f"{bench_label(run)}: dG=0 at {float(model_to_true_km(rt0, datum, suite)):.1f} km (P={pmod0:.3f} GPa vs prof {prof_peq / 1e9:.3f}), "
+            f"xi0.5 at {float(model_to_true_km(xihalf, datum, suite)):.1f} km, max|rate| {rate[j]:.3g}/Ma at {float(model_to_true_km(zr[j], datum, suite)):.1f} km"
         )
     for a in ax:
-        a.axhline(nominal, color="grey", lw=1.5, ls="--")
+        a.axhline(nominal_true, color="grey", lw=1.5, ls="--")
         a.invert_yaxis()
-        a.set_ylim(500, 250)
+        a.set_ylim(float(model_to_true_km(500, datum, suite)), float(model_to_true_km(250, datum, suite)))
     for a in ax[1:]:
         a.tick_params(labelleft=False)
     ax[0].set_xlabel("$\\xi$ (dimensionless)")

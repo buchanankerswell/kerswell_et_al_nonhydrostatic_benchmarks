@@ -58,7 +58,7 @@ POSTPROCESSED_MD   := $(ASPECT_RESULTS)/postprocessed.md
 PERPLEX_MODELS  := $(shell find $(PERPLEX) -type f -name '*.dat' -exec basename {} .dat \;)
 # Versioned thermodynamic inputs (tracked) live alongside generated outputs in
 # SIMULATION/data; deep-clean and .gitignore spare exactly these files.
-VERSIONED_DATA := olivine-wadsleyite-profile-Mg100.tsv wadsleyite-ringwoodite-profile-Mg100.tsv ringwoodite-postspinel-profile-Mg100.tsv
+VERSIONED_DATA := olivine-wadsleyite-profile-Mg100.tsv wadsleyite-ringwoodite-profile-Mg100.tsv ringwoodite-postspinel-profile-Mg100.tsv depth-datum.tsv
 MESH_CSV_BOX_SUITE  := $(ASPECT_RESULTS)/structure-summary-box.csv
 MESH_CSV_SINK_SUITE := $(ASPECT_RESULTS)/structure-summary-sink.csv
 SEISMIC_BOX_SUITE   := $(ASPECT_RESULTS)/seismic_profiles_box
@@ -176,6 +176,9 @@ TRANSITION_Y_OL_WD := 6.408e+05
 # near 383 km, box still needs its no-feedback control run.
 NOMINAL_410_BOX     := 373100
 NOMINAL_410_SINK400 := 362700
+# Profile-reference 410 (m, true depth): dG = 0 in the BurnMan isentrope
+# sits at 422554 m. Seismic panels center their reference band here.
+PROFILE_REF_410_M := 422600
 
 # Fixed vertical lines each suite is sampled along (m): box center, sink
 # block center. Both suites are isothermal, so there is no hotspot to follow.

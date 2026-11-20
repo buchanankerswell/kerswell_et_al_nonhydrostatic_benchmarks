@@ -5,7 +5,7 @@ from pathlib import Path
 
 from simulation.mesh.config import MeshConfig
 from simulation.mesh.pipeline import FullPipeline, PlottingPipeline, PostProcessingPipeline
-from simulation.params.transitions import PhaseTransition, find_surface_depth_offset, find_transition, read_dG_profile
+from simulation.params.transitions import PhaseTransition, find_surface_depth_offset, find_transition, load_depth_datum, read_dG_profile
 from utils.logging import log_artifact, log_info
 from tile import ImageTiler
 
@@ -52,6 +52,13 @@ def parse_arguments() -> Namespace:
         default=None,
         help="Fixed representative-trace x [m]; vertical trace for isothermal suites. Overrides anomaly following.",
     )
+    parser.add_argument(
+        "--block-top-m", type=float, default=875e3, help="Block top [m] for the ambient-reference correction (project.mk BLOCK_Y_TOP)."
+    )
+    parser.add_argument(
+        "--block-bottom-m", type=float, default=725e3, help="Block bottom [m] for the ambient-reference correction (project.mk BLOCK_Y_BOT)."
+    )
+    parser.add_argument("--gravity", type=float, default=9.81, help="Gravity [m/s^2] for the ambient-reference correction (project.mk GRAVITY).")
     parser.add_argument("--mode", type=str, choices=["postprocess", "visualize", "full"], default="full", help="Pipeline mode.")
     parser.add_argument("--save-csv", type=str2bool, default=True, help="Save structure data to csv.")
     parser.add_argument("--force-reprocess", type=str2bool, default=False, help="Force reprocessing and overwriting of cache.")
@@ -103,6 +110,9 @@ def main():
                 f"--mode={args.mode}",
                 f"--save-csv={args.save_csv}",
                 f"--suite-tag={args.suite_tag}",
+                f"--block-top-m={args.block_top_m}",
+                f"--block-bottom-m={args.block_bottom_m}",
+                f"--gravity={args.gravity}",
                 f"--force-reprocess={args.force_reprocess}",
                 f"--verbosity={args.verbosity}",
             ]
@@ -120,6 +130,7 @@ def main():
 
     model_height = args.model_height
     headers, data = read_dG_profile(args.dG_profile_ol_wd)
+    depth_datum = load_depth_datum(str(Path(args.dG_profile_ol_wd).parent / "depth-datum.tsv"))
     surface_depth = find_surface_depth_offset(headers, data, args.surface_pressure)
 
     trans_data: dict[str, PhaseTransition] = {"X_wd": find_transition(headers, data, model_height, surface_depth)}
@@ -182,6 +193,10 @@ def main():
             verbosity=verbosity,
             suite_tag=args.suite_tag,
             trace_x=args.trace_x,
+            depth_datum=depth_datum,
+            block_top_m=args.block_top_m,
+            block_bot_m=args.block_bottom_m,
+            gravity=args.gravity,
         )
 
         transition_summary, seismic_profile_cache = pipeline.run(transition_summary_path, seismic_profile_cache_path, force_reprocess)
@@ -202,6 +217,10 @@ def main():
                 verbosity=verbosity,
                 suite_tag=args.suite_tag,
                 trace_x=args.trace_x,
+                depth_datum=depth_datum,
+                block_top_m=args.block_top_m,
+                block_bot_m=args.block_bottom_m,
+                gravity=args.gravity,
             )
             transition_summary, seismic_profile_cache = post_pipeline.run(transition_summary_path, seismic_profile_cache_path, force_reprocess)
         else:
@@ -229,6 +248,10 @@ def main():
             verbosity=verbosity,
             suite_tag=args.suite_tag,
             trace_x=args.trace_x,
+            depth_datum=depth_datum,
+            block_top_m=args.block_top_m,
+            block_bot_m=args.block_bottom_m,
+            gravity=args.gravity,
         )
         pipeline.run(
             fields_to_plot,

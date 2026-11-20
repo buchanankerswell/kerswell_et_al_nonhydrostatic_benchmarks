@@ -1,8 +1,7 @@
-# 410 reference depths (km). Sink default mirrors project.mk
-# NOMINAL_410_SINK400; both numbers are placeholders until the new runs
-# land (sink should come out near 383 km). Passed explicitly by R/seismic.R.
-nominal_410_box_km <- 373.1
-nominal_410_sink_km <- 362.7
+# Profile-reference 410 depth (km, true depth): dG = 0 in the BurnMan
+# isentrope sits at 422.6 km. Passed explicitly by R/seismic.R.
+nominal_410_box_km <- 422.6
+nominal_410_sink_km <- 422.6
 
 # Shared damping palette (same families as the structure panels). Per-value
 # shades keep the paired Bimpl/Rel values distinct.
@@ -21,7 +20,7 @@ read_seismic_profile <- function(filepath) {
     mutate(
       model_id = str_extract(fname, "(?<=seismic-profile-).*(?=-t[0-9]+-representative\\.csv)"),
       timestep = as.numeric(str_extract(fname, "(?<=-t)[0-9]+(?=-representative\\.csv)")),
-      depth = depth / 1e3,
+      depth = true_depth_km,
       trace_x = trace_x / 1e3,
     )
 }

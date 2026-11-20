@@ -66,6 +66,35 @@ def read_dG_profile(filepath: str) -> tuple[list[str], np.ndarray]:
     return headers, np.array(data)
 
 
+def load_depth_datum(path: str) -> dict[str, np.ndarray]:
+    """Canonical model-depth to true-depth table (m), per suite.
+
+    True depth maps ambient pressure through the BurnMan isentrope, so the
+    phase transition lands near 410 km instead of at model-domain depth.
+    """
+    rows = []
+    with open(path) as f:
+        for line in f:
+            s = line.strip()
+            if not s or s.startswith("#"):
+                continue
+            rows.append([float(v) for v in s.split()])
+    data = np.array(rows)
+    cols = ["model_depth_m", "box", "sink"]
+    assert data.shape[1] == 3, f"depth datum must have 3 columns, got {data.shape[1]}"
+    return {k: data[:, i] for i, k in enumerate(cols)}
+
+
+def model_to_true_km(model_depth_km, datum: dict[str, np.ndarray], suite: str):
+    """True depth (km) for model depths (km) via the datum table."""
+    return np.interp(np.asarray(model_depth_km, dtype=float) * 1e3, datum["model_depth_m"], datum[suite]) / 1e3
+
+
+def true_to_model_km(true_depth_km, datum: dict[str, np.ndarray], suite: str):
+    """Model depth (km) for true depths (km); inverse of model_to_true_km."""
+    return np.interp(np.asarray(true_depth_km, dtype=float) * 1e3, datum[suite], datum["model_depth_m"]) / 1e3
+
+
 def find_surface_depth_offset(headers: list[str], data: np.ndarray, surface_pressure: float) -> float:
     """
     Finds the depth at which the profile matches the model's surface pressure.

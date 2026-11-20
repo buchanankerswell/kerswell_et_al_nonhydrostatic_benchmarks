@@ -13,6 +13,7 @@ Usage (repo root):
 """
 
 import argparse
+import os
 from pathlib import Path
 
 import matplotlib
@@ -21,9 +22,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-from benchmarks.common import apply_bench_style
+from simulation.mesh.config import apply_bench_style
+from simulation.params.transitions import load_depth_datum, model_to_true_km, true_to_model_km
 
 apply_bench_style()
+
+DATUM = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/data/depth-datum.tsv"
 
 
 def parse_probes(spec):
@@ -38,23 +42,25 @@ def parse_probes(spec):
 
 
 def draw_domain(suite, width, height, trans_y, trace_x, nominal, probes, out):
+    datum = load_depth_datum(str(DATUM))
     fig, ax = plt.subplots(figsize=(7, 8))
     ax.set_xlim(-0.08 * width, 1.12 * width)
     ax.set_ylim(-0.05 * height, 1.05 * height)
     ax.set_aspect("equal")
     ax.set_xlabel("Distance (km)")
-    ax.set_ylabel("Height (km)")
+    ax.set_ylabel("Depth (km)")
 
     ax.add_patch(Rectangle((0, 0), width, height, fill=False, edgecolor="black", lw=2))
 
-    trans_depth = (height - trans_y) / 1e3
+    trans_depth = float(model_to_true_km((height - trans_y) / 1e3, datum, suite))
     ax.axhline(trans_y, color="black", ls="--", lw=1.5)
     ax.text(width * 1.02, trans_y, f"initial $\\xi$ step {trans_depth:.0f} km", va="center", fontsize=10)
 
     if nominal is not None:
         nom_y = height - nominal
+        nom_true = float(model_to_true_km(nominal / 1e3, datum, suite))
         ax.axhspan(nom_y - 10e3, nom_y + 10e3, color="grey", alpha=0.4)
-        ax.text(width * 1.02, nom_y, f"410 nominal {nominal / 1e3:.0f} km", va="center", fontsize=10, color="dimgrey")
+        ax.text(width * 1.02, nom_y, f"410 nominal {nom_true:.0f} km", va="center", fontsize=10, color="dimgrey")
 
     ax.axvline(trace_x, color="dimgrey", ls=":", lw=1.5)
     ax.text(trace_x, height * 1.01, f"trace x={trace_x / 1e3:.0f} km", ha="center", fontsize=10)
@@ -77,6 +83,9 @@ def draw_domain(suite, width, height, trans_y, trace_x, nominal, probes, out):
 
     ax.set_xticks([0, width / 2, width])
     ax.set_xticklabels([0, f"{width / 2 / 1e3:.0f}", f"{width / 1e3:.0f}"])
+    true_ticks = [100, 300, 500, 700, 900]
+    ax.set_yticks([height - float(true_to_model_km(t, datum, suite)) * 1e3 for t in true_ticks])
+    ax.set_yticklabels([f"{t}" for t in true_ticks])
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
     fig.savefig(out, dpi=300)

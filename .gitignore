@@ -12,6 +12,7 @@ simulation/data/*
 !simulation/data/olivine-wadsleyite-profile-Mg100.tsv
 !simulation/data/wadsleyite-ringwoodite-profile-Mg100.tsv
 !simulation/data/ringwoodite-postspinel-profile-Mg100.tsv
+!simulation/data/depth-datum.tsv
 simulation/results
 simulation/plugins/CMakeFiles
 simulation/plugins/build

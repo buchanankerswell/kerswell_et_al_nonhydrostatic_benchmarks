@@ -13,7 +13,7 @@ from utils.logging import gutter_tqdm, log_error, log_warn
 from plotter import MeshPlotter
 from postprocess import MeshPostProcessor
 from preprocess import MeshPreProcessor
-from simulation.params.transitions import PhaseTransition
+from simulation.params.transitions import PhaseTransition, model_to_true_km
 
 
 class TransInfo(NamedTuple):
@@ -44,9 +44,15 @@ class BasePipeline:
     verbosity: int = 0
     suite_tag: str = ""
     trace_x: float | None = None
+    depth_datum: dict | None = None
+    # Ambient-reference block-load correction, passed from project.mk
+    # (BLOCK_Y_TOP/BLOCK_Y_BOT, GRAVITY) via the mesh driver.
+    block_top_m: float = 875e3
+    block_bot_m: float = 725e3
+    gravity: float = 9.81
 
     def __post_init__(self) -> None:
-        self.preprocessor = MeshPreProcessor(self.verbosity)
+        self.preprocessor = MeshPreProcessor(self.verbosity, self.block_top_m, self.block_bot_m, self.gravity)
         self._pvtu_file_cache: dict | None = None
         self.trans_info: dict = {
             "xi_ol_wd": TransInfo(
@@ -336,6 +342,8 @@ class PostProcessingPipeline(BasePipeline):
 
                         uniform_z = np.linspace(np.min(raw_z), np.max(raw_z), 1000)
                         export_data = {"depth": uniform_z}
+                        if self.depth_datum is not None and self.suite_tag in ("box", "sink"):
+                            export_data["true_depth_km"] = model_to_true_km(uniform_z / 1e3, self.depth_datum, self.suite_tag)
 
                         for f in export_fields:
                             from scipy.interpolate import interp1d
@@ -352,7 +360,12 @@ class PostProcessingPipeline(BasePipeline):
                             export_data[f] = f_interp(uniform_z)
 
                         df = pd.DataFrame(export_data)
-                        cols = ["depth", "trace_x"] + [f for f in target_fields if f != "trace_x"]
+                        cols = (
+                            ["depth"]
+                            + (["true_depth_km"] if "true_depth_km" in export_data else [])
+                            + ["trace_x"]
+                            + [f for f in target_fields if f != "trace_x"]
+                        )
                         df[cols].to_csv(csv_path, index=False)
 
     def _process_transition(
@@ -745,6 +758,7 @@ class FullPipeline(BasePipeline):
             verbosity=self.verbosity,
             suite_tag=self.suite_tag,
             trace_x=self.trace_x,
+            depth_datum=self.depth_datum,
         )
         transition_summary_cache, seismic_profile_cache = post_processor.run(
             transition_summary_cache_path, seismic_profile_cache_path, force_reprocess
