@@ -19,15 +19,15 @@ read_seismic_profile <- function(filepath) {
   fname <- basename(filepath)
   df |>
     mutate(
-      model_id = str_extract(fname, "(?<=seismic_profile_).*(?=_t[0-9]+_representative\\.csv)"),
-      timestep = as.numeric(str_extract(fname, "(?<=_t)[0-9]+(?=_representative\\.csv)")),
+      model_id = str_extract(fname, "(?<=seismic-profile-).*(?=-t[0-9]+-representative\\.csv)"),
+      timestep = as.numeric(str_extract(fname, "(?<=-t)[0-9]+(?=-representative\\.csv)")),
       depth = depth / 1e3,
       trace_x = trace_x / 1e3,
     )
 }
 
 read_suite_profiles <- function(data_dir, suite_label) {
-  files <- list.files(data_dir, pattern = "seismic_profile_.*_t[0-9]+_representative\\.csv", full.names = TRUE)
+  files <- list.files(data_dir, pattern = "seismic-profile-.*-t[0-9]+-representative\\.csv", full.names = TRUE)
   if (!length(files)) {
     log_error(paste("no representative seismic profiles in:", data_dir))
     return(NULL)
@@ -40,7 +40,7 @@ read_suite_profiles <- function(data_dir, suite_label) {
 }
 
 read_init_profile <- function(data_dir) {
-  files <- list.files(data_dir, pattern = "seismic_profile_.*DynpOn_DampNone.*_t0_representative\\.csv", full.names = TRUE)
+  files <- list.files(data_dir, pattern = "seismic-profile-.*DynpOn_DampNone.*-t0-representative\\.csv", full.names = TRUE)
   if (!length(files)) {
     return(NULL)
   }

@@ -109,7 +109,7 @@ def main():
         damp_pat = "Bimpl1e21" if suite == "box" else "Bimpl1e19"
         panel_history(ax[1], df, damp_pat)
         fig.tight_layout()
-        out = figdir / f"bulk_damping_check_{suite}.png"
+        out = figdir / f"bulk-damping-check-{suite}.png"
         fig.savefig(out, dpi=300)
         plt.close(fig)
         print(f"wrote -> {out}")

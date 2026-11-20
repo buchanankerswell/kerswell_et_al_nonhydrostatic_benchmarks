@@ -131,7 +131,7 @@ def main():
             logx=True,
         )
     fig.tight_layout()
-    fig.savefig(outdir / "mesh_sensitivity.png", dpi=300)
+    fig.savefig(outdir / "mesh-sensitivity.png", dpi=300)
     plt.close(fig)
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 5), sharey=False)
@@ -142,7 +142,7 @@ def main():
         labs = [uid_label(r["run"]) + (" (no feedback)" if str(r["dynp"]) == "0" else "") for r in sel]
         panel(ax[i], xs, ys, labs, "Time Step (CFL Number)", "Largest $\\hat{P}$ Range (MPa)")
     fig.tight_layout()
-    fig.savefig(outdir / "step_sensitivity.png", dpi=300)
+    fig.savefig(outdir / "step-sensitivity.png", dpi=300)
     plt.close(fig)
 
     if offsets:
@@ -154,7 +154,7 @@ def main():
             labs = [uid_label(r["run"]) for r in sel]
             panel(ax[i], xs, ys, labs, "Time Step (CFL Number)", "Boundary Offset From Control (km)")
         fig.tight_layout()
-        fig.savefig(outdir / "step_boundary_error.png", dpi=300)
+        fig.savefig(outdir / "step-boundary-error.png", dpi=300)
         plt.close(fig)
     print("plots -> " + str(outdir))
 

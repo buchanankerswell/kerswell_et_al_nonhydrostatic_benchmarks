@@ -327,7 +327,7 @@ class PostProcessingPipeline(BasePipeline):
         for model_id, timesteps in seismic_profile_cache.items():
             for tstep, suffix_dict in timesteps.items():
                 for suffix, fields_dict in suffix_dict.items():
-                    csv_path = out_dir / f"seismic_profile_{model_id}_t{tstep}_{suffix}.csv"
+                    csv_path = out_dir / f"seismic-profile-{model_id}-t{tstep}-{suffix}.csv"
 
                     if all(f in fields_dict for f in export_fields):
                         raw_z = fields_dict[target_fields[0]]["depths"]
