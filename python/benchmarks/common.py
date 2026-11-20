@@ -1,4 +1,8 @@
-"""Shared UID labels and run-data loaders for the benchmark figure scripts."""
+"""Shared run-data loaders for the benchmark figure scripts.
+
+Figure style, colors, and labels live in simulation/mesh/config.py (single
+source of truth); this module only parses UIDs and reads per-run outputs.
+"""
 
 import csv
 import os
@@ -8,72 +12,9 @@ from pathlib import Path
 
 import numpy as np
 
+from simulation.mesh.config import DAMP_RE
+
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
-
-BENCH_FACECOLOR = "0.92"
-BENCH_DPI = 300
-
-# Standard benchmark colors, mirroring R damp_pal in R/utils/seismic.R:
-# one color per damping kind+value, shared by every benchmark plot.
-DAMP_COLORS = {
-    "None": "#000000",
-    "Bimpl1e21": "#E41A1C",
-    "Bimpl1e19": "#EF3B2C",
-    "Bimpl1e20": "#A50F15",
-    "Bexpl1e20": "#377EB8",
-    "Bexpl1e19": "#74ADD1",
-    "Rel3.156e12": "#4DAF4A",
-    "Rel3.156e10": "#A6D96A",
-    "Rel3.156e11": "#1B7837",
-    "Cap1e7": "#984EA3",
-    "Cap2e8": "#C51B7D",
-}
-
-
-def damp_key(run):
-    """Damping kind+value token from a UID (None, Bimpl1e21, ...)."""
-    m = DAMP_RE.search(run)
-    return (m.group(1) + m.group(2)) if m else "None"
-
-
-def bench_color(run):
-    """Standard line color for a run: one color per damping kind+value."""
-    return DAMP_COLORS.get(damp_key(run), "#333333")
-
-
-def bench_label(run):
-    """Standard legend label for a run: damping + res + CFL/no-feedback tags."""
-    parts = [damp_key(run)]
-    mr = re.search(r"_Res(\d+)", run)
-    if mr:
-        parts.append(f"Res{mr.group(1)}")
-    mc = re.search(r"_CFL([\d.]+)", run)
-    if mc:
-        parts.append(f"CFL{mc.group(1)}")
-    if "_DynpOff_" in run:
-        parts.append("(no feedback)")
-    return " ".join(parts)
-
-
-def apply_bench_style():
-    """Match R theme_bench: grey92 panels, no grid, tick marks off, dpi 300."""
-    import matplotlib as mpl
-
-    mpl.rcParams.update(
-        {
-            "figure.dpi": BENCH_DPI,
-            "savefig.dpi": BENCH_DPI,
-            "savefig.bbox": "tight",
-            "axes.facecolor": BENCH_FACECOLOR,
-            "figure.facecolor": "white",
-            "axes.grid": False,
-            "xtick.direction": "out",
-            "ytick.direction": "out",
-            "legend.frameon": False,
-            "legend.fontsize": 11,
-            "font.size": 14,
-        }
-    )
 
 
 def parse_uid_columns(run):
@@ -90,25 +31,6 @@ def parse_uid_columns(run):
     cfl_match = re.search(r"_CFL([\d.]+)", run)
     cfl = float(cfl_match.group(1)) if cfl_match else None
     return {"suite": suite, "damp": damp, "dynp": dynp, "res": res, "z": z, "cfl": cfl}
-
-
-DAMP_RE = re.compile(r"_Damp([A-Za-z]+)([\d.e+-]*)")
-UID_DAMP_RE = re.compile(r"_Damp[A-Za-z]+[\d.e+-]*")
-
-
-def uid_label(run):
-    """Compact label from a UID: damping + dynp state + res + Z tag + CFL tag."""
-    m = DAMP_RE.search(run)
-    damp = (m.group(1) + m.group(2)) if m else run
-    mo = re.search(r"_Dynp(On|Off)_", run)
-    dyn = f" {mo.group(1)}" if mo else ""
-    mr = re.search(r"_Res(\d+)", run)
-    res = f"r{mr.group(1)}" if mr else ""
-    mz = re.search(r"_Z([\d.e+-]+)", run)
-    z = f" Z{mz.group(1)}" if mz else ""
-    mc = re.search(r"_CFL([\d.]+)", run)
-    cfl = f" CFL{mc.group(1)}" if mc else ""
-    return f"{damp}{dyn} [{res}{z}{cfl}]".replace("[ ", "[")
 
 
 def load_vtu_series(run):

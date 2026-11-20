@@ -26,7 +26,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from common import UID_DAMP_RE, apply_bench_style, bench_color, bench_label, load_point_series, load_stats_series, load_vtu_series, parse_uid_columns
+from common import load_point_series, load_stats_series, load_vtu_series, parse_uid_columns
+from simulation.mesh.config import UID_DAMP_RE, apply_bench_style, bench_color, bench_label
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 

@@ -20,7 +20,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from common import apply_bench_style, bench_color, bench_label
+from simulation.mesh.config import apply_bench_style, bench_color, bench_label
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
