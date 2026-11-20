@@ -172,10 +172,12 @@ DEPTH_CORRECTION_OL_WD := 5e+03
 TRANSITION_Y_OL_WD := 6.408e+05
 
 # Model depth (m) where ASPECT pressure equals the profile equilibrium
-# (14.324 GPa). Placeholders until the new runs land: sink should come out
-# near 383 km, box still needs its no-feedback control run.
-NOMINAL_410_BOX     := 373100
-NOMINAL_410_SINK400 := 362700
+# (14.324 GPa). Re-derived under g = 9.81 as dG = 0 on the Barkla2
+# no-feedback twins (static across all 21 outputs): B2 at 379943 m,
+# S2 at 379957 m. Ambient reference removes the block load, so both
+# suites share the same ~380 km adiabat; the 14 m split is mesh noise.
+NOMINAL_410_BOX     := 379943
+NOMINAL_410_SINK400 := 379957
 # Profile-reference 410 in true depth (profile dG = 0 at 422554 m).
 PROFILE_REF_410_M := 422600
 
