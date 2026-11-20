@@ -216,7 +216,7 @@ class PostProcessingPipeline(BasePipeline):
                     continue
 
                 for field_name in self.config.file_map:
-                    self.preprocessor.prepare_mesh(mesh, field_name)
+                    self.preprocessor.prepare_mesh(mesh, field_name, model_id)
 
                 entry = {"time": self.preprocessor.get_mesh_time_myr(mesh, model_id, tstep)}
 
@@ -653,7 +653,7 @@ class PlottingPipeline(BasePipeline):
                 cached_data = self.cache.get(model_id, {}).get(tstep, {})
 
                 for field_name, out_path in needed_fields:
-                    self.preprocessor.prepare_mesh(mesh, field_name)
+                    self.preprocessor.prepare_mesh(mesh, field_name, model_id)
                     if not self.preprocessor.check_mesh(mesh, field_name):
                         continue
 

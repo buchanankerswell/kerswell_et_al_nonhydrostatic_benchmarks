@@ -50,7 +50,7 @@ SETS = {
     ],
 }
 
-PANEL_W, DOMAIN_W_KM = 1500, 1000.0
+PANEL_W = 1500
 
 
 def transform(values, mode):
@@ -120,13 +120,14 @@ def band_clim(steps_data, field, scale, mode, yc, half):
     return (-m, m)
 
 
-def render_band_panel(data, field, cmap, scale, mode, clim, yc, half):
+def render_band_panel(data, field, cmap, scale, mode, clim, yc, half, cx, domain_w_m):
     mesh = data["mesh"].copy()
     mesh.point_data["__band"] = transform(data[field] * scale, mode)
-    pl = pv.Plotter(off_screen=True, window_size=[PANEL_W, int(PANEL_W * 2 * half / 1e6 / (DOMAIN_W_KM))], lighting="none")
+    height_px = int(PANEL_W * 2 * half / 1e6 / (domain_w_m / 1e3))
+    pl = pv.Plotter(off_screen=True, window_size=[PANEL_W, height_px], lighting="none")
     pl.background_color = "#FFFFFF"
     pl.add_mesh(mesh, scalars="__band", cmap=cmap, clim=clim, show_scalar_bar=False, show_edges=False, lighting=False)
-    pl.camera_position = [(500e3, yc, 1e6), (500e3, yc, 0.0), (0.0, 1.0, 0.0)]
+    pl.camera_position = [(cx, yc, 1e6), (cx, yc, 0.0), (0.0, 1.0, 0.0)]
     pl.enable_parallel_projection()
     pl.camera.parallel_scale = half
     img = pl.screenshot(return_img=True)
@@ -144,12 +145,12 @@ def block_bbox(data):
     return (pts[:, 0].min(), pts[:, 0].max(), pts[:, 1].min(), pts[:, 1].max())
 
 
-def draw_context(ax, bbox, nominal_y, yc, half):
-    ax.set_xlim(0, 1e6)
+def draw_context(ax, bbox, nominal_y, yc, half, x0, x1):
+    ax.set_xlim(x0, x1)
     ax.set_ylim(0, 1e6)
     ax.set_aspect("equal")
-    ax.add_patch(patches.Rectangle((0, 0), 1e6, 1e6, facecolor="#E5E5E5", edgecolor="black"))
-    ax.add_patch(patches.Rectangle((0, yc - half), 1e6, 2 * half, facecolor="#BFBFBF", edgecolor="black", linewidth=1.0))
+    ax.add_patch(patches.Rectangle((x0, 0), x1 - x0, 1e6, facecolor="#E5E5E5", edgecolor="black"))
+    ax.add_patch(patches.Rectangle((x0, yc - half), x1 - x0, 2 * half, facecolor="#BFBFBF", edgecolor="black", linewidth=1.0))
     ax.axhline(nominal_y, color="black", linewidth=2.5)
     if bbox is not None:
         x0, x1, y0, y1 = bbox
@@ -178,13 +179,19 @@ def main():
     times = [step_time_myr(args.model, s) for s in args.steps]
     clims = {f[0]: band_clim(steps_data, f[0], f[2], f[4], yc, half) for f in fields}
 
+    # Domain extent from the mesh itself, so narrow (box) and square (sink)
+    # setups are framed correctly instead of assuming a fixed width.
+    xs = steps_data[0]["points"][:, 0]
+    x0, x1 = float(xs.min()), float(xs.max())
+    cx, domain_w_m = (x0 + x1) / 2.0, max(x1 - x0, 1e3)
+
     fig = plt.figure(figsize=(16, 9))
     gs = fig.add_gridspec(5, 4, height_ratios=[1, 1, 1, 1, 0.12], hspace=0.03, wspace=0.05)
 
     for i, (data, t) in enumerate(zip(steps_data, times)):
         for j, (field, cmap, scale, label, mode) in enumerate(fields):
             ax = fig.add_subplot(gs[i, j])
-            img = render_band_panel(data, field, cmap, scale, mode, clims[field], yc, half)
+            img = render_band_panel(data, field, cmap, scale, mode, clims[field], yc, half, cx, domain_w_m)
             ax.imshow(img, aspect="auto")
             ax.set_xticks([])
             ax.set_yticks([])
@@ -193,7 +200,7 @@ def main():
             if i == 0:
                 ax.set_title(label, fontsize=12)
         axc = fig.add_subplot(gs[i, 3])
-        draw_context(axc, block_bbox(data), nominal_y, yc, half)
+        draw_context(axc, block_bbox(data), nominal_y, yc, half, x0, x1)
         if i == 0:
             axc.set_title("block position", fontsize=12)
 

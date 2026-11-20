@@ -152,13 +152,16 @@ def plot_rms_suite(runs, title, out_path, control, reference=None):
     plt.close(fig)
 
 
-def plot_probe_suite(runs, title, out_path, control, reference=None, field="relaxed_pressure"):
+def plot_probe_suite(runs, title, out_path, control, reference=None, field="pressure"):
     fig, ax = plt.subplots(figsize=(8, 5))
     plotted = 0
     for run in runs:
         probe = load_probe_series(run, 0, field)
         if probe is None:
             continue
+        # Absolute probe pressure is dominated by the hydrostatic background
+        # (~14 GPa); subtract the initial value so the wave is visible.
+        values = probe["values"] - probe["values"][0]
         plotted += 1
         if run == control:
             kw = dict(lw=2.5)
@@ -166,12 +169,12 @@ def plot_probe_suite(runs, title, out_path, control, reference=None, field="rela
             kw = dict(lw=1.5, ls="--", color="grey")
         else:
             kw = dict(lw=1.2, alpha=0.85)
-        ax.plot(probe["time_myr"], probe["values"], label=uid_label(run), **kw)
+        ax.plot(probe["time_myr"], values, label=uid_label(run), **kw)
     if plotted == 0:
         print(f"skip {out_path.name}: no point_values.txt found", file=sys.stderr)
         plt.close(fig)
         return
-    ax.set_ylabel(f"probe {field} [MPa]")
+    ax.set_ylabel(f"probe {field} change [MPa]")
     ax.set_xlabel("time [Myr]")
     ax.legend(fontsize=11, loc="upper right", frameon=False)
     fig.suptitle(title)
