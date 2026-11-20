@@ -49,7 +49,7 @@ def draw_domain(suite, width, height, trans_y, trace_x, nominal, probes, out):
 
     trans_depth = (height - trans_y) / 1e3
     ax.axhline(trans_y, color="black", ls="--", lw=1.5)
-    ax.text(width * 1.02, trans_y, f"init xi step {trans_depth:.0f} km", va="center", fontsize=10)
+    ax.text(width * 1.02, trans_y, f"initial $\\xi$ step {trans_depth:.0f} km", va="center", fontsize=10)
 
     if nominal is not None:
         nom_y = height - nominal

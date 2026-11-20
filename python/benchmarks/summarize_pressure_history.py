@@ -11,7 +11,7 @@ Usage (repo root):
   PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
     python/benchmarks/summarize_pressure_history.py --runs <uid ...> \\
       --plot-box <uid ...> --plot-sink <uid ...> \\
-      --out-csv simulation/results/pressure_history_summary.csv --fig-dir figs/benchmarks
+      --out-csv simulation/results/pressure-history-summary.csv --fig-dir figs/benchmarks
 """
 
 import argparse
@@ -111,8 +111,8 @@ def plot_suite(runs, out_path, control, reference=None):
             kw = dict(lw=1.2, alpha=0.85)
         ax[0].plot(s["t"], s["pmax"] - s["pmin"], label=uid_label(run), **kw)
         ax[1].plot(s["t"], s["pmin"], label=uid_label(run), **kw)
-    ax[0].set_ylabel("Dynamic Pressure Range (MPa)")
-    ax[1].set_ylabel("Lowest Dynamic Pressure (MPa)")
+    ax[0].set_ylabel("$\\hat{P}$ Range (MPa)")
+    ax[1].set_ylabel("Minimum $\\hat{P}$ (MPa)")
     ax[1].set_xlabel("Time (Myr)")
     ax[0].legend(fontsize=11, loc="upper right", frameon=False)
     fig.tight_layout()
@@ -141,7 +141,7 @@ def plot_mean_flow_suite(runs, out_path, control, reference=None):
         plt.close(fig)
         return
     ax.set_yscale("log")
-    ax.set_ylabel("Average Flow Speed (m/yr)")
+    ax.set_ylabel("$u_\\mathrm{rms}$ (m/yr)")
     ax.set_xlabel("Time (Myr)")
     ax.legend(fontsize=11, loc="upper right", frameon=False)
     fig.tight_layout()
@@ -172,7 +172,7 @@ def plot_point_suite(runs, out_path, control, reference=None, field="pressure"):
         print(f"skip {out_path.name}: no point_values.txt found", file=sys.stderr)
         plt.close(fig)
         return
-    ax.set_ylabel("Point Pressure Change (MPa)")
+    ax.set_ylabel("Point $\\Delta P$ (MPa)")
     ax.set_xlabel("Time (Myr)")
     ax.legend(fontsize=11, loc="upper right", frameon=False)
     fig.tight_layout()
@@ -190,7 +190,7 @@ def main():
     ap.add_argument("--runs", nargs="*", default=None, help="UIDs to include in the CSV (default: discover NH_* runs)")
     ap.add_argument("--plot-box", nargs="*", default=None)
     ap.add_argument("--plot-sink", nargs="*", default=None)
-    ap.add_argument("--out-csv", default="simulation/results/pressure_history_summary.csv")
+    ap.add_argument("--out-csv", default="simulation/results/pressure-history-summary.csv")
     ap.add_argument("--fig-dir", default="figs/benchmarks")
     args = ap.parse_args()
 
@@ -229,15 +229,15 @@ def main():
     sink_paper = args.plot_sink if args.plot_sink is not None else paper_set(sink, 6)
     und = next((r for r in box_paper if "_DynpOn_DampNone_" in r), None)
     nod = next((r for r in box_paper if "_DynpOff_DampNone_" in r), None)
-    plot_suite(box_paper, figdir / "pressure_history_box.png", und, reference=nod)
+    plot_suite(box_paper, figdir / "pressure-history-box.png", und, reference=nod)
     und = next((r for r in sink_paper if "_DynpOn_DampNone_" in r), None)
     nod = next((r for r in sink_paper if "_DynpOff_DampNone_" in r), None)
-    plot_suite(sink_paper, figdir / "pressure_history_sink.png", und, reference=nod)
+    plot_suite(sink_paper, figdir / "pressure-history-sink.png", und, reference=nod)
     for runs, tag in ((box_paper, "box"), (sink_paper, "sink")):
         und = next((r for r in runs if "_DynpOn_DampNone_" in r), None)
         nod = next((r for r in runs if "_DynpOff_DampNone_" in r), None)
-        plot_mean_flow_suite(runs, figdir / f"mean_flow_speed_{tag}.png", und, reference=nod)
-        plot_point_suite(runs, figdir / f"point_pressure_{tag}.png", und, reference=nod)
+        plot_mean_flow_suite(runs, figdir / f"mean-flow-speed-{tag}.png", und, reference=nod)
+        plot_point_suite(runs, figdir / f"point-pressure-{tag}.png", und, reference=nod)
     print(f"plots -> {figdir}/")
 
 

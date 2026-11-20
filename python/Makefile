@@ -20,7 +20,7 @@ CLEAN := $(PYTHON)/**/__pycache__ \
 	 $(DATA_MESH_BOX_SUITE) \
 	 $(DATA_MESH_SINK_SUITE) \
 	 $(POSTPROCESSED_CSV) \
-	 $(SIMULATION)/results/pressure_history_summary.csv
+	 $(SIMULATION)/results/pressure-history-summary.csv
 
 .PHONY: all visualize sync-barkla postprocess timeseries pressure-history diagnostics scaling setup adiabat meshes meshes-box-suite meshes-sink-suite clean help
 
@@ -64,16 +64,16 @@ pressure-history: timeseries
 	  --runs $(UIDS_BOX_SUITE) $(UIDS_SINK_SUITE) \
 	  --plot-box $(PLOT_BOX_RUNS) \
 	  --plot-sink $(PLOT_SINK_RUNS) \
-	  --out-csv $(SIMULATION)/results/pressure_history_summary.csv \
+	  --out-csv $(SIMULATION)/results/pressure-history-summary.csv \
 	  --fig-dir $(FIGS)/benchmarks
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_profiles.py \
 	  --runs $(PLOT_BOX_RUNS) --suite-tag box --profile $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
 	  --model-height $(MODEL_HEIGHT_BOX) --surface-pressure $(SURFACE_PRESSURE) \
-	  --nominal-km $(shell echo $(NOMINAL_410_BOX) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/depth_profiles_box.png
+	  --nominal-km $(shell echo $(NOMINAL_410_BOX) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/depth-profiles-box.png
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_profiles.py \
 	  --runs $(PLOT_SINK_RUNS) --suite-tag sink --profile $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
 	  --model-height $(MODEL_HEIGHT_SINK) --surface-pressure $(SURFACE_PRESSURE) \
-	  --nominal-km $(shell echo $(NOMINAL_410_SINK400) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/depth_profiles_sink.png
+	  --nominal-km $(shell echo $(NOMINAL_410_SINK400) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/depth-profiles-sink.png
 	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
 diagnostics: postprocess
@@ -82,7 +82,7 @@ diagnostics: postprocess
 
 scaling: pressure-history postprocess
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_mesh_step_sensitivity.py \
-	  --summary $(SIMULATION)/results/pressure_history_summary.csv \
+	  --summary $(SIMULATION)/results/pressure-history-summary.csv \
 	  --postprocessed $(POSTPROCESSED_CSV) \
 	  --out-dir $(FIGS)/benchmarks \
 	  --z-mid $(Z_MID) --cfl-box $(CFL_BOX) --cfl-sink $(CFL_SINK)

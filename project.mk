@@ -68,7 +68,7 @@ DATA_MESH_BOX_SUITE  := $(addprefix $(ASPECT_RESULTS)/,structure-summary-box.csv
 DATA_MESH_SINK_SUITE := $(addprefix $(ASPECT_RESULTS)/,structure-summary-sink.csv structure-cache-sink.pkl seismic-profile-cache-sink.pkl seismic_profiles_sink)
 
 # Box main runs: every damping type at Z_MID Res5. DynpOff+DampNone is the
-# reference with no feedback; DynpOn+DampNone the wave run with no damping.
+# reference with no feedback; DynpOn+DampNone the run with no damping.
 ID_B1 := NH_Box_DynpOn_DampNone_Z4.44e-04_Res5
 ID_B2 := NH_Box_DynpOff_DampNone_Z4.44e-04_Res5
 ID_B3 := NH_Box_DynpOn_DampBimpl1e21_Z4.44e-04_Res5
@@ -123,7 +123,7 @@ VIZ_OUT_BOX_SUITE  := 5e+05
 VIZ_OUT_SINK_SUITE := 2.5e+05
 
 # End times per suite (s, model time; UIDs carry no End token). Long enough
-# to cover wave onset, saturation, and (sink) block bottoming.
+# to cover pressure-rise onset, saturation, and (sink) block bottoming.
 END_BOX  := 1e7
 END_SINK := 5e6
 

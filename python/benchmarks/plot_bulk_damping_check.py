@@ -62,7 +62,7 @@ def panel_rate_vs_res(ax, df):
         ax.plot(grp["res"], grp["rate"], label=f"{damp} Z{z}", **kw)
     ax.set_yscale("log")
     ax.set_xlabel("Mesh Refinement Level")
-    ax.set_ylabel("Final Highest Reaction Rate (1/s)")
+    ax.set_ylabel("Final Highest $\\dot{X}$ (1/s)")
     ax.legend(fontsize=11, loc="upper right", frameon=False)
 
 
@@ -79,7 +79,7 @@ def panel_history(ax, df, damp_pat="Bimpl1e21"):
         ax.plot(grp["timestep"], grp["rate"], label=tag, lw=1.5)
     ax.set_yscale("log")
     ax.set_xlabel("Output Step")
-    ax.set_ylabel("Highest Reaction Rate (1/s)")
+    ax.set_ylabel("Highest $\\dot{X}$ (1/s)")
     ax.legend(fontsize=11, loc="upper right", frameon=False)
 
 

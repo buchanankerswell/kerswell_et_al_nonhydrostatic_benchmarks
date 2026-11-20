@@ -8,7 +8,7 @@ instead of a line.
 
 Usage (repo root):
   PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python
-    python/benchmarks/plot_mesh_step_sensitivity.py --summary simulation/results/pressure_history_summary.csv
+    python/benchmarks/plot_mesh_step_sensitivity.py --summary simulation/results/pressure-history-summary.csv
     --postprocessed simulation/results/postprocessed.csv --out-dir figs/benchmarks
     --z-mid 4.44e-04 --cfl-box 0.7 --cfl-sink 0.5
 """
@@ -83,7 +83,7 @@ def panel(ax, xs, ys, labels, xlabel, ylabel, logx=False):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--summary", default=str(RESULTS / "pressure_history_summary.csv"))
+    ap.add_argument("--summary", default=str(RESULTS / "pressure-history-summary.csv"))
     ap.add_argument("--postprocessed", default=str(RESULTS / "postprocessed.csv"))
     ap.add_argument("--out-dir", default="figs/benchmarks")
     ap.add_argument("--z-mid", default="4.44e-04")
@@ -127,7 +127,7 @@ def main():
             [v[1] for v in by_damp.values()],
             [uid_label(v[2][0]) for v in by_damp.values()],
             "Mesh Refinement Level",
-            "Largest Pressure Range (MPa)",
+            "Largest $\\hat{P}$ Range (MPa)",
             logx=True,
         )
     fig.tight_layout()
@@ -140,7 +140,7 @@ def main():
         xs = [[float(r["cfl"])] for r in sel]
         ys = [[float(r["largest_range_MPa"])] for r in sel]
         labs = [uid_label(r["run"]) + (" (no feedback)" if str(r["dynp"]) == "0" else "") for r in sel]
-        panel(ax[i], xs, ys, labs, "Time Step (CFL Number)", "Largest Pressure Range (MPa)")
+        panel(ax[i], xs, ys, labs, "Time Step (CFL Number)", "Largest $\\hat{P}$ Range (MPa)")
     fig.tight_layout()
     fig.savefig(outdir / "step_sensitivity.png", dpi=300)
     plt.close(fig)

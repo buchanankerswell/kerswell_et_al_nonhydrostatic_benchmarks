@@ -9,7 +9,7 @@ Usage (repo root):
   PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
     python/benchmarks/plot_depth_profiles.py --runs <uid ...> \\
       --suite-tag box --profile simulation/data/olivine-wadsleyite-profile-Mg100.tsv \\
-      --out figs/benchmarks/depth_profiles_box.png
+      --out figs/benchmarks/depth-profiles-box.png
 """
 
 import argparse
@@ -118,11 +118,11 @@ def main():
         a.axhline(nominal, color="grey", lw=1.5, ls="--")
         a.invert_yaxis()
         a.set_ylim(500, 250)
-    ax[0].set_xlabel("Transformed Fraction (-)")
+    ax[0].set_xlabel("$\\xi$ (-)")
     ax[0].set_xlim(-0.05, 1.05)
-    ax[1].set_xlabel("Driving Energy (kJ/mol)")
-    ax[2].set_xlabel("Reaction Rate (1/Ma)")
-    ax[3].set_xlabel("Dynamic Pressure (GPa)")
+    ax[1].set_xlabel("$dG$ (kJ/mol)")
+    ax[2].set_xlabel("$\\dot{X}$ (1/Ma)")
+    ax[3].set_xlabel("$\\hat{P}$ (GPa)")
     ax[0].set_ylabel("Depth (km)")
     ax[0].legend(fontsize=10, loc="lower left", frameon=False)
     fig.tight_layout()

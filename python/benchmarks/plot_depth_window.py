@@ -40,14 +40,14 @@ RESULTS = os.path.join(os.environ.get("PROJECT_ROOT", "."), "simulation/results"
 
 SETS = {
     "set0": [
-        ("nonadiabatic_pressure", "PuOr_r", 1e-6, "Dynamic Pressure (MPa)", "sym"),
-        ("nonadiabatic_density", "BrBG", 1e-3, "Density Change (g/cm3)", "sym"),
-        ("velocity_vertical", "PiYG", 1e2, "Vertical Flow (cm/yr)", "sym"),
+        ("nonadiabatic_pressure", "PuOr_r", 1e-6, "$\\hat{P}$ (MPa)", "sym"),
+        ("nonadiabatic_density", "BrBG", 1e-3, "$\\hat{\\rho}$ (g/cm$^3$)", "sym"),
+        ("velocity_vertical", "PiYG", 1e2, "$\\vec{u}_y$ (cm/yr)", "sym"),
     ],
     "set1": [
-        ("dG_driving_0", "PuOr_r", 1e-3, "Driving Energy (kJ/mol)", "sym"),
-        ("reaction_rate_C0", "RdGy_r", 3.154e13, "Reaction Rate (1/Ma)", "signedlog"),
-        ("xi_ol_wd", "GnBu", 1.0, "Transformed Fraction (-)", "fixed01"),
+        ("dG_driving_0", "PuOr_r", 1e-3, "$dG$ (kJ/mol)", "sym"),
+        ("reaction_rate_C0", "RdGy_r", 3.154e13, "$\\dot{X}$ (1/Ma)", "signedlog"),
+        ("xi_ol_wd", "GnBu", 1.0, "$\\xi$ (-)", "fixed01"),
     ],
 }
 
