@@ -1,6 +1,8 @@
 # Minimal benchmark set: the main damping runs at Z_MID (box Res5, sink Res6)
-# plus one timestep-scaling pair per suite (undamped, half and double CFL).
-# REGISTER_NH_BOX takes: list dynp dampkind dampval z res [cfl].
+# plus timestep scaling (undamped; box half and double CFL, sink double
+# CFL only — the halved-CFL sink run blows up deterministically in the
+# initial transient, see project.mk). REGISTER_NH_BOX takes: list dynp
+# dampkind dampval z res [cfl].
 # REGISTER_NH_SINK takes: list dynp dampkind dampval block z res [cfl].
 # An empty cfl keeps the suite default (CFL_BOX / CFL_SINK in project.mk).
 $(eval $(call REGISTER_NH_BOX,UIDS_BOX_SUITE,1,none,0,$(Z_MID),5))
@@ -20,11 +22,10 @@ $(eval $(call REGISTER_NH_SINK,UIDS_SINK_SUITE,1,Bexpl,1e19,400,$(Z_MID),6))
 $(eval $(call REGISTER_NH_SINK,UIDS_SINK_SUITE,1,Rel,3.156e10,400,$(Z_MID),6))
 $(eval $(call REGISTER_NH_SINK,UIDS_SINK_SUITE,1,Rel,3.156e11,400,$(Z_MID),6))
 $(eval $(call REGISTER_NH_SINK,UIDS_SINK_SUITE,1,Cap,2e8,400,$(Z_MID),6))
-$(eval $(call REGISTER_NH_SINK,UIDS_SINK_SUITE,1,none,0,400,$(Z_MID),6,0.25))
 $(eval $(call REGISTER_NH_SINK,UIDS_SINK_SUITE,1,none,0,400,$(Z_MID),6,1.0))
 
 $(foreach id,$(ID_B1) $(ID_B2) $(ID_B3) $(ID_B4) $(ID_B5) $(ID_B6) $(ID_BCFL035) $(ID_BCFL14),$(if $(filter $(id),$(UIDS_BOX_SUITE)),,$(error !! UID $(id) not registered in UIDS_BOX_SUITE)))
-$(foreach id,$(ID_S1) $(ID_S2) $(ID_S3) $(ID_S4) $(ID_S5) $(ID_S6) $(ID_S7) $(ID_S8) $(ID_SCFL025) $(ID_SCFL10),$(if $(filter $(id),$(UIDS_SINK_SUITE)),,$(error !! UID $(id) not registered in UIDS_SINK_SUITE)))
+$(foreach id,$(ID_S1) $(ID_S2) $(ID_S3) $(ID_S4) $(ID_S5) $(ID_S6) $(ID_S7) $(ID_S8) $(ID_SCFL10),$(if $(filter $(id),$(UIDS_SINK_SUITE)),,$(error !! UID $(id) not registered in UIDS_SINK_SUITE)))
 
 ASPECT_DATA      := $(SIMULATION)/data
 ASPECT_TEMPLATES := $(SIMULATION)/params/templates

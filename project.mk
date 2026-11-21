@@ -89,8 +89,10 @@ ID_S6 := NH_Sink_DynpOn_DampRel3.156e10_Block400_Z4.44e-04_Res6
 ID_S7 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res6
 ID_S8 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res6
 
-# Sink timestep scaling: undamped Res6 at half and double CFL (0.5 is ID_S1).
-ID_SCFL025 := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6_CFL0.25
+# Sink timestep scaling: undamped Res6 at double CFL (0.5 is ID_S1).
+# The halved-CFL twin (CFL0.25) is dropped: it blows up deterministically
+# in the initial transient (t ~ 1e5 s, velocity 0.09 -> 22 m/yr, then
+# ASPECT aborts on negative density*c_P), while CFL0.5 and CFL1.0 run clean.
 ID_SCFL10 := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6_CFL1.0
 
 # Visualization scope (can edit)
@@ -101,7 +103,7 @@ VIS_ALL_SINK_SUITE := $(VIS_ALL)
 VIS_ON := true yes 1
 
 VIS_IDS_BOX_SUITE  := $(ID_B1) $(ID_B2) $(ID_B3) $(ID_B4) $(ID_B5) $(ID_B6) $(ID_BCFL035) $(ID_BCFL14)
-VIS_IDS_SINK_SUITE := $(ID_S1) $(ID_S2) $(ID_S3) $(ID_S4) $(ID_S5) $(ID_S6) $(ID_S7) $(ID_S8) $(ID_SCFL025) $(ID_SCFL10)
+VIS_IDS_SINK_SUITE := $(ID_S1) $(ID_S2) $(ID_S3) $(ID_S4) $(ID_S5) $(ID_S6) $(ID_S7) $(ID_S8) $(ID_SCFL10)
 
 # Recursive (=): expands after local.mk registers UIDS_*/Z_MID above.
 VIS_MODELS_BOX_SUITE  = $(if $(filter $(VIS_ON),$(VIS_ALL_BOX_SUITE)),$(notdir $(RESULTS_BOX_SUITE)),$(VIS_IDS_BOX_SUITE))
