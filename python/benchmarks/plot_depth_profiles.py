@@ -24,7 +24,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from simulation.mesh.config import S_PER_MA, apply_bench_style, bench_color, bench_label
+from simulation.mesh.config import S_PER_MYR, apply_bench_style, bench_color, bench_label
 from simulation.params.transitions import (
     find_surface_depth_offset,
     find_transition,
@@ -105,7 +105,7 @@ def main():
         kw = dict(lw=2.2, alpha=0.9, label=bench_label(run), color=bench_color(run))
         ax[0].plot(xi, tx, **kw)
         ax[1].plot(dg / 1e3, model_to_true_km(zd, datum, suite), **kw)
-        ax[2].plot(rate * S_PER_MA, tr, **kw)
+        ax[2].plot(rate * S_PER_MYR, tr, **kw)
         pmod = np.interp(zx, zp, p)
         pad = np.interp(zx, za, pa) / 1e9
         ax[3].plot(pmod - pad, tx, **kw)
@@ -118,7 +118,7 @@ def main():
     ax[0].set_xlabel("$\\xi$")
     ax[0].set_xlim(-0.05, 1.05)
     ax[1].set_xlabel("$dG$ (kJ/mol)")
-    ax[2].set_xlabel("$\\dot{X}$ (1/Ma)")
+    ax[2].set_xlabel("$\\dot{X}$ (1/Myr)")
     ax[3].set_xlabel("$\\hat{P}$ (GPa)")
     ax[0].set_ylabel("Depth (km)")
     handles, labels = ax[0].get_legend_handles_labels()

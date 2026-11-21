@@ -130,11 +130,11 @@ def main():
                     "z": m.group("z"),
                     "disp410_km": disp410 / 1e3,
                     "width410_km": abs(float(r["width_410"])) / 1e3,
-                    "rate410": float(r[rate_col]),
-                    "vmax410": float(r[vmax_col]),
+                    "rate410_per_s": float(r[rate_col]),
+                    "vmax410_m_per_s": float(r[vmax_col]),
                     "kin410_km": (disp410 - therm410) / 1e3,
                     "therm410_km": therm410 / 1e3,
-                    "hatT410": hatT410,
+                    "hatT410_K": hatT410,
                 }
             )
 

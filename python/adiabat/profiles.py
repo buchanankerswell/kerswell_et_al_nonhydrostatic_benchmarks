@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 # Constants
 EARTH_RADIUS: float = 6370e3  # m
-SURFACE_GRAVITY: float = 9.81  # m/s/s
+SURFACE_GRAVITY: float = 9.81  # m/s^2
 
 
 class LiveIndenter:

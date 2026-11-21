@@ -41,8 +41,8 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
   z_vals <- suppressWarnings(as.numeric(z_levels))
   df <- suppressWarnings(read_csv(postprocessed_csv, show_col_types = FALSE)) |>
     mutate(
-      # File reaction rates are 1/s; figures use geologic 1/Ma.
-      rate410 = rate410 * 3.154e13,
+      # File reaction rates are 1/s; figures use geologic 1/Myr.
+      rate410_per_Myr = rate410_per_s * 3.154e13,
       suite = factor(case_when(
         suite == "box" ~ suite_lab_box,
         suite == "sink" ~ suite_lab_sink,
@@ -91,7 +91,7 @@ visualize_benchmark_structure <- function(df, out_path, force_rewrite = FALSE) {
   ensure_output_dir(out_path)
   p_disp <- structure_strip(df, "disp410_km", "410 Displacement (km)")
   p_width <- structure_strip(df, "width410_km", "410 Width (km)")
-  p_rate <- structure_strip(df, "rate410", expression(Max~dot(X)~"(1/Ma)"))
+  p_rate <- structure_strip(df, "rate410_per_Myr", expression(Max~dot(X)~"(1/Myr)"))
   p_kin <- structure_strip(df, "kin410_km", "Kinetic Contribution (km)", show_legend = TRUE)
   p <- (p_disp | p_width) / (p_rate | p_kin) +
     plot_layout(guides = "collect") &

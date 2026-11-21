@@ -18,8 +18,8 @@ write_postprocessed_summary_table <- function(postprocessed_csv, out_dir, quiet 
 
   formatted <- postprocessed_data |>
     mutate(
-      # File reaction rates are 1/s; the table matches the figures in 1/Ma.
-      rate410 = rate410 * 3.154e13,
+      # File reaction rates are 1/s; the table matches the figures in 1/Myr.
+      rate410_per_Myr = rate410_per_s * 3.154e13,
       suite_abbr = case_when(
         suite == "box" ~ "Box",
         suite == "sink" ~ "Sink",
@@ -35,15 +35,15 @@ write_postprocessed_summary_table <- function(postprocessed_csv, out_dir, quiet 
       Damping = damp,
       `Dynp on` = dynp,
       Res = res,
-      Z = z,
-      `$\\delta z_{410}$` = disp410_km,
-      `$\\delta w_{410}$` = width410_km,
-      `$\\dot{X}_\\mathrm{max}$` = rate410,
-      `$\\delta z_t$` = therm410_km,
-      `$\\delta z_k$` = kin410_km
+      `Z (1/s/K)` = z,
+      `$\\delta z_{410}$ (km)` = disp410_km,
+      `$\\delta w_{410}$ (km)` = width410_km,
+      `$\\dot{X}_\\mathrm{max}$ (1/Myr)` = rate410_per_Myr,
+      `$\\delta z_t$ (km)` = therm410_km,
+      `$\\delta z_k$ (km)` = kin410_km
     ) |>
-    mutate(across(c(`$\\dot{X}_\\mathrm{max}$`), ~ formatC(.x, format = "e", digits = 2))) |>
-    mutate(across(c(`$\\delta z_{410}$`, `$\\delta w_{410}$`, `$\\delta z_t$`, `$\\delta z_k$`), ~ formatC(.x, format = "f", digits = 1)))
+    mutate(across(c(`$\\dot{X}_\\mathrm{max}$ (1/Myr)`), ~ formatC(.x, format = "e", digits = 2))) |>
+    mutate(across(c(`$\\delta z_{410}$ (km)`, `$\\delta w_{410}$ (km)`, `$\\delta z_t$ (km)`, `$\\delta z_k$ (km)`), ~ formatC(.x, format = "f", digits = 1)))
 
   col_align <- c("l", "l", "l", rep("r", ncol(formatted) - 3))
 

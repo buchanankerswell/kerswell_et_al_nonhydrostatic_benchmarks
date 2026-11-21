@@ -22,7 +22,7 @@ _FIELD_DEFAULTS: dict[str, tuple] = {
     "velocity_vertical":         ("velocity-vertical",        "PiYG",     "auto",      "$\\vec{u}_y$ (cm/yr)",      "%.1f", 1e2,      True,  False, False),
     "viscosity":                 ("viscosity",                "bone_r",   (19, 24),    "Log $\\eta$ (Pa s)",        "%.0f", 1,        True,  True,  True),
     "xi_ol_wd":                  ("xi-ol-wd",                 "GnBu",     (0.0, 1.0),  "$\\xi$",                   "%.1f", 1,        False, True,  True),
-    "reaction_rate_C0":          ("reaction-rate-ol-wd",      "RdGy_r",   "auto",      "Log $\\dot{X}$ (1/Ma)",     "%.2f", 3.154e13, True,  True,  True),
+    "reaction_rate_C0":          ("reaction-rate-ol-wd",      "RdGy_r",   "auto",      "Log $\\dot{X}$ (1/Myr)",     "%.2f", 3.154e13, True,  True,  True),
 }
 # fmt: on
 
@@ -139,8 +139,8 @@ class MeshConfig:
 BENCH_FACECOLOR = "0.92"
 BENCH_DPI = 300
 
-# Seconds per million years: file reaction rates are 1/s, figures use 1/Ma.
-S_PER_MA = 3.154e13
+# Seconds per million years: file reaction rates are 1/s, figures use 1/Myr.
+S_PER_MYR = 3.154e13
 
 
 def apply_bench_style():

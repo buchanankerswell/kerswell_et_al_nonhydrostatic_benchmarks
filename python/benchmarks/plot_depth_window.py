@@ -32,6 +32,7 @@ import pyvista as pv
 from matplotlib import patches
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
+from simulation.mesh.config import S_PER_MYR
 from simulation.params.transitions import load_depth_datum, model_to_true_km
 from utils.logging import log_artifact
 
@@ -49,7 +50,7 @@ SETS = {
     ],
     "set1": [
         ("dG_driving_0", "PuOr_r", 1e-3, "$dG$ (kJ/mol)", "sym"),
-        ("reaction_rate_C0", "RdGy_r", 3.154e13, "$\\dot{X}$ (1/Ma)", "signedlog"),
+        ("reaction_rate_C0", "RdGy_r", S_PER_MYR, "$\\dot{X}$ (1/Myr)", "signedlog"),
         ("xi_ol_wd", "GnBu", 1.0, "$\\xi$", "fixed01"),
     ],
 }
