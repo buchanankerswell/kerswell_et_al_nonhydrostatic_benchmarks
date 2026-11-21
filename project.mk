@@ -110,9 +110,9 @@ VIS_MODELS_BOX_SUITE  = $(if $(filter $(VIS_ON),$(VIS_ALL_BOX_SUITE)),$(notdir $
 VIS_MODELS_SINK_SUITE = $(if $(filter $(VIS_ON),$(VIS_ALL_SINK_SUITE)),$(notdir $(RESULTS_SINK_SUITE)),$(VIS_IDS_SINK_SUITE))
 
 # --------------------------------------------------
-# Runtime constants (can edit). All values are SI: temperatures K,
-# pressures Pa, times s, lengths m, rates 1/s/K, enthalpies J/mol,
-# volumes m^3/mol, viscosities Pa s, densities kg/m^3; CFL numbers,
+# Runtime constants (can edit). All values are SI: temperatures (K),
+# pressures (Pa), times (s), lengths (m), rates (1/s/K), enthalpies (J/mol),
+# volumes (m^3/mol), viscosities (Pa s), densities (kg/m^3); CFL numbers,
 # iteration counts, Mg#, and mesh counts are dimensionless. Figure scripts
 # rescale to geologic units at plot time (see config.py).
 # --------------------------------------------------
@@ -170,13 +170,14 @@ ETA_MIN   := 1e+19
 ETA_MAX   := 1e+24
 ETA_GIBBS := 1e+03
 
+# Depth correction (m).
 DEPTH_CORRECTION_OL_WD := 5e+03
 
 # Reference density (kg/m^3) for the postprocessed thermal split of the
 # measured 410 displacement into thermal offset and kinetic contribution.
 REF_DENSITY := 4100.0
 
-# Init-step model-Y at the profile equilibrium. The runtime adiabat puts the
+# Init-step model-Y (m) at the profile equilibrium. The runtime adiabat puts the
 # same equilibrium pressure deeper, so all runs relax from the init step
 # within ~0.1 Myr; final states are unaffected.
 TRANSITION_Y_OL_WD := 6.408e+05
@@ -196,8 +197,8 @@ PROFILE_REF_410_M := 422600
 TRACE_X_BOX  := 150000
 TRACE_X_SINK := 500000
 
-# Probe points (x, y in model m; y = 1e6 - depth). Baked into finished
-# runs; do not move.
+# Probe points (x, y in metres of model height; y = 1e6 - depth). Baked
+# into finished runs; do not move.
 POINTS_BOX  := 1.5e+05, 6.358e+05; 1.5e+05, 4.358e+05
 POINTS_SINK := 5.0e+05, 6.358e+05; 5.0e+05, 8.00e+05
 
@@ -205,7 +206,7 @@ MODEL_WIDTH_BOX  := 300e+03
 MODEL_HEIGHT_BOX := 1000e+03
 MESH_X_BOX       := 1
 MESH_Y_BOX       := 4
-# Model extents are m; mesh counts are cells per direction.
+# Model extents are (m); mesh counts are cells per direction.
 
 MODEL_WIDTH_SINK  := 1000e+03
 MODEL_HEIGHT_SINK := 1000e+03
@@ -220,7 +221,7 @@ DEPTH_WINDOW_STEPS := 00000 00002 00006 00012
 TRACE_X_STEP_LIMIT := 150e3
 
 # Adiabat generation (BurnMan isentrope + PerpleX tables backing VERSIONED_DATA).
-# Potential temperature K, resolutions counts, planet radius m.
+# Potential temperature (K), resolutions (counts), planet radius (m).
 ADIABAT_POTENTIAL_TEMP := 1573.0
 ADIABAT_TABLE_RES      := 128
 ADIABAT_PROFILE_RES    := 501

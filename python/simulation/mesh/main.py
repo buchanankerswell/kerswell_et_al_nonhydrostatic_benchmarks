@@ -26,8 +26,8 @@ def parse_arguments() -> Namespace:
     parser = ArgumentParser(description="Visualize and postprocess simulation results.")
 
     parser.add_argument("dG_profile_ol_wd", type=str, help="Path to olivine-wadsleyite dG profile")
-    parser.add_argument("model_height", type=float, help="Model height [m]")
-    parser.add_argument("surface_pressure", type=float, help="Surface pressure [Pa]")
+    parser.add_argument("model_height", type=float, help="Model height (m)")
+    parser.add_argument("surface_pressure", type=float, help="Surface pressure (Pa)")
     parser.add_argument("out_fig_dir", type=str, help="Output figure directory")
     parser.add_argument("out_data_dir", type=str, help="Flattened simulation/results dir")
     parser.add_argument("--suite-tag", type=str, required=True, help="Suite tag: box or sink")
@@ -39,29 +39,29 @@ def parse_arguments() -> Namespace:
     parser.add_argument("--chunk", type=str, default=None, help="Chunk label (i/N) set by the parent when splitting work.")
     parser.add_argument("--suppress-artifact", type=str2bool, default=False, help="Skip suite artifact log (parent logs once).")
 
-    parser.add_argument("--depth-corr-ol-wd", type=float, default=0.0, help="Depth correction for the olivine -> wadsleyite transition [m].")
+    parser.add_argument("--depth-corr-ol-wd", type=float, default=0.0, help="Depth correction for the olivine -> wadsleyite transition (m).")
     parser.add_argument(
         "--nominal-410",
         type=float,
         default=None,
-        help="Runtime-adiabat 410 nominal depth [m]; supersedes profile + depth-corr for X_wd when given.",
+        help="Runtime-adiabat 410 nominal depth (m); supersedes profile + depth-corr for X_wd when given.",
     )
     parser.add_argument(
-        "--x-step-limit-m", type=float, default=150e3, help="Representative-trace max x jump per depth slice [m] (project.mk TRACE_X_STEP_LIMIT)."
+        "--x-step-limit-m", type=float, default=150e3, help="Representative-trace max x jump per depth slice (m) (project.mk TRACE_X_STEP_LIMIT)."
     )
     parser.add_argument(
         "--trace-x",
         type=float,
         default=None,
-        help="Fixed representative-trace x [m]; vertical trace for isothermal suites. Overrides anomaly following.",
+        help="Fixed representative-trace x (m); vertical trace for isothermal suites. Overrides anomaly following.",
     )
     parser.add_argument(
-        "--block-top-m", type=float, default=875e3, help="Block top [m] for the ambient-reference correction (project.mk BLOCK_Y_TOP)."
+        "--block-top-m", type=float, default=875e3, help="Block top (m) for the ambient-reference correction (project.mk BLOCK_Y_TOP)."
     )
     parser.add_argument(
-        "--block-bottom-m", type=float, default=725e3, help="Block bottom [m] for the ambient-reference correction (project.mk BLOCK_Y_BOT)."
+        "--block-bottom-m", type=float, default=725e3, help="Block bottom (m) for the ambient-reference correction (project.mk BLOCK_Y_BOT)."
     )
-    parser.add_argument("--gravity", type=float, default=9.81, help="Gravity [m/s^2] for the ambient-reference correction (project.mk GRAVITY).")
+    parser.add_argument("--gravity", type=float, default=9.81, help="Gravity (m/s^2) for the ambient-reference correction (project.mk GRAVITY).")
     parser.add_argument("--mode", type=str, choices=["postprocess", "visualize", "full"], default="full", help="Pipeline mode.")
     parser.add_argument("--save-csv", type=str2bool, default=True, help="Save structure data to csv.")
     parser.add_argument("--force-reprocess", type=str2bool, default=False, help="Force reprocessing and overwriting of cache.")

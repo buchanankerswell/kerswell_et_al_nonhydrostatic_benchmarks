@@ -9,11 +9,11 @@ class PhaseTransition:
     Container for extracted ASPECT phase transition parameters.
 
     Attributes:
-        y (float):            Vertical coordinate in the model domain [m].
-        depth (float):        Depth relative to the model surface     [m].
-        temperature (float):  Temperature at the transition           [K].
-        clapeyron (float):    Clapeyron slope (dP/dT)                 [Pa/K].
-        density_jump (float): Change in density across the transition [kg/m^3].
+        y (float):            Vertical coordinate in the model domain (m).
+        depth (float):        Depth relative to the model surface     (m).
+        temperature (float):  Temperature at the transition           (K).
+        clapeyron (float):    Clapeyron slope (dP/dT)                 (Pa/K).
+        density_jump (float): Change in density across the transition (kg/m^3).
     """
 
     y: float

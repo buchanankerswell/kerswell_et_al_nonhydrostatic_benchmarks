@@ -118,7 +118,7 @@ depth-window:
 	done
 
 # Shared mesh recipe: $(1)=suite tag, $(2)=models, $(3)=visualize ids,
-# $(4)=fig dir, $(5)=410 nominal [m], $(6)=trace x [m], $(7)=model height [m].
+# $(4)=fig dir, $(5)=410 nominal (m), $(6)=trace x (m), $(7)=model height (m).
 define MESH_SUITE
 	@$(eval MODELS := $(2))
 	@$(eval DIRS := $(addprefix $(SIMULATION)/results/, $(MODELS)))

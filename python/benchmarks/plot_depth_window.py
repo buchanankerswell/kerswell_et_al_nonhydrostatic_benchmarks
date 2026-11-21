@@ -202,12 +202,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True, help="Run UID to render")
     ap.add_argument("--steps", nargs=4, required=True, help="Output numbers to render (4 steps)")
-    ap.add_argument("--nominal-410-m", type=float, default=379943.0, help="Runtime-adiabat 410 nominal [m] (project.mk NOMINAL_410_*)")
-    ap.add_argument("--window-half-m", type=float, default=50e3, help="Depth-window half-height [m]")
+    ap.add_argument("--nominal-410-m", type=float, default=379943.0, help="Runtime-adiabat 410 nominal (m) (project.mk NOMINAL_410_*)")
+    ap.add_argument("--window-half-m", type=float, default=50e3, help="Depth-window half-height (m)")
     ap.add_argument("--set", choices=["set0", "set1"], default="set0", help="Field set to render")
-    ap.add_argument("--block-top-m", type=float, default=875e3, help="Block top [m] (project.mk BLOCK_Y_TOP)")
-    ap.add_argument("--block-bottom-m", type=float, default=725e3, help="Block bottom [m] (project.mk BLOCK_Y_BOT)")
-    ap.add_argument("--gravity", type=float, default=9.81, help="Gravity [m/s^2] (project.mk GRAVITY)")
+    ap.add_argument("--block-top-m", type=float, default=875e3, help="Block top (m) (project.mk BLOCK_Y_TOP)")
+    ap.add_argument("--block-bottom-m", type=float, default=725e3, help="Block bottom (m) (project.mk BLOCK_Y_BOT)")
+    ap.add_argument("--gravity", type=float, default=9.81, help="Gravity (m/s^2) (project.mk GRAVITY)")
     ap.add_argument(
         "--clims-json", default=None, help="Standardized color limits JSON path from compute_window_clims.py; overrides per-figure scaling"
     )

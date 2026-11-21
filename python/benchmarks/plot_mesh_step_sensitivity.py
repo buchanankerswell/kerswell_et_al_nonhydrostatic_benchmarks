@@ -88,7 +88,7 @@ def main():
     ap.add_argument("--summary", default=str(RESULTS / "pressure-history-summary.csv"), help="Pressure-history summary CSV path")
     ap.add_argument("--postprocessed", default=str(RESULTS / "postprocessed.csv"), help="Postprocessed boundary-table CSV path")
     ap.add_argument("--out-dir", default="figs/benchmarks", help="Output figure directory")
-    ap.add_argument("--z-mid", default="4.44e-04", help="Intermediate reaction rate [1/s/K] (project.mk Z_MID)")
+    ap.add_argument("--z-mid", default="4.44e-04", help="Intermediate reaction rate (1/s/K) (project.mk Z_MID)")
     ap.add_argument("--cfl-box", type=float, default=0.7, help="Box suite default CFL number, dimensionless (project.mk CFL_BOX)")
     ap.add_argument("--cfl-sink", type=float, default=0.5, help="Sink suite default CFL number, dimensionless (project.mk CFL_SINK)")
     args = ap.parse_args()
