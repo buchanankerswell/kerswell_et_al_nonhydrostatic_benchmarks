@@ -8,13 +8,15 @@ project.mk constants passed as CLI args; nothing is hardcoded.
 Usage (repo root):
   PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
     python/setup/domains.py --suite box --width-m 300000 --height-m 1000000 \\
-      --transition-y-m 640800 --trace-x-m 150000 --nominal-m 373100 \\
+      --transition-y-m 640800 --trace-x-m 150000 --nominal-m 379943 \\
       --probes "150000,635800;150000,435800" --out figs/setup/box-domain.png
 """
 
 import argparse
 import os
 from pathlib import Path
+
+from utils.logging import log_artifact
 
 import matplotlib
 
@@ -90,7 +92,7 @@ def draw_domain(suite, width, height, trans_y, trace_x, nominal, probes, out):
     fig.tight_layout()
     fig.savefig(out, dpi=300)
     plt.close(fig)
-    print(f"wrote -> {out}")
+    log_artifact(out)
 
 
 def main():

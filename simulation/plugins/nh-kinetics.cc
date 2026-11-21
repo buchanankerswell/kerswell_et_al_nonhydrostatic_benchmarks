@@ -153,7 +153,9 @@ namespace aspect
           const double   T_ref = this->get_adiabatic_conditions().temperature(position);
 
           // Ambient reference: subtract the static block load that the
-          // 1D adiabat includes, so P_ref is ambient mantle.
+          // 1D adiabat includes, so P_ref is ambient mantle. The load
+          // accumulates downward, so within the block it is top - y
+          // (full top - bottom below the block, zero above it).
           double P_ref = P_ref_adiabatic;
           if (use_ambient_reference_column && block_density_excess != 0.0)
             {
@@ -162,7 +164,7 @@ namespace aspect
               if (y < ambient_block_bottom_y)
                 overlap = ambient_block_top_y - ambient_block_bottom_y;
               else if (y < ambient_block_top_y)
-                overlap = y - ambient_block_bottom_y;
+                overlap = ambient_block_top_y - y;
               P_ref -= block_density_excess * gravity_magnitude * overlap;
             }
           const Point<1> profile_pos(P_ref);

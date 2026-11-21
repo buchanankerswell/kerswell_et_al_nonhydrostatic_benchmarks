@@ -21,7 +21,7 @@ _FIELD_DEFAULTS: dict[str, tuple] = {
     "velocity":                  ("velocity-cart",            "PiYG",     "auto",      "$\\vec{u}$ (cm/yr)",        "%.1f", 1e2,      False, False, False),
     "velocity_vertical":         ("velocity-vertical",        "PiYG",     "auto",      "$\\vec{u}_y$ (cm/yr)",      "%.1f", 1e2,      True,  False, False),
     "viscosity":                 ("viscosity",                "bone_r",   (19, 24),    "Log $\\eta$ (Pa s)",        "%.0f", 1,        True,  True,  True),
-    "xi_ol_wd":                  ("xi-ol-wd",                 "GnBu",     (0.0, 1.0),  "$\\xi$ (dimensionless)",    "%.1f", 1,        False, True,  True),
+    "xi_ol_wd":                  ("xi-ol-wd",                 "GnBu",     (0.0, 1.0),  "$\\xi$",                   "%.1f", 1,        False, True,  True),
     "reaction_rate_C0":          ("reaction-rate-ol-wd",      "RdGy_r",   "auto",      "Log $\\dot{X}$ (1/Ma)",     "%.2f", 3.154e13, True,  True,  True),
 }
 # fmt: on
@@ -163,8 +163,14 @@ def apply_bench_style():
 
 # Standard benchmark colors, mirroring R damp_pal in R/utils/seismic.R:
 # one color per damping kind+value, shared by every benchmark plot.
+# None-family variants (CFL twins, no-feedback controls) get their own
+# shades so every run in a panel is unique; box and sink share the map.
 DAMP_COLORS = {
     "None": "#000000",
+    "None_CFL0.35": "#525252",
+    "None_CFL1.0": "#737373",
+    "None_CFL1.4": "#969696",
+    "None_Off": "#08306B",
     "Bimpl1e21": "#E41A1C",
     "Bimpl1e19": "#EF3B2C",
     "Bimpl1e20": "#A50F15",
@@ -182,9 +188,19 @@ UID_DAMP_RE = re.compile(r"_Damp[A-Za-z]+[\d.e+-]*")
 
 
 def damp_key(run):
-    """Damping kind+value token from a UID (None, Bimpl1e21, ...)."""
+    """Damping kind+value token from a UID (None, Bimpl1e21, ...).
+
+    Extended with _CFL<value> for timestep variants and _Off for the
+    no-feedback controls, so every benchmark run maps to a unique color.
+    """
     m = DAMP_RE.search(run)
-    return (m.group(1) + m.group(2)) if m else "None"
+    key = (m.group(1) + m.group(2)) if m else "None"
+    mc = re.search(r"_CFL([\d.]+)", run)
+    if mc:
+        key += f"_CFL{mc.group(1)}"
+    if "_DynpOff_" in run:
+        key += "_Off"
+    return key
 
 
 def bench_color(run):
@@ -194,7 +210,11 @@ def bench_color(run):
 
 def bench_label(run):
     """Standard legend label for a run: damping + res + CFL/no-feedback tags."""
-    parts = [damp_key(run)]
+    key = damp_key(run)
+    # The variant suffixes already surface as explicit tags below; the
+    # color key stays the full variant so every run maps to a unique color.
+    shown = re.sub(r"_CFL[\d.]+", "", key).replace("_Off", "")
+    parts = [shown or key]
     mr = re.search(r"_Res(\d+)", run)
     if mr:
         parts.append(f"Res{mr.group(1)}")

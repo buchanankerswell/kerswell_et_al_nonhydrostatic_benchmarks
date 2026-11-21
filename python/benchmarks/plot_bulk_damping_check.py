@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from simulation.mesh.config import apply_bench_style, bench_color, bench_label
+from utils.logging import log_artifact, log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
@@ -30,15 +31,15 @@ apply_bench_style()
 def load(suite):
     path = RESULTS / f"structure-summary-{suite}.csv"
     if not path.exists() or path.stat().st_size < 2:
-        print(f"skip {suite}: {path} not found", file=sys.stderr)
+        log_warn(f"skip {suite}: {path} not found")
         return None
     try:
         df = pd.read_csv(path)
     except pd.errors.EmptyDataError:
-        print(f"skip {suite}: {path} empty", file=sys.stderr)
+        log_warn(f"skip {suite}: {path} empty")
         return None
     if df.empty:
-        print(f"skip {suite}: {path} empty", file=sys.stderr)
+        log_warn(f"skip {suite}: {path} empty")
         return None
     df["res"] = df["model_id"].str.extract(r"_Res(\d+)").astype(int)
     df["damp"] = df["model_id"].str.extract(r"_Damp([A-Za-z]+[\d.e+-]*)")
@@ -46,7 +47,7 @@ def load(suite):
     df["dynp"] = df["model_id"].str.contains("_DynpOn_")
     rate_col = next((c for c in df.columns if "reaction_rate" in c and "410" in c), None)
     if rate_col is None:
-        print(f"skip {suite}: no rate column in {list(df.columns)}", file=sys.stderr)
+        log_warn(f"skip {suite}: no rate column in {list(df.columns)}")
         return None
     df["rate"] = pd.to_numeric(df[rate_col], errors="coerce").abs()
     return df
@@ -102,16 +103,6 @@ def main():
         df = load(suite)
         if df is None or df.empty:
             continue
-        final = df.sort_values("timestep").groupby("model_id").tail(1)
-        bulk = final[final["damp"].str.contains("Bimpl", na=False)].sort_values(["damp", "res"])
-        print(f"--- {suite} bulk-damping final max rate vs resolution ---")
-        for _, r in bulk.iterrows():
-            print(f"  {r['model_id']}: {r['rate']:.3e} 1/s")
-        ctrl = final[final["damp"] == "None"].sort_values("res")
-        print(f"--- {suite} DampNone control ---")
-        for _, r in ctrl.iterrows():
-            print(f"  {r['model_id']}: {r['rate']:.3e} 1/s")
-
         fig, ax = plt.subplots(1, 2, figsize=(12, 5))
         panel_rate_vs_res(ax[0], df)
         damp_pat = "Bimpl1e21" if suite == "box" else "Bimpl1e19"
@@ -120,7 +111,7 @@ def main():
         out = figdir / f"bulk-damping-check-{suite}.png"
         fig.savefig(out, dpi=300)
         plt.close(fig)
-        print(f"wrote -> {out}")
+        log_artifact(out)
 
 
 if __name__ == "__main__":

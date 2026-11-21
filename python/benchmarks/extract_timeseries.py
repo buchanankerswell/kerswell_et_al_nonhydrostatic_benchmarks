@@ -17,6 +17,8 @@ import sys
 
 import numpy as np
 
+from utils.logging import log_warn
+
 # Ambient-reference block-load correction: the 1D adiabatic reference
 # includes the initial block load, so add the static load back below
 # the block column.
@@ -101,7 +103,6 @@ def write_stats_timeseries(stats_path, out_path):
         w = csv.DictWriter(f, fieldnames=["timestep", "time_yr"] + list(wanted_columns))
         w.writeheader()
         w.writerows(rows)
-    print(f"Wrote {len(rows)} steps -> {out_path}")
 
 
 def main():
@@ -117,22 +118,22 @@ def main():
 
     sol_dir = os.path.join(args.run_dir, "solution")
     if not os.path.isdir(sol_dir):
-        print(f"skip {args.run_dir}: no solution dir (run it or sync it first)")
+        log_warn(f"skip {args.run_dir}: no solution dir (run it or sync it first)")
         return
     stats_path = os.path.join(args.run_dir, "statistics")
     try:
         mapping = parse_statistics(stats_path)
     except OSError:
-        print(f"warn {args.run_dir}: no statistics file, times are NaN")
+        log_warn(f"{args.run_dir}: no statistics file, times are NaN")
         mapping = {}
     try:
         write_stats_timeseries(stats_path, os.path.join(args.run_dir, "stats-timeseries.csv"))
     except OSError:
-        print(f"warn {args.run_dir}: no statistics file, skipping stats-timeseries.csv")
+        log_warn(f"{args.run_dir}: no statistics file, skipping stats-timeseries.csv")
 
     pvtu = sorted(f for f in os.listdir(sol_dir) if f.endswith(".pvtu"))
     if not pvtu:
-        print(f"skip {args.run_dir}: no solution outputs to tabulate")
+        log_warn(f"skip {args.run_dir}: no solution outputs to tabulate")
         return
     rows = []
     for f in pvtu:
@@ -154,7 +155,7 @@ def main():
                 overlap = np.where(
                     y < args.block_bottom_m,
                     args.block_top_m - args.block_bottom_m,
-                    np.where(y < args.block_top_m, y - args.block_bottom_m, 0.0),
+                    np.where(y < args.block_top_m, args.block_top_m - y, 0.0),
                 )
                 amb = nad + excess * args.gravity * overlap
                 row["ambient_pressure_min"] = float(np.min(amb))
@@ -181,7 +182,6 @@ def main():
         w.writeheader()
         for r in rows:
             w.writerow(r)
-    print(f"Wrote {len(rows)} outputs -> {out}")
 
 
 if __name__ == "__main__":

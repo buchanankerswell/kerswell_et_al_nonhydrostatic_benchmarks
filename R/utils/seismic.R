@@ -4,9 +4,14 @@ nominal_410_box_km <- 422.6
 nominal_410_sink_km <- 422.6
 
 # Shared damping palette (same families as the structure panels). Per-value
-# shades keep the paired Bimpl/Rel values distinct.
+# shades keep the paired Bimpl/Rel values distinct. None-family variants
+# (CFL twins, no-feedback controls) get their own shades so every run in
+# a panel is unique; box and sink share the map. Mirrors python DAMP_COLORS
+# in simulation/mesh/config.py hex-for-hex.
 damp_pal <- c(
   "None" = "#000000",
+  "None_CFL0.35" = "#525252", "None_CFL1.0" = "#737373", "None_CFL1.4" = "#969696",
+  "None_Off" = "#08306B",
   "Bimpl1e21" = "#E41A1C", "Bimpl1e19" = "#EF3B2C", "Bimpl1e20" = "#A50F15",
   "Bexpl1e20" = "#377EB8", "Bexpl1e19" = "#74ADD1",
   "Rel3.156e12" = "#4DAF4A", "Rel3.156e10" = "#A6D96A", "Rel3.156e11" = "#1B7837",
@@ -61,8 +66,11 @@ visualize_seismic_comparison <- function(data_dir_box, data_dir_sink, out_path, 
   df <- df |> mutate(
     suite = factor(suite, levels = c("Box", "Sink")),
     damp = str_extract(model_id, "(?<=_Damp)[A-Za-z]+[\\d.e+-]*"),
+    cfl = str_extract(model_id, "(?<=_CFL)[\\d.]+"),
     dynp = factor(str_extract(model_id, "(?<=_Dynp)(On|Off)"), levels = c("On", "Off"))
-  )
+  ) |>
+    mutate(damp = ifelse(!is.na(cfl), paste0(damp, "_CFL", cfl), damp)) |>
+    mutate(damp = ifelse(dynp == "Off", paste0(damp, "_Off"), damp))
   df_init_box <- read_init_profile(data_dir_box)
   df_init_sink <- read_init_profile(data_dir_sink)
 

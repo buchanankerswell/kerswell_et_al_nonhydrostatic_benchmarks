@@ -168,6 +168,10 @@ def main():
     fields_for_seismic_profiles = ["density", "seismic_Vp", "seismic_Vs"]
 
     plot_config = MeshConfig()
+    if args.suite_tag == "box":
+        # Narrow box domain (300 x 1000 km): match the render window to the
+        # domain aspect so tiled panels carry no side whitespace.
+        plot_config.plotter_window_size = [576, 1920]
     plot_config.file_map = {k: plot_config.file_map[k] for k in fields_to_plot if k in plot_config.file_map}
     plot_config.default_fig_dir = out_fig_dir
 

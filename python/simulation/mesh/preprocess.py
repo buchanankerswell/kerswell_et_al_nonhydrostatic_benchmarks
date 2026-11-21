@@ -64,7 +64,7 @@ class MeshPreProcessor:
             overlap = np.where(
                 y < self.block_bot_m,
                 self.block_top_m - self.block_bot_m,
-                np.where(y < self.block_top_m, y - self.block_bot_m, 0.0),
+                np.where(y < self.block_top_m, self.block_top_m - y, 0.0),
             )
             mesh[field] = np.asarray(mesh[field]) + excess * self.gravity * overlap
         else:

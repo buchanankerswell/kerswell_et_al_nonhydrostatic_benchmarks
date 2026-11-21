@@ -33,6 +33,7 @@ from matplotlib import patches
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 from simulation.params.transitions import load_depth_datum, model_to_true_km
+from utils.logging import log_artifact
 
 # Ambient-reference block-load correction: the 1D adiabatic reference
 # includes the initial block load, so add the static load back below
@@ -49,7 +50,7 @@ SETS = {
     "set1": [
         ("dG_driving_0", "PuOr_r", 1e-3, "$dG$ (kJ/mol)", "sym"),
         ("reaction_rate_C0", "RdGy_r", 3.154e13, "$\\dot{X}$ (1/Ma)", "signedlog"),
-        ("xi_ol_wd", "GnBu", 1.0, "$\\xi$ (dimensionless)", "fixed01"),
+        ("xi_ol_wd", "GnBu", 1.0, "$\\xi$", "fixed01"),
     ],
 }
 
@@ -89,7 +90,7 @@ def read_step(model, step, block_top_m=875e3, block_bot_m=725e3, gravity=9.81):
             overlap = np.where(
                 y < block_bot_m,
                 block_top_m - block_bot_m,
-                np.where(y < block_top_m, y - block_bot_m, 0.0),
+                np.where(y < block_top_m, block_top_m - y, 0.0),
             )
             out["nonadiabatic_pressure"] = out["nonadiabatic_pressure"] + excess * gravity * overlap
             depth = 1e6 - y
@@ -201,7 +202,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True)
     ap.add_argument("--steps", nargs=4, required=True)
-    ap.add_argument("--nominal-410-m", type=float, default=362700.0)
+    ap.add_argument("--nominal-410-m", type=float, default=379943.0)
     ap.add_argument("--window-half-km", type=float, default=50.0)
     ap.add_argument("--set", choices=["set0", "set1"], default="set0")
     ap.add_argument("--block-top-m", type=float, default=875e3, help="Block top [m] (project.mk BLOCK_Y_TOP)")
@@ -220,7 +221,7 @@ def main():
     times = [step_time_myr(args.model, s) for s in args.steps]
     suite = "sink" if args.model.startswith("NH_Sink_") else "box"
     datum = load_depth_datum(str(Path(RESULTS).parent / "data" / "depth-datum.tsv"))
-    true_ticks = ["%.0f" % v for v in model_to_true_km((1e6 - (yc + half), 1e6 - yc, 1e6 - (yc - half)), datum, suite)]
+    true_ticks = ["%.0f" % v for v in model_to_true_km(tuple((1e6 - y) / 1e3 for y in (yc + half, yc, yc - half)), datum, suite)]
     if args.clims_json:
         import json
 
@@ -246,7 +247,7 @@ def main():
     gs = fig.add_gridspec(
         5,
         3,
-        height_ratios=[1, 1, 1, 1, 0.12],
+        height_ratios=[1, 1, 1, 1, 0.135],
         width_ratios=[r, r, r],
         hspace=0.08,
         wspace=0.06,
@@ -273,25 +274,24 @@ def main():
                 ax.set_yticks([])
             ax.set_xticks([])
             if i == 0:
-                ax.set_title(label, fontsize=14, fontweight="bold")
+                ax.set_title(label, fontsize=14)
             if j == 2:
-                ax_in = inset_axes(ax, width="10%", height="45%", loc="lower right", borderpad=0.8)
+                ax_in = inset_axes(ax, width="11%", height="50%", loc="lower right", borderpad=0.8)
                 if is_sink:
                     draw_block_shape(ax_in, data, nominal_y, yc, half, x0, x1, ticks=False)
                 else:
                     draw_particle_path(ax_in, t, nominal_y, yc, half, x0, x1, ticks=False)
                 if i == 0:
-                    ax_in.set_title("Model Domain", fontsize=9, fontweight="bold", pad=2)
+                    ax_in.set_title("Domain", fontsize=9, fontweight="bold", pad=2)
 
     for j, (field, cmap, scale, label, mode) in enumerate(fields):
         ax = fig.add_subplot(gs[4, j])
         ax.set_axis_off()
         sm = plt.cm.ScalarMappable(cmap=plt.get_cmap(cmap), norm=plt.Normalize(*clims[field]))
-        plt.colorbar(sm, ax=ax, orientation="horizontal", fraction=1.0, aspect=30, shrink=0.5)
+        plt.colorbar(sm, ax=ax, orientation="horizontal", fraction=1.0, aspect=26, shrink=0.5)
 
     fig.savefig(args.out, dpi=150, bbox_inches="tight")
-    print("wrote " + args.out)
-    print("clims: " + str({k: (round(v[0], 1), round(v[1], 1)) for k, v in clims.items()}))
+    log_artifact(args.out)
 
 
 if __name__ == "__main__":

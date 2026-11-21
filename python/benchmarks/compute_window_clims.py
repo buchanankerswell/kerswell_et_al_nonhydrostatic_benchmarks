@@ -16,6 +16,8 @@ import os
 import sys
 from pathlib import Path
 
+from utils.logging import log_artifact, log_info, log_warn
+
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 WINDOW_HALF_KM = 50.0
 
@@ -26,8 +28,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", nargs="+", required=True)
     ap.add_argument("--steps", nargs=4, default=["00000", "00002", "00006", "00012"])
-    ap.add_argument("--nominal-box-m", type=float, default=373100.0, help="Box nominal [m] (project.mk NOMINAL_410_BOX)")
-    ap.add_argument("--nominal-sink-m", type=float, default=362700.0, help="Sink nominal [m] (project.mk NOMINAL_410_SINK400)")
+    ap.add_argument("--nominal-box-m", type=float, default=379943.0, help="Box nominal [m] (project.mk NOMINAL_410_BOX)")
+    ap.add_argument("--nominal-sink-m", type=float, default=379957.0, help="Sink nominal [m] (project.mk NOMINAL_410_SINK400)")
     ap.add_argument("--block-top-m", type=float, default=875e3, help="Block top [m] (project.mk BLOCK_Y_TOP)")
     ap.add_argument("--block-bottom-m", type=float, default=725e3, help="Block bottom [m] (project.mk BLOCK_Y_BOT)")
     ap.add_argument("--gravity", type=float, default=9.81, help="Gravity [m/s^2] (project.mk GRAVITY)")
@@ -41,11 +43,10 @@ def main():
     for model in args.models:
         suite = "sink" if model.startswith("NH_Sink_") else "box"
         if not all((RESULTS / model / "solution" / f"solution-{s}.pvtu").exists() for s in args.steps):
-            print(f"skip {model}: solutions missing", file=sys.stderr)
+            log_warn(f"skip {model}: solutions missing")
             continue
         yc = 1e6 - nominal_m[suite]
         grouped[suite].append([read_step(model, s, args.block_top_m, args.block_bottom_m, args.gravity) for s in args.steps])
-        print(f"read {model} ({suite}, yc={1e6 - yc:.0f} m)")
 
     out = {}
     for suite, runs in grouped.items():
@@ -59,13 +60,13 @@ def main():
             for field, _cmap, scale, _label, mode in fields:
                 lo, hi = window_clim(steps_all, field, scale, mode, yc, half)
                 out[suite][setname][field] = [round(float(lo), 3), round(float(hi), 3)]
-        print(f"{suite}: " + ", ".join(f"{f}={out[suite]['set0'][f]}" for f, *_ in SETS["set0"]))
+        log_info(f"{suite}: " + ", ".join(f"{f}={out[suite]['set0'][f]}" for f, *_ in SETS["set0"]))
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w") as f:
         json.dump(out, f, indent=1)
-    print(f"wrote -> {out_path}")
+    log_artifact(out_path)
 
 
 if __name__ == "__main__":

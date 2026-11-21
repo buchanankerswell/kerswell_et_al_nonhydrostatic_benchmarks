@@ -3,12 +3,12 @@
 import csv
 import os
 import re
-import sys
 from pathlib import Path
 
 import numpy as np
 
 from simulation.mesh.config import DAMP_RE
+from utils.logging import log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
@@ -102,7 +102,7 @@ def load_point_series(run, point=0, field="pressure"):
     if not time_blocks or column_names is None or field not in column_names:
         return None
     if point >= len(time_blocks[0]):
-        print(f"skip {run}: point {point} missing", file=sys.stderr)
+        log_warn(f"skip {run}: point {point} missing")
         return None
     field_index = column_names.index(field)
     times = np.array([b[0][0] for b in time_blocks]) / 1e6

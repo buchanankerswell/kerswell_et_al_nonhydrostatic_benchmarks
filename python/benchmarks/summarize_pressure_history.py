@@ -28,6 +28,7 @@ import numpy as np
 
 from common import load_point_series, load_stats_series, load_vtu_series, parse_uid_columns
 from simulation.mesh.config import UID_DAMP_RE, apply_bench_style, bench_color, bench_label
+from utils.logging import log_artifact, log_info, log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
@@ -60,7 +61,7 @@ def largest_of(run):
 def summarize(run, by_run):
     s = load_vtu_series(run)
     if s is None or len(s["t"]) < 2:
-        print(f"skip {run}: single output, no history to compare", file=sys.stderr)
+        log_warn(f"skip {run}: single output, no history to compare")
         return None
     stats = load_stats_series(run)
     if stats is not None and np.isfinite(stats["flow"]).any():
@@ -97,7 +98,7 @@ def summarize(run, by_run):
 def plot_suite(runs, out_path, control, reference=None):
     runs = [r for r in runs if load_vtu_series(r) is not None]
     if not runs:
-        print(f"skip {out_path.name}: no timeseries.csv found", file=sys.stderr)
+        log_warn(f"skip {out_path.name}: no timeseries.csv found")
         return
     fig, ax = plt.subplots(2, 1, figsize=(8, 8), sharex=True)
     for run in runs:
@@ -138,7 +139,7 @@ def plot_mean_flow_suite(runs, out_path, control, reference=None):
             kw = dict(lw=1.2, alpha=0.85, color=bench_color(run))
         ax.plot(stats["time_myr"], stats["flow"], label=bench_label(run), **kw)
     if plotted == 0:
-        print(f"skip {out_path.name}: no stats-timeseries.csv found", file=sys.stderr)
+        log_warn(f"skip {out_path.name}: no stats-timeseries.csv found")
         plt.close(fig)
         return
     ax.set_ylabel("$u_\\mathrm{rms}$ (m/yr)")
@@ -170,7 +171,7 @@ def plot_point_suite(runs, out_path, control, reference=None, field="pressure"):
             kw = dict(lw=1.2, alpha=0.85, color=bench_color(run))
         ax.plot(point["time_myr"], values, label=bench_label(run), **kw)
     if plotted == 0:
-        print(f"skip {out_path.name}: no point_values.txt found", file=sys.stderr)
+        log_warn(f"skip {out_path.name}: no point_values.txt found")
         plt.close(fig)
         return
     ax.set_ylabel("Point $\\Delta P$ (MPa)")
@@ -214,7 +215,7 @@ def main():
             rows.append({"suite": "sink", **row})
 
     if not rows:
-        print("no NH_* runs with timeseries.csv found; nothing to summarize", file=sys.stderr)
+        log_warn("no NH_* runs with timeseries.csv found; nothing to summarize")
         return
 
     out_csv = Path(args.out_csv)
@@ -223,7 +224,7 @@ def main():
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
-    print(f"wrote {len(rows)} rows -> {out_csv}")
+    log_info(f"summarized {len(rows)} runs -> {out_csv}")
 
     figdir = Path(args.fig_dir)
     box_paper = args.plot_box if args.plot_box is not None else paper_set(box, 5)
@@ -239,7 +240,7 @@ def main():
         nod = next((r for r in runs if "_DynpOff_DampNone_" in r), None)
         plot_mean_flow_suite(runs, figdir / f"mean-flow-speed-{tag}.png", und, reference=nod)
         plot_point_suite(runs, figdir / f"point-pressure-{tag}.png", und, reference=nod)
-    print(f"plots -> {figdir}/")
+    log_artifact(figdir)
 
 
 if __name__ == "__main__":

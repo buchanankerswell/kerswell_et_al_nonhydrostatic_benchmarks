@@ -114,6 +114,24 @@ class ImageTiler:
         draw.text((25, 10), tag, font=self._get_default_font(), fill="black")
         return image
 
+    def _crop_whitespace(self, image: Image.Image, pad: int = 8) -> Image.Image:
+        """Crop near-white borders around panel content (screenshots pad the mesh)."""
+        import numpy as np
+
+        gray = np.asarray(image.convert("L"))
+        rows = np.where((gray < 250).any(axis=1))[0]
+        cols = np.where((gray < 250).any(axis=0))[0]
+        if rows.size == 0 or cols.size == 0:
+            return image
+        return image.crop(
+            (
+                max(int(cols.min()) - pad, 0),
+                max(int(rows.min()) - pad, 0),
+                min(int(cols.max()) + pad, image.width),
+                min(int(rows.max()) + pad, image.height),
+            )
+        )
+
     def _concatenate_images_horizontally(self, images: list[Image.Image]) -> Image.Image:
         """Return a new RGB image with all images pasted side-by-side.
 
@@ -126,12 +144,14 @@ class ImageTiler:
         Returns:
             Combined RGB Image.
         """
-        widths, heights = zip(*(img.size for img in images))
-        combined = Image.new("RGB", (sum(widths), max(heights)), color=(255, 255, 255))
+        cropped = [self._crop_whitespace(img) for img in images]
+        widths, heights = zip(*(img.size for img in cropped))
+        gap = 24
+        combined = Image.new("RGB", (sum(widths) + gap * (len(cropped) - 1), max(heights)), color=(255, 255, 255))
         x_offset = 0
-        for img in images:
+        for img in cropped:
             combined.paste(img, (x_offset, 0))
-            x_offset += img.size[0]
+            x_offset += img.size[0] + gap
         return combined
 
     def _build_tile_path(self, timestep: str, tags: list[str | None]) -> Path:

@@ -21,6 +21,7 @@ import numpy as np
 import pyvista as pv
 
 from simulation.params.transitions import read_dG_profile
+from utils.logging import log_artifact, log_info
 
 
 def level_adiabat(run_dir):
@@ -41,7 +42,7 @@ def block_overlap(y, excess, top_m, bot_m):
     return np.where(
         y < bot_m,
         top_m - bot_m,
-        np.where(y < top_m, y - bot_m, 0.0),
+        np.where(y < top_m, top_m - y, 0.0),
     )
 
 
@@ -74,7 +75,7 @@ def main():
         press = np.maximum.accumulate(p_amb[::-1])
         cols[suite] = np.interp(grid_m, depth, np.interp(press, prof_p, prof_z))
         assert np.all(np.diff(cols[suite]) >= 0), f"{suite} datum not monotonic"
-        print(f"{suite}: top {cols[suite][0]:.0f} m, 373 km -> {np.interp(373100, grid_m, cols[suite]):.0f} m")
+        log_info(f"{suite}: top {cols[suite][0]:.0f} m, 380 km -> {np.interp(380000, grid_m, cols[suite]):.0f} m")
 
     out = Path(args.out)
     with open(out, "w") as f:
@@ -83,7 +84,7 @@ def main():
         f.write("# model_depth_m box_true_m sink_true_m\n")
         for i in range(len(grid_m)):
             f.write(f"{grid_m[i]:.0f}\t{cols['box'][i]:.1f}\t{cols['sink'][i]:.1f}\n")
-    print(f"wrote -> {out}")
+    log_artifact(out)
 
 
 if __name__ == "__main__":

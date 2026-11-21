@@ -32,6 +32,7 @@ from simulation.params.transitions import (
     model_to_true_km,
     read_dG_profile,
 )
+from utils.logging import log_artifact, log_info, log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 DATUM = RESULTS.parent / "data" / "depth-datum.tsv"
@@ -52,12 +53,6 @@ def load_rep(run, tag):
         seis = pickle.load(f)
     ts = max(seis[run].keys())
     return seis[run][ts]["representative"], ts
-
-
-def zero_cross(z, v):
-    s = np.sign(v)
-    j = np.where(np.diff(s) != 0)[0]
-    return [float(z[t] + (z[t + 1] - z[t]) * abs(v[t]) / (abs(v[t]) + abs(v[t + 1]))) for t in j]
 
 
 def profile_equilibrium(profile_path, model_height, surface_pressure):
@@ -87,19 +82,18 @@ def main():
 
     prof_eq, prof_peq, gamma = profile_equilibrium(args.profile, args.model_height, args.surface_pressure)
     nominal = args.nominal_km if args.nominal_km is not None else prof_eq + args.depth_corr_ol_wd / 1e3
-    print(f"profile dG=0 at model {prof_eq:.1f} km, P_eq = {prof_peq / 1e9:.3f} GPa, gamma = {gamma:.3e} Pa/K; nominal {nominal:.1f} km")
     datum = load_depth_datum(str(DATUM))
     suite = args.suite_tag
     nominal_true = float(model_to_true_km(nominal, datum, suite))
-    print(f"true depth: nominal {nominal_true:.1f} km (model {nominal:.1f} km)")
+    log_info(f"profile dG=0 at model {prof_eq:.1f} km, nominal {nominal:.1f} km -> true {nominal_true:.1f} km")
 
-    fig, ax = plt.subplots(1, 4, figsize=(10, 5), sharey=True)
-    fig.subplots_adjust(wspace=0.08)
+    fig, ax = plt.subplots(1, 4, figsize=(10.5, 5), sharey=True)
+    fig.subplots_adjust(wspace=0.04, left=0.06, right=0.82)
     for run in args.runs:
         try:
             rep, ts = load_rep(run, args.suite_tag)
         except (OSError, KeyError) as e:
-            print(f"skip {run}: {e}", file=sys.stderr)
+            log_warn(f"skip {run}: {e}")
             continue
         zx, xi = clean(rep["xi_ol_wd"])
         zd, dg = clean(rep["dG_driving_0"])
@@ -115,34 +109,24 @@ def main():
         pmod = np.interp(zx, zp, p)
         pad = np.interp(zx, za, pa) / 1e9
         ax[3].plot(pmod - pad, tx, **kw)
-        rt = zero_cross(zd, dg)
-        xihalf = float(np.interp(0.5, xi, zx)) if xi.min() < 0.5 < xi.max() else float("nan")
-        rt0 = rt[0] if rt else float("nan")
-        pmod0 = float(np.interp(rt0, zp, p)) if rt else float("nan")
-        j = int(np.nanargmax(np.abs(rate))) if np.isfinite(rate).any() else -1
-        print(
-            f"{bench_label(run)}: dG=0 at {float(model_to_true_km(rt0, datum, suite)):.1f} km (P={pmod0:.3f} GPa vs prof {prof_peq / 1e9:.3f}), "
-            f"xi0.5 at {float(model_to_true_km(xihalf, datum, suite)):.1f} km, max|rate| {rate[j]:.3g}/Ma at {float(model_to_true_km(zr[j], datum, suite)):.1f} km"
-        )
     for a in ax:
         a.axhline(nominal_true, color="grey", lw=1.5, ls="--")
         a.invert_yaxis()
         a.set_ylim(float(model_to_true_km(500, datum, suite)), float(model_to_true_km(250, datum, suite)))
     for a in ax[1:]:
         a.tick_params(labelleft=False)
-    ax[0].set_xlabel("$\\xi$ (dimensionless)")
+    ax[0].set_xlabel("$\\xi$")
     ax[0].set_xlim(-0.05, 1.05)
     ax[1].set_xlabel("$dG$ (kJ/mol)")
     ax[2].set_xlabel("$\\dot{X}$ (1/Ma)")
     ax[3].set_xlabel("$\\hat{P}$ (GPa)")
     ax[0].set_ylabel("Depth (km)")
     handles, labels = ax[0].get_legend_handles_labels()
-    ax[0].legend(handles, labels, fontsize=10, loc="lower left", frameon=True, facecolor="white", framealpha=0.9)
-    fig.tight_layout()
+    fig.legend(handles, labels, fontsize=10, loc="center left", bbox_to_anchor=(0.84, 0.5), frameon=True, facecolor="white", framealpha=0.9)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.out, dpi=300)
     plt.close(fig)
-    print(f"wrote -> {args.out}")
+    log_artifact(args.out)
 
 
 if __name__ == "__main__":

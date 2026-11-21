@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from simulation.mesh.config import apply_bench_style, bench_color, bench_label
+from utils.logging import log_artifact, log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
@@ -34,7 +35,7 @@ apply_bench_style()
 
 def read_rows(path, want):
     if not os.path.exists(path):
-        print("skip: missing " + path, file=sys.stderr)
+        log_warn("skip: missing " + path)
         return []
     with open(path) as f:
         rows = [r for r in csv.DictReader(f) if all(k in r for k in want)]
@@ -96,7 +97,7 @@ def main():
     records = read_rows(args.summary, ["suite", "run", "largest_range_MPa", "res", "z", "damp", "dynp"])
     post = read_rows(args.postprocessed, ["suite", "model_id", "disp410_km", "res", "z", "damp", "dynp"])
     if not records:
-        print("no history summary rows; nothing to plot", file=sys.stderr)
+        log_warn("no history summary rows; nothing to plot")
         return
     for r in records:
         r["cfl"] = r.get("cfl") or ""
@@ -157,7 +158,7 @@ def main():
         fig.tight_layout()
         fig.savefig(outdir / "step-boundary-error.png", dpi=300)
         plt.close(fig)
-    print("plots -> " + str(outdir))
+    log_artifact(outdir)
 
 
 if __name__ == "__main__":
