@@ -108,7 +108,7 @@ def write_stats_timeseries(stats_path, out_path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("run_dir", help="simulation/results/<run> directory")
-    ap.add_argument("-o", "--output", default=None)
+    ap.add_argument("-o", "--output", default=None, help="Output CSV path (default: <run_dir>/timeseries.csv)")
     ap.add_argument("--block-top-m", type=float, default=875e3, help="Block top [m] (project.mk BLOCK_Y_TOP)")
     ap.add_argument("--block-bottom-m", type=float, default=725e3, help="Block bottom [m] (project.mk BLOCK_Y_BOT)")
     ap.add_argument("--gravity", type=float, default=9.81, help="Gravity [m/s^2] (project.mk GRAVITY)")

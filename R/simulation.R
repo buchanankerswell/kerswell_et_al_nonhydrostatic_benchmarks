@@ -15,6 +15,7 @@ main <- function() {
   lapply(list.files(util_dir, pattern = "\\.R$", full.names = TRUE), source)
 
   force_rewrite <- if (length(args) >= 4) parse_logical(args[4]) else FALSE
+  # Reaction-rate anchors [1/s/K] from project.mk (Z_LO/Z_MID/Z_HI).
   if (length(args) >= 7) {
     z_levels <<- c(args[5], args[6], args[7])
   }

@@ -48,6 +48,9 @@ class BasePipeline:
     block_top_m: float = 875e3
     block_bot_m: float = 725e3
     gravity: float = 9.81
+    # Representative-trace guard (m, project.mk TRACE_X_STEP_LIMIT): max x
+    # jump between depth slices before the trace re-anchors.
+    x_step_limit_m: float = 150e3
 
     def __post_init__(self) -> None:
         self.preprocessor = MeshPreProcessor(self.verbosity, self.block_top_m, self.block_bot_m, self.gravity)
@@ -229,7 +232,7 @@ class PostProcessingPipeline(BasePipeline):
                 requested_depths = np.linspace(d_min, d_max, num=500)
                 y_max = mesh.bounds[3]
                 y_slicing_grid = y_max - requested_depths
-                representative_trace = self._extract_representative_trace(mesh, y_slicing_grid, requested_depths, x_step_limit=150e3)
+                representative_trace = self._extract_representative_trace(mesh, y_slicing_grid, requested_depths, x_step_limit=self.x_step_limit_m)
 
                 trace_depths = representative_trace["trace_x"]["depths"]
                 trace_x_vals = representative_trace["trace_x"]["values"]

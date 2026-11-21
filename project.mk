@@ -110,7 +110,11 @@ VIS_MODELS_BOX_SUITE  = $(if $(filter $(VIS_ON),$(VIS_ALL_BOX_SUITE)),$(notdir $
 VIS_MODELS_SINK_SUITE = $(if $(filter $(VIS_ON),$(VIS_ALL_SINK_SUITE)),$(notdir $(RESULTS_SINK_SUITE)),$(VIS_IDS_SINK_SUITE))
 
 # --------------------------------------------------
-# Runtime constants (can edit)
+# Runtime constants (can edit). All values are SI: temperatures K,
+# pressures Pa, times s, lengths m, rates 1/s/K, enthalpies J/mol,
+# volumes m^3/mol, viscosities Pa s, densities kg/m^3; CFL numbers,
+# iteration counts, Mg#, and mesh counts are dimensionless. Figure scripts
+# rescale to geologic units at plot time (see config.py).
 # --------------------------------------------------
 SURFACE_TEMPERATURE := 1706
 SURFACE_PRESSURE    := 2e+09
@@ -120,7 +124,7 @@ MAX_SOLVER_TSTEP    := 25e+03
 CHECKPOINT_TIME     := 300
 MG_NUM              := 100
 
-# Output cadence (21 run outputs each: end / viz-out = 20).
+# Output cadence (s, model time; 21 run outputs each: end / viz-out = 20).
 VIZ_OUT_BOX_SUITE  := 5e+05
 VIZ_OUT_SINK_SUITE := 2.5e+05
 
@@ -131,8 +135,8 @@ END_SINK := 5e6
 
 # Fixed solver settings (outside the parameter sweep, so absent from UIDs).
 # CFL 0.7 box / 0.5 sink proved low-sensitivity (box flat, sink timing-only).
-# Gravity 9.81 everywhere: matches the PerpleX profile construction, the
-# postprocessing thermal split (GRAV), and the ASPECT default.
+# Gravity everywhere (m/s^2): matches the PerpleX profile construction, the
+# postprocessing thermal split, and the ASPECT default.
 CFL_BOX  := 7e-01
 CFL_SINK := 5e-01
 GRAVITY  := 9.81
@@ -141,7 +145,7 @@ GRAVITY  := 9.81
 # integrated down a column through the initial block, adding ~589 MPa of
 # block weight into P_ref; the plugin subtracts that static load when
 # AMBIENT_REF is true so kinetics see ambient mantle. Box has no block, so
-# the correction is a no-op there. Geometry must match {block-expr} below.
+# the correction is a no-op there. Geometry (m) must match {block-expr} below.
 AMBIENT_REF := true
 BLOCK_Y_TOP := 875e3
 BLOCK_Y_BOT := 725e3
@@ -167,6 +171,10 @@ ETA_MAX   := 1e+24
 ETA_GIBBS := 1e+03
 
 DEPTH_CORRECTION_OL_WD := 5e+03
+
+# Reference density (kg/m^3) for the postprocessed thermal split of the
+# measured 410 displacement into thermal offset and kinetic contribution.
+REF_DENSITY := 4100.0
 
 # Init-step model-Y at the profile equilibrium. The runtime adiabat puts the
 # same equilibrium pressure deeper, so all runs relax from the init step
@@ -197,11 +205,26 @@ MODEL_WIDTH_BOX  := 300e+03
 MODEL_HEIGHT_BOX := 1000e+03
 MESH_X_BOX       := 1
 MESH_Y_BOX       := 4
+# Model extents are m; mesh counts are cells per direction.
 
 MODEL_WIDTH_SINK  := 1000e+03
 MODEL_HEIGHT_SINK := 1000e+03
 MESH_X_SINK       := 2
 MESH_Y_SINK       := 2
+
+# Depth-window figure steps (output numbers, subset of TIMESTEPS).
+DEPTH_WINDOW_STEPS := 00000 00002 00006 00012
+
+# Representative-trace guard (m): max x jump between depth slices before
+# the trace re-anchors to the strongest anomaly.
+TRACE_X_STEP_LIMIT := 150e3
+
+# Adiabat generation (BurnMan isentrope + PerpleX tables backing VERSIONED_DATA).
+# Potential temperature K, resolutions counts, planet radius m.
+ADIABAT_POTENTIAL_TEMP := 1573.0
+ADIABAT_TABLE_RES      := 128
+ADIABAT_PROFILE_RES    := 501
+PLANET_RADIUS          := 6370e3
 
 # --------------------------------------------------
 # Environment (no edits)

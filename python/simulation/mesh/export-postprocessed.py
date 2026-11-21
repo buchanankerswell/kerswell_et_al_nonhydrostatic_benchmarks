@@ -23,7 +23,7 @@ from simulation.params.transitions import (
 )
 from utils.logging import log_artifact, log_info
 
-RHO = 4100.0
+RHO_DEFAULT = 4100.0  # kg/m^3, mirrors project.mk REF_DENSITY
 
 UID_RE = re.compile(
     r"^NH_(?P<suite>Box|Sink)_Dynp(?P<dynp>On|Off)_Damp(?P<dampkind>[A-Za-z]+)(?P<dampval>[\d.e]*)"
@@ -35,13 +35,14 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Export NH postprocessed table.")
     parser.add_argument("--data-dir", required=True, help="Flattened simulation/results dir")
     parser.add_argument("--out-csv", required=True, help="Output CSV path")
-    parser.add_argument("--profile-ol-wd", required=True)
-    parser.add_argument("--model-height", type=float, required=True)
-    parser.add_argument("--surface-pressure", type=float, required=True)
-    parser.add_argument("--depth-corr-ol-wd", type=float, default=0.0)
+    parser.add_argument("--profile-ol-wd", required=True, help="Olivine-wadsleyite dG profile TSV path")
+    parser.add_argument("--model-height", type=float, required=True, help="Model height [m]")
+    parser.add_argument("--surface-pressure", type=float, required=True, help="Surface pressure [Pa]")
+    parser.add_argument("--depth-corr-ol-wd", type=float, default=0.0, help="Depth correction for the olivine-wadsleyite transition [m]")
     parser.add_argument("--nominal-410-box", type=float, default=None, help="Runtime-adiabat 410 nominal [m], box")
     parser.add_argument("--nominal-410-sink400", type=float, default=None, help="Runtime-adiabat 410 nominal [m], sink")
     parser.add_argument("--gravity", type=float, default=9.81, help="Gravity [m/s^2] (project.mk GRAVITY)")
+    parser.add_argument("--ref-density", type=float, default=None, help="Reference density [kg/m^3] for the thermal split (project.mk REF_DENSITY)")
     parser.add_argument("--force", action="store_true", help="Overwrite output.")
     return parser.parse_args()
 
@@ -112,9 +113,10 @@ def main():
             except KeyError:
                 continue
             disp410 = float(r["displacement_410"])
+            rho = args.ref_density if args.ref_density is not None else RHO_DEFAULT
             rxn = nominal_410_for_uid(mid, *nominals) if use_runtime_nominal else rxn410
             hatT410 = interp_at(rep, "nonadiabatic_temperature", rxn + disp410)
-            therm410 = gamma410 * hatT410 / (RHO * args.gravity)
+            therm410 = gamma410 * hatT410 / (rho * args.gravity)
             dampkind = m.group("dampkind")
             dampval = m.group("dampval") or "0"
             rows.append(

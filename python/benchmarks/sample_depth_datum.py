@@ -48,14 +48,14 @@ def block_overlap(y, excess, top_m, bot_m):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--profile", required=True)
-    ap.add_argument("--box-run", required=True)
-    ap.add_argument("--sink-run", required=True)
-    ap.add_argument("--sink-excess", type=float, default=400.0)
+    ap.add_argument("--profile", required=True, help="Olivine-wadsleyite dG profile TSV path")
+    ap.add_argument("--box-run", required=True, help="Finished box run directory to sample")
+    ap.add_argument("--sink-run", required=True, help="Finished sink run directory to sample")
+    ap.add_argument("--sink-excess", type=float, default=400.0, help="Sink block density excess [kg/m^3]")
     ap.add_argument("--block-top-m", type=float, default=875e3, help="Block top [m] (project.mk BLOCK_Y_TOP)")
     ap.add_argument("--block-bottom-m", type=float, default=725e3, help="Block bottom [m] (project.mk BLOCK_Y_BOT)")
     ap.add_argument("--gravity", type=float, default=9.81, help="Gravity [m/s^2] (project.mk GRAVITY)")
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--out", required=True, help="Output datum TSV path")
     args = ap.parse_args()
 
     headers, data = read_dG_profile(args.profile)

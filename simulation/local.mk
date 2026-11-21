@@ -2,9 +2,10 @@
 # plus timestep scaling (undamped; box half and double CFL, sink double
 # CFL only — the halved-CFL sink run blows up deterministically in the
 # initial transient, see project.mk). REGISTER_NH_BOX takes: list dynp
-# dampkind dampval z res [cfl].
-# REGISTER_NH_SINK takes: list dynp dampkind dampval block z res [cfl].
-# An empty cfl keeps the suite default (CFL_BOX / CFL_SINK in project.mk).
+# dampkind dampval z[1/s/K] res[level] [cfl].
+# REGISTER_NH_SINK takes: list dynp dampkind dampval block[kg/m^3]
+# z[1/s/K] res[level] [cfl].
+# An empty cfl keeps the suite default (CFL_BOX / CFL_SINK, dimensionless).
 $(eval $(call REGISTER_NH_BOX,UIDS_BOX_SUITE,1,none,0,$(Z_MID),5))
 $(eval $(call REGISTER_NH_BOX,UIDS_BOX_SUITE,0,none,0,$(Z_MID),5))
 $(eval $(call REGISTER_NH_BOX,UIDS_BOX_SUITE,1,Bimpl,1e21,$(Z_MID),5))

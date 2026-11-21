@@ -190,10 +190,10 @@ def paper_set(runs, ref):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", nargs="*", default=None, help="UIDs to include in the CSV (default: discover NH_* runs)")
-    ap.add_argument("--plot-box", nargs="*", default=None)
-    ap.add_argument("--plot-sink", nargs="*", default=None)
-    ap.add_argument("--out-csv", default="simulation/results/pressure-history-summary.csv")
-    ap.add_argument("--fig-dir", default="figs/benchmarks")
+    ap.add_argument("--plot-box", nargs="*", default=None, help="Box run UIDs to plot")
+    ap.add_argument("--plot-sink", nargs="*", default=None, help="Sink run UIDs to plot")
+    ap.add_argument("--out-csv", default="simulation/results/pressure-history-summary.csv", help="Output summary CSV path")
+    ap.add_argument("--fig-dir", default="figs/benchmarks", help="Output figure directory")
     args = ap.parse_args()
 
     box = [r for r in (args.runs or discover("NH_Box_")) if r.startswith("NH_Box_")]

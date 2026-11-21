@@ -97,14 +97,14 @@ def draw_domain(suite, width, height, trans_y, trace_x, nominal, probes, out):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--suite", required=True, choices=["box", "sink"])
-    ap.add_argument("--width-m", type=float, required=True)
-    ap.add_argument("--height-m", type=float, required=True)
-    ap.add_argument("--transition-y-m", type=float, required=True)
-    ap.add_argument("--trace-x-m", type=float, required=True)
-    ap.add_argument("--nominal-m", type=float, default=None)
-    ap.add_argument("--probes", default="")
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--suite", required=True, choices=["box", "sink"], help="Suite tag")
+    ap.add_argument("--width-m", type=float, required=True, help="Model width [m]")
+    ap.add_argument("--height-m", type=float, required=True, help="Model height [m]")
+    ap.add_argument("--transition-y-m", type=float, required=True, help="Init-step transition height [m]")
+    ap.add_argument("--trace-x-m", type=float, required=True, help="Representative-trace x [m]")
+    ap.add_argument("--nominal-m", type=float, default=None, help="Runtime-adiabat 410 nominal [m]")
+    ap.add_argument("--probes", default="", help="Probe points as x,y [m];x,y [m]")
+    ap.add_argument("--out", required=True, help="Output figure path")
     args = ap.parse_args()
     draw_domain(
         args.suite, args.width_m, args.height_m, args.transition_y_m, args.trace_x_m, args.nominal_m, parse_probes(args.probes), Path(args.out)

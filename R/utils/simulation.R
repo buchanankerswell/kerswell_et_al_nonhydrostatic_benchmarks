@@ -5,6 +5,8 @@
 suite_lab_box <- "Box"
 suite_lab_sink <- "Sink"
 suite_shapes <- c("Box" = 21, "Sink" = 22)
+# Reaction-rate anchors [1/s/K] (defaults mirror project.mk Z_LO/Z_MID/Z_HI;
+# R/simulation.R overrides them from the command line).
 z_levels <- c("9.51e-08", "4.44e-04", "1.4e+04")
 z_pal <- c("sluggish" = "#7FB3D5", "intermediate" = "#E41A1C", "quasi-equilibrium" = "#4D148C")
 

@@ -94,7 +94,7 @@ def panel_history(ax, df, damp_pat="Bimpl1e21"):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--fig-dir", default="figs/benchmarks")
+    ap.add_argument("--fig-dir", default="figs/benchmarks", help="Output figure directory")
     args = ap.parse_args()
     figdir = Path(args.fig_dir)
     figdir.mkdir(parents=True, exist_ok=True)

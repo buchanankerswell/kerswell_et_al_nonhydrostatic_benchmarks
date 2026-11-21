@@ -51,6 +51,7 @@ $(POSTPROCESSED_CSV):
 	  --nominal-410-box=$(NOMINAL_410_BOX) \
 	  --nominal-410-sink400=$(NOMINAL_410_SINK400) \
 	  --gravity=$(GRAVITY) \
+	  --ref-density=$(REF_DENSITY) \
 	  --force
 	$(call LOG_ARTIFACT,$@)
 
@@ -94,8 +95,7 @@ meshes: meshes-box-suite meshes-sink-suite
 # pressure/density/vertical-flow, set1 is drive/rate/fraction). Steps and
 # nominals match the existing figures. Outputs carry the full run UID.
 # Runs without synced solutions are skipped, so this works before and
-# after sync-barkla.
-DEPTH_WINDOW_STEPS := 00000 00002 00006 00012
+# after sync-barkla (steps from project.mk DEPTH_WINDOW_STEPS).
 
 depth-window:
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/compute_window_clims.py \
@@ -137,6 +137,7 @@ define MESH_SUITE
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
 	  --nominal-410=$(5) \
 	  --trace-x=$(6) \
+	  --x-step-limit-m=$(TRACE_X_STEP_LIMIT) \
 	  --block-top-m=$(BLOCK_Y_TOP) \
 	  --block-bottom-m=$(BLOCK_Y_BOT) \
 	  --gravity=$(GRAVITY) \
@@ -157,7 +158,9 @@ adiabat: $(PROFILES)
 
 $(PROFILES): $(SIMULATION)/data/olivine-wadsleyite-profile-Mg%.tsv:
 	@for model in $(PERPLEX_MODELS); do \
-	  cd $(PERPLEX)/$$model && PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/adiabat/main.py $$model $* $(SIMULATION)/data $(FIGS)/adiabat --surface-gravity $(GRAVITY); \
+	  cd $(PERPLEX)/$$model && PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/adiabat/main.py $$model $* $(SIMULATION)/data $(FIGS)/adiabat \
+	    --potential-temperature $(ADIABAT_POTENTIAL_TEMP) --out-table-resolution $(ADIABAT_TABLE_RES) \
+	    --out-profile-resolution $(ADIABAT_PROFILE_RES) --planet-radius $(PLANET_RADIUS) --surface-gravity $(GRAVITY); \
 	done
 
 clean:

@@ -33,7 +33,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument("--suite-tag", type=str, required=True, help="Suite tag: box or sink")
 
     parser.add_argument("--model-ids", nargs="+", type=str, required=True, help="Simulation names")
-    parser.add_argument("--timesteps", nargs="+", type=int, required=True, help="Timesteps to process")
+    parser.add_argument("--timesteps", nargs="+", type=int, required=True, help="Output numbers to process")
     parser.add_argument("--in-dirs", nargs="+", type=str, required=True, help="Simulation results directories")
     parser.add_argument("--visualize-ids", nargs="*", type=str, default=None, help="Subset to render and tile (default: all).")
     parser.add_argument("--chunk", type=str, default=None, help="Chunk label (i/N) set by the parent when splitting work.")
@@ -45,6 +45,9 @@ def parse_arguments() -> Namespace:
         type=float,
         default=None,
         help="Runtime-adiabat 410 nominal depth [m]; supersedes profile + depth-corr for X_wd when given.",
+    )
+    parser.add_argument(
+        "--x-step-limit-m", type=float, default=150e3, help="Representative-trace max x jump per depth slice [m] (project.mk TRACE_X_STEP_LIMIT)."
     )
     parser.add_argument(
         "--trace-x",
@@ -122,6 +125,7 @@ def main():
                 cmd += [f"--nominal-410={args.nominal_410}"]
             if args.trace_x is not None:
                 cmd += [f"--trace-x={args.trace_x}"]
+            cmd += [f"--x-step-limit-m={args.x_step_limit_m}"]
             cmd += ["--suppress-artifact=true", f"--chunk={idx + 1}/{n_chunks}"]
             subprocess.run(cmd, check=True)
         if args.mode in ("postprocess", "full"):
@@ -203,6 +207,7 @@ def main():
             verbosity=verbosity,
             suite_tag=args.suite_tag,
             trace_x=args.trace_x,
+            x_step_limit_m=args.x_step_limit_m,
             depth_datum=depth_datum,
             block_top_m=args.block_top_m,
             block_bot_m=args.block_bottom_m,
@@ -227,6 +232,7 @@ def main():
                 verbosity=verbosity,
                 suite_tag=args.suite_tag,
                 trace_x=args.trace_x,
+                x_step_limit_m=args.x_step_limit_m,
                 depth_datum=depth_datum,
                 block_top_m=args.block_top_m,
                 block_bot_m=args.block_bottom_m,
@@ -258,6 +264,7 @@ def main():
             verbosity=verbosity,
             suite_tag=args.suite_tag,
             trace_x=args.trace_x,
+            x_step_limit_m=args.x_step_limit_m,
             depth_datum=depth_datum,
             block_top_m=args.block_top_m,
             block_bot_m=args.block_bottom_m,

@@ -70,14 +70,14 @@ def profile_equilibrium(profile_path, model_height, surface_pressure):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--runs", nargs="+", required=True)
-    ap.add_argument("--suite-tag", required=True)
-    ap.add_argument("--profile", required=True)
-    ap.add_argument("--model-height", type=float, required=True)
-    ap.add_argument("--surface-pressure", type=float, required=True)
-    ap.add_argument("--depth-corr-ol-wd", type=float, default=5e3)
+    ap.add_argument("--runs", nargs="+", required=True, help="Run UIDs to plot")
+    ap.add_argument("--suite-tag", required=True, help="Suite tag: box or sink")
+    ap.add_argument("--profile", required=True, help="Olivine-wadsleyite dG profile TSV path")
+    ap.add_argument("--model-height", type=float, required=True, help="Model height [m]")
+    ap.add_argument("--surface-pressure", type=float, required=True, help="Surface pressure [Pa]")
+    ap.add_argument("--depth-corr-ol-wd", type=float, default=5e3, help="Depth correction for the olivine-wadsleyite transition [m]")
     ap.add_argument("--nominal-m", type=float, default=None, help="Runtime-adiabat 410 nominal [m]; defaults to profile + depth correction")
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--out", required=True, help="Output figure path")
     args = ap.parse_args()
 
     prof_eq, prof_peq, gamma = profile_equilibrium(args.profile, args.model_height, args.surface_pressure)
