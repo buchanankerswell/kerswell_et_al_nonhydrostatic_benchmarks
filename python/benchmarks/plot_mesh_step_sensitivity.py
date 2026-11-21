@@ -135,6 +135,7 @@ def main():
     fig.tight_layout()
     fig.savefig(outdir / "mesh-sensitivity.png", dpi=300)
     plt.close(fig)
+    log_artifact(outdir / "mesh-sensitivity.png")
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 5), sharey=False)
     for i, suite in enumerate(("box", "sink")):
@@ -146,6 +147,7 @@ def main():
     fig.tight_layout()
     fig.savefig(outdir / "step-sensitivity.png", dpi=300)
     plt.close(fig)
+    log_artifact(outdir / "step-sensitivity.png")
 
     if offsets:
         fig, ax = plt.subplots(1, 2, figsize=(12, 5), sharey=False)
@@ -158,7 +160,7 @@ def main():
         fig.tight_layout()
         fig.savefig(outdir / "step-boundary-error.png", dpi=300)
         plt.close(fig)
-    log_artifact(outdir)
+        log_artifact(outdir / "step-boundary-error.png")
 
 
 if __name__ == "__main__":

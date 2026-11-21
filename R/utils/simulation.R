@@ -39,6 +39,8 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
   z_vals <- suppressWarnings(as.numeric(z_levels))
   df <- suppressWarnings(read_csv(postprocessed_csv, show_col_types = FALSE)) |>
     mutate(
+      # File reaction rates are 1/s; figures use geologic 1/Ma.
+      rate410 = rate410 * 3.154e13,
       suite = factor(case_when(
         suite == "box" ~ suite_lab_box,
         suite == "sink" ~ suite_lab_sink,

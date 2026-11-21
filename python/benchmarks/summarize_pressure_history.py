@@ -225,6 +225,7 @@ def main():
         w.writeheader()
         w.writerows(rows)
     log_info(f"summarized {len(rows)} runs -> {out_csv}")
+    log_artifact(out_csv)
 
     figdir = Path(args.fig_dir)
     box_paper = args.plot_box if args.plot_box is not None else paper_set(box, 5)
@@ -232,15 +233,18 @@ def main():
     und = next((r for r in box_paper if "_DynpOn_DampNone_" in r), None)
     nod = next((r for r in box_paper if "_DynpOff_DampNone_" in r), None)
     plot_suite(box_paper, figdir / "pressure-history-box.png", und, reference=nod)
+    log_artifact(figdir / "pressure-history-box.png")
     und = next((r for r in sink_paper if "_DynpOn_DampNone_" in r), None)
     nod = next((r for r in sink_paper if "_DynpOff_DampNone_" in r), None)
     plot_suite(sink_paper, figdir / "pressure-history-sink.png", und, reference=nod)
+    log_artifact(figdir / "pressure-history-sink.png")
     for runs, tag in ((box_paper, "box"), (sink_paper, "sink")):
         und = next((r for r in runs if "_DynpOn_DampNone_" in r), None)
         nod = next((r for r in runs if "_DynpOff_DampNone_" in r), None)
         plot_mean_flow_suite(runs, figdir / f"mean-flow-speed-{tag}.png", und, reference=nod)
+        log_artifact(figdir / f"mean-flow-speed-{tag}.png")
         plot_point_suite(runs, figdir / f"point-pressure-{tag}.png", und, reference=nod)
-    log_artifact(figdir)
+        log_artifact(figdir / f"point-pressure-{tag}.png")
 
 
 if __name__ == "__main__":

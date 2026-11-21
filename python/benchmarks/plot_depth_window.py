@@ -203,7 +203,7 @@ def main():
     ap.add_argument("--model", required=True)
     ap.add_argument("--steps", nargs=4, required=True)
     ap.add_argument("--nominal-410-m", type=float, default=379943.0)
-    ap.add_argument("--window-half-km", type=float, default=50.0)
+    ap.add_argument("--window-half-m", type=float, default=50e3)
     ap.add_argument("--set", choices=["set0", "set1"], default="set0")
     ap.add_argument("--block-top-m", type=float, default=875e3, help="Block top [m] (project.mk BLOCK_Y_TOP)")
     ap.add_argument("--block-bottom-m", type=float, default=725e3, help="Block bottom [m] (project.mk BLOCK_Y_BOT)")
@@ -215,7 +215,7 @@ def main():
 
     nominal_y = 1e6 - args.nominal_410_m
     yc = nominal_y
-    half = args.window_half_km * 1e3
+    half = args.window_half_m
 
     steps_data = [read_step(args.model, s, args.block_top_m, args.block_bottom_m, args.gravity) for s in args.steps]
     times = [step_time_myr(args.model, s) for s in args.steps]

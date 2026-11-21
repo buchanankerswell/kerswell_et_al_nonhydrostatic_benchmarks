@@ -139,6 +139,9 @@ class MeshConfig:
 BENCH_FACECOLOR = "0.92"
 BENCH_DPI = 300
 
+# Seconds per million years: file reaction rates are 1/s, figures use 1/Ma.
+S_PER_MA = 3.154e13
+
 
 def apply_bench_style():
     """Match R theme_bench: grey92 panels, no grid, tick marks off, dpi 300."""

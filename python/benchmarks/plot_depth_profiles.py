@@ -24,7 +24,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from simulation.mesh.config import apply_bench_style, bench_color, bench_label
+from simulation.mesh.config import S_PER_MA, apply_bench_style, bench_color, bench_label
 from simulation.params.transitions import (
     find_surface_depth_offset,
     find_transition,
@@ -76,12 +76,12 @@ def main():
     ap.add_argument("--model-height", type=float, required=True)
     ap.add_argument("--surface-pressure", type=float, required=True)
     ap.add_argument("--depth-corr-ol-wd", type=float, default=5e3)
-    ap.add_argument("--nominal-km", type=float, default=None, help="Runtime-adiabat 410 nominal (km); defaults to profile + depth correction")
+    ap.add_argument("--nominal-m", type=float, default=None, help="Runtime-adiabat 410 nominal [m]; defaults to profile + depth correction")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
     prof_eq, prof_peq, gamma = profile_equilibrium(args.profile, args.model_height, args.surface_pressure)
-    nominal = args.nominal_km if args.nominal_km is not None else prof_eq + args.depth_corr_ol_wd / 1e3
+    nominal = args.nominal_m / 1e3 if args.nominal_m is not None else prof_eq + args.depth_corr_ol_wd / 1e3
     datum = load_depth_datum(str(DATUM))
     suite = args.suite_tag
     nominal_true = float(model_to_true_km(nominal, datum, suite))
@@ -105,7 +105,7 @@ def main():
         kw = dict(lw=2.2, alpha=0.9, label=bench_label(run), color=bench_color(run))
         ax[0].plot(xi, tx, **kw)
         ax[1].plot(dg / 1e3, model_to_true_km(zd, datum, suite), **kw)
-        ax[2].plot(rate, tr, **kw)
+        ax[2].plot(rate * S_PER_MA, tr, **kw)
         pmod = np.interp(zx, zp, p)
         pad = np.interp(zx, za, pa) / 1e9
         ax[3].plot(pmod - pad, tx, **kw)

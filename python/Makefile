@@ -32,7 +32,6 @@ setup:
 	  --transition-y-m $(TRANSITION_Y_OL_WD) --trace-x-m $(TRACE_X_BOX) --nominal-m $(NOMINAL_410_BOX) --probes "$(POINTS_BOX)" --out $(FIGS_SETUP)/box-domain.png
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/setup/domains.py --suite sink --width-m $(MODEL_WIDTH_SINK) --height-m $(MODEL_HEIGHT_SINK) \
 	  --transition-y-m $(TRANSITION_Y_OL_WD) --trace-x-m $(TRACE_X_SINK) --nominal-m $(NOMINAL_410_SINK400) --probes "$(POINTS_SINK)" --out $(FIGS_SETUP)/sink-domain.png
-	$(call LOG_ARTIFACT,$(FIGS_SETUP))
 
 sync-barkla:
 	@$(MAKE) --no-print-directory -C $(BASH) sync-barkla
@@ -72,17 +71,15 @@ pressure-history: timeseries
 	  --runs $(PLOT_BOX_RUNS) --suite-tag box --profile $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
 	  --model-height $(MODEL_HEIGHT_BOX) --surface-pressure $(SURFACE_PRESSURE) \
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
-	  --nominal-km $(shell echo $(NOMINAL_410_BOX) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/depth-profiles-box.png
+	  --nominal-m=$(NOMINAL_410_BOX) --out $(FIGS)/benchmarks/depth-profiles-box.png
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_profiles.py \
 	  --runs $(PLOT_SINK_RUNS) --suite-tag sink --profile $(SIMULATION)/data/olivine-wadsleyite-profile-Mg$(MG_NUM).tsv \
 	  --model-height $(MODEL_HEIGHT_SINK) --surface-pressure $(SURFACE_PRESSURE) \
 	  --depth-corr-ol-wd=$(DEPTH_CORRECTION_OL_WD) \
-	  --nominal-km $(shell echo $(NOMINAL_410_SINK400) | awk '{print $$1/1000}') --out $(FIGS)/benchmarks/depth-profiles-sink.png
-	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
+	  --nominal-m=$(NOMINAL_410_SINK400) --out $(FIGS)/benchmarks/depth-profiles-sink.png
 
 diagnostics: postprocess
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_bulk_damping_check.py --fig-dir $(FIGS)/benchmarks
-	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
 scaling: pressure-history postprocess
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_mesh_step_sensitivity.py \
@@ -90,7 +87,6 @@ scaling: pressure-history postprocess
 	  --postprocessed $(POSTPROCESSED_CSV) \
 	  --out-dir $(FIGS)/benchmarks \
 	  --z-mid $(Z_MID) --cfl-box $(CFL_BOX) --cfl-sink $(CFL_SINK)
-	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
 meshes: meshes-box-suite meshes-sink-suite
 
@@ -120,7 +116,6 @@ depth-window:
 	      --out $(FIGS)/benchmarks/depth-window-$$model-$$s.png --set $$s; \
 	  done; \
 	done
-	$(call LOG_ARTIFACT,$(FIGS)/benchmarks)
 
 # Shared mesh recipe: $(1)=suite tag, $(2)=models, $(3)=visualize ids,
 # $(4)=fig dir, $(5)=410 nominal [m], $(6)=trace x [m], $(7)=model height [m].

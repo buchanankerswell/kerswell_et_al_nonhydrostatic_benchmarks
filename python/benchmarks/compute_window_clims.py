@@ -19,7 +19,7 @@ from pathlib import Path
 from utils.logging import log_artifact, log_info, log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
-WINDOW_HALF_KM = 50.0
+WINDOW_HALF_M = 50e3
 
 
 def main():
@@ -38,7 +38,7 @@ def main():
 
     nominal_m = {"box": args.nominal_box_m, "sink": args.nominal_sink_m}
 
-    half = WINDOW_HALF_KM * 1e3
+    half = WINDOW_HALF_M
     grouped = {"box": [], "sink": []}
     for model in args.models:
         suite = "sink" if model.startswith("NH_Sink_") else "box"

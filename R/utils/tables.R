@@ -18,6 +18,8 @@ write_postprocessed_summary_table <- function(postprocessed_csv, out_dir, quiet 
 
   formatted <- postprocessed_data |>
     mutate(
+      # File reaction rates are 1/s; the table matches the figures in 1/Ma.
+      rate410 = rate410 * 3.154e13,
       suite_abbr = case_when(
         suite == "box" ~ "Box",
         suite == "sink" ~ "Sink",
