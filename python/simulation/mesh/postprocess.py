@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 import numpy as np
-import pyvista as pv
 from config import MeshConfig
+
 
 @dataclass
 class MeshPostProcessor:
@@ -15,83 +15,6 @@ class MeshPostProcessor:
 
     config: MeshConfig
     verbosity: int = 0
-
-    def measure_discontinuity_structure(
-        self,
-        mesh: pv.UnstructuredGrid,
-        field: str,
-        rxn_depth: float,
-        x_offset: float = 750e3,
-        width_threshold: float = 15e3,
-    ) -> dict[str, float]:
-        """
-        Find the best-representative vertical profile and measure the phase transition displacement and width from the X=0.1 to X=0.9 interval.
-
-        Args:
-            mesh:      Source mesh with 'depth' and field point data.
-            field:     Phase fraction field name (values expected in [0, 1]).
-            rxn_depth: Nominal reaction depth for this transition (m).
-            threshold: Width threshold (m) above which width-based selection is preferred when not in a displacement regime.
-
-        Returns:
-            Dict with keys 'x_position', 'displacement', and 'width' (all in m). All values are nan if no valid profile is found.
-        """
-        x_coords = mesh.points[:, 0]
-        x_center = 0.5 * (x_coords.min() + x_coords.max())
-        x_start = max(x_center - x_offset, x_coords.min())
-        x_end = min(x_center + x_offset, x_coords.max())
-
-        x_positions = np.unique(x_coords)
-        x_positions = x_positions[(x_positions >= x_start) & (x_positions <= x_end)]
-
-        valid = []
-        for x in x_positions:
-            mask = x_coords == x
-            depths = mesh.point_data["depth"][mask]
-            values = mesh.point_data[field][mask]
-            sort_idx = np.argsort(depths)
-
-            trans_depth, displacement, width = self._evaluate_transition_structure(depths[sort_idx], values[sort_idx], rxn_depth)
-            if not (np.isnan(trans_depth) or np.isnan(displacement) or np.isnan(width)):
-                valid.append((x, trans_depth, displacement, width))
-
-        if not valid:
-            return {"x_position": np.nan, "displacement": np.nan, "width": np.nan}
-
-        x_vals, trans_depths, displacements, widths = np.array(valid).T
-
-        # Determine most representative depth profile
-        if np.any(widths > width_threshold):
-            best_idx = np.nanargmax(widths)
-        else:
-            median_trans_depth = np.nanmedian(trans_depths)
-            deviations = np.abs(trans_depths - median_trans_depth)
-            best_idx = np.nanargmax(deviations)
-
-        return {"x_position": x_vals[best_idx], "displacement": displacements[best_idx], "width": widths[best_idx]}
-
-    def extract_depth_profile(self, mesh: pv.UnstructuredGrid, field: str, x_pos: float, tolerance=500.0) -> tuple[np.ndarray, np.ndarray]:
-        """
-        Return (depths, values) along a vertical profile at x_pos, sorted by depth.
-
-        Args:
-            mesh:          Source mesh with 'depth' point data.
-            field:         Field name to extract values for.
-            x_pos:         x-coordinate of the vertical profile (m).
-            tolerance:     x_pos tolerance for extracting depth profile (m).
-
-        Returns:
-            Tuple of (depths, values) arrays sorted by depth, or two empty arrays if no points are found at x_pos.
-        """
-        mask = np.isclose(mesh.points[:, 0], x_pos, atol=tolerance)
-        if not np.any(mask):
-            return np.empty(0), np.empty(0)
-
-        depths = mesh.point_data["depth"][mask]
-        values = mesh.point_data[field][mask] * self.config.scaling_map.get(field, 1.0)
-
-        sort_idx = np.argsort(depths)
-        return depths[sort_idx], values[sort_idx]
 
     def calculate_max_in_region(
         self, depths: np.ndarray, values: np.ndarray, rxn_depth: float, displacement: float, width: float, width_threshold: float = 15e3
@@ -125,7 +48,9 @@ class MeshPostProcessor:
 
         return float(np.nanmax(np.abs(values[mask]))) if np.any(mask) else np.nan
 
-    def transition_depth_bounds(self, rxn_depth: float, displacement: float, width: float, width_threshold: float = 15e3, for_visualizing: bool = False) -> tuple[float, float]:
+    def transition_depth_bounds(
+        self, rxn_depth: float, displacement: float, width: float, width_threshold: float = 15e3, for_visualizing: bool = False
+    ) -> tuple[float, float]:
         """
         Return (lower, upper) mesh-relative depth bounds for the transition window.
 
@@ -154,7 +79,7 @@ class MeshPostProcessor:
         """
         Return (lower_factor, upper_factor) for the transition depth window.
 
-        Narrow transitions (width <= 5 km) use a wider lower margin to capture the full phase change. Broad transitions use a tighter window.
+        Narrow transitions (width <= threshold) use a wider lower margin to capture the full phase change. Broad transitions use a tighter window.
         """
         return (2.5, 1.5) if width <= width_threshold else (2.0, 1.0)
 
@@ -168,30 +93,24 @@ class MeshPostProcessor:
         """
         Measure the displacement and width of a phase transition from a depth profile.
 
-        A phase fraction grows from zero to one across its own transition, but the next transition
-        overprints it: the wadsleyite fraction of a cold slab falls back to zero below the 520.
-        The transition is therefore bracketed from the profile itself, from the first sample above
-        one tenth to the first sample above nine tenths, and the monotonicity repair is confined to
-        that bracket. Repairing the whole depth column would pull the overprinting transition into
-        the repair and flatten the transition boundaries along with it.
+        The transition runs from the first sample above 0.1 to the first
+        sample above 0.9 in phase fraction. Small dips inside that span are
+        smoothed, and crossings are found by straight-line interpolation.
+        Each crossing anchors to rxn_depth: when several crossings exist,
+        the one whose midpoint sits closest to rxn_depth wins, so stray
+        crossings far from the known transition depth cannot hijack the
+        measurement.
 
-        Within the bracket the profile is repaired for monotonicity using isotonic regression
-        (PAVA), which pools local decreases and leaves the rise itself untouched.
-
-        Crossings at X=0.1 and X=0.9 are located by linear interpolation, with each crossing
-        anchored to rxn_depth: when multiple crossings exist, the one whose midpoint depth is
-        closest to rxn_depth is selected. This prevents noise crossings far from the known
-        transition depth from being mistaken for the real transition boundary.
-
-        When both crossings are found, the result is validated before use:
-            - depth_90 must be greater than depth_10 (crossings must be in the correct order).
+        When both crossings are found, the result is checked before use:
+            - depth_90 must be greater than depth_10 (crossings in order).
             - the midpoint of the transition must lie within max_displacement_limit of rxn_depth.
 
         Transition structure is then computed as:
             displacement = depth(X=0.9) - rxn_depth
             width        = depth(X=0.9) - depth(X=0.1)
 
-        If only one crossing is found, width falls back to the local vertical grid spacing at that crossing and trans_depth is set to the single
+        If only one crossing is found, width falls back to the local depth
+        spacing at that crossing and trans_depth is set to the single
         valid crossing depth.
 
         Args:
@@ -201,7 +120,7 @@ class MeshPostProcessor:
             search_window: Half-width (m) of the depth window around rxn_depth within which the inferred transition must lie. Default 80 km.
 
         Returns:
-            (trans_depth, displacement, width) in metres, or (nan, nan, nan) if the profile is too corrupt, no valid crossings are found,
+            (trans_depth, displacement, width) in meters, or (nan, nan, nan) if the profile is too corrupt, no valid crossings are found,
             or the inferred transition location fails the proximity check.
         """
 
@@ -236,9 +155,7 @@ class MeshPostProcessor:
 
         # Monotonicity repair via isotonic regression (PAVA), confined to the transition.
         repaired_values = values.copy()
-        repaired_values[lo : hi + 1] = self._repair_monotonic(
-            values[lo : hi + 1], depths[lo : hi + 1], rxn_depth, search_window, bounds=(0, hi - lo)
-        )
+        repaired_values[lo : hi + 1] = self._repair_monotonic(values[lo : hi + 1], depths[lo : hi + 1], rxn_depth, search_window, bounds=(0, hi - lo))
 
         bracket_depths = depths[lo : hi + 1]
         bracket_values = repaired_values[lo : hi + 1]
@@ -320,20 +237,19 @@ class MeshPostProcessor:
         bounds: tuple[int, int] | None = None,
     ) -> np.ndarray:
         """
-        Repair monotonicity violations in a phase fraction profile near a known reaction depth.
+        Smooth out dips in a phase fraction profile near a known transition depth.
 
-        Only the subset of points within search_window of rxn_depth is inspected and repaired using the Pool Adjacent Violators Algorithm (PAVA).
-        Non-monotonic artefacts outside this window are ignored entirely, preventing unrelated mesh noise elsewhere in the depth column from
-        triggering rejection or corrupting the repair.
-
-        Within the window, PAVA pools adjacent violating points into blocks and replaces each block with its mean. Pools are formed where the
-        profile decreases, so a rising phase fraction passes through untouched and only local dips are smoothed.
+        Only points within search_window of rxn_depth are touched. Dips are
+        pooled with their neighbors and replaced by the pool mean, so a
+        rising phase fraction passes through unchanged and only local dips
+        are flattened. Points outside the window are ignored, keeping mesh
+        noise elsewhere in the depth column out of the repair.
 
         Args:
             values:        Phase fraction array (expected to be broadly 0 -> 1).
             depths:        Depth array (m), sorted ascending, aligned with values.
-            rxn_depth:     Nominal reaction depth (m) used to centre the search window.
-            search_window: Half-width (m) of the depth window around rxn_depth within which monotonicity is enforced. Default 80 km.
+            rxn_depth:     Nominal reaction depth (m) used to center the search window.
+            search_window: Half-width (m) of the depth window around rxn_depth. Default 100 km.
             bounds:        Optional (lo, hi) index range to repair, overriding the search window.
 
         Returns:

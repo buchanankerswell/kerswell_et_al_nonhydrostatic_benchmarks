@@ -4,7 +4,7 @@ write_postprocessed_summary_table <- function(postprocessed_csv, out_dir, quiet 
     return(invisible())
   }
 
-  if (!quiet) log_info("Reading and formatting postprocessed slab data")
+  if (!quiet) log_info("Reading and formatting benchmark data")
 
   postprocessed_data <- suppressWarnings(read_csv(postprocessed_csv, show_col_types = FALSE))
 
@@ -18,47 +18,34 @@ write_postprocessed_summary_table <- function(postprocessed_csv, out_dir, quiet 
 
   formatted <- postprocessed_data |>
     mutate(
-      test = case_when(
-        is_T & scenario == 16 ~ "T1",
-        is_T & scenario == 17 ~ "T2",
-        is_T & scenario == 18 ~ "T3",
-        is_T & scenario == 19 ~ "T4",
-        TRUE ~ ""
-      ),
-      regime = case_when(
-        L_km <= 5 & vmax660 > 0.5 ~ 1L,
-        L_km > 5 & vmax660 > 0.5 ~ 2L,
-        TRUE ~ 3L
-      ),
-      suite_ord = factor(suite, levels = c("sw-suite", "nc-suite")),
+      # Cache stores display units (kJ/mol, 1/Ma, GPa); no conversion needed.
+      rate410_per_Ma = rate410_per_Ma,
       suite_abbr = case_when(
-        is_T ~ test,
-        suite == "sw-suite" ~ "SW",
-        TRUE ~ "NC"
-      )
+        suite == "sink" ~ "Sink",
+        TRUE ~ suite
+      ),
+      damp_num = suppressWarnings(as.numeric(str_extract(damp, "[\\d.e+-]+$"))),
+      damp_ord = factor(damp, levels = unique(damp[order(dynp, damp, damp_num, res, z)]))
     ) |>
+    arrange(suite_abbr, dynp, damp_ord, damp_num, res, z) |>
     select(
       Suite = suite_abbr,
-      Scenario = scenario,
-      `$Z_\\mathrm{ri}$` = z_ri_ps,
-      `$\\delta z$` = disp660_km,
-      `$\\delta w$` = width660_km,
-      `$\\dot{X}_\\mathrm{max}$` = rate660,
-      `$\\vec{v}_\\mathrm{max}$` = vmax660,
-      `$\\delta z_t$` = therm660_km,
-      `$\\delta z_k$` = kin660_km,
-      Regime = regime,
-      suite_ord = suite_ord,
-      test_ord = test
+      Model = model_id,
+      Damping = damp,
+      `Dynp on` = dynp,
+      Res = res,
+      `Z (1/s/K)` = z,
+      `$\\delta z_{410}$ (km)` = disp410_km,
+      `$\\delta w_{410}$ (km)` = width410_km,
+      `$\\dot{X}_\\mathrm{max}$ (1/Ma)` = rate410_per_Ma,
+      `$\\delta z_t$ (km)` = therm410_km,
+      `$\\delta z_k$ (km)` = kin410_km
     ) |>
-    arrange(suite_ord, Scenario, test_ord, desc(`$Z_\\mathrm{ri}$`)) |>
-    select(-suite_ord, -test_ord) |>
-    mutate(across(c(`$Z_\\mathrm{ri}$`), ~ formatC(.x, format = "e", digits = 1))) |>
-    mutate(across(c(`$\\dot{X}_\\mathrm{max}$`), ~ formatC(.x, format = "e", digits = 2))) |>
-    mutate(across(c(`$\\vec{v}_\\mathrm{max}$`), ~ formatC(.x, format = "f", digits = 2))) |>
-    mutate(across(c(`$\\delta z$`, `$\\delta w$`, `$\\delta z_t$`, `$\\delta z_k$`), ~ formatC(.x, format = "f", digits = 1)))
+    mutate(across(c(`$\\dot{X}_\\mathrm{max}$ (1/Ma)`), ~ formatC(.x, format = "e", digits = 2))) |>
+    mutate(across(c(`Z (1/s/K)`), ~ formatC(as.numeric(.x), format = "e", digits = 2))) |>
+    mutate(across(c(`$\\delta z_{410}$ (km)`, `$\\delta w_{410}$ (km)`, `$\\delta z_t$ (km)`, `$\\delta z_k$ (km)`), ~ formatC(.x, format = "f", digits = 1)))
 
-  col_align <- c("l", rep("r", ncol(formatted) - 1))
+  col_align <- c("l", "l", "l", rep("r", ncol(formatted) - 3))
 
   md_table <- kable(formatted, format = "pipe", escape = FALSE, align = col_align)
   writeLines(md_table, out_path_md)

@@ -15,6 +15,9 @@ main <- function() {
 
   lapply(list.files(util_dir, pattern = "\\.R$", full.names = TRUE), source)
 
+  # Figure resolution from project.mk FIG_DPI (draft 100, manuscript 330).
+  fig_dpi <- if (length(args) >= 5) as.numeric(args[5]) else 100
+
   if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
 
   in_adiabatic_profile <- file.path(data_dir, paste0(model_id, "-adiabatic-profile.tsv"))
@@ -29,7 +32,7 @@ main <- function() {
   out_material_profiles <- file.path(out_dir, "material-property-profiles.png")
   out_thermodynamic_profiles <- file.path(out_dir, "thermodynamic-property-profiles.png")
 
-  missing <- c(in_material_table, in_profiles)[!file.exists(c(in_material_table, in_profiles))]
+  missing <- c(in_material_table, in_profiles, in_adiabatic_profile)[!file.exists(c(in_material_table, in_profiles, in_adiabatic_profile))]
 
   if (length(missing) > 0) {
     log_warn("the following input files do not exist:")
@@ -39,9 +42,9 @@ main <- function() {
 
   tryCatch(
     {
-      visualize_material_table(in_adiabatic_profile, in_material_table, out_material_table)
-      visualize_material_profile(in_profiles, out_material_profiles)
-      visualize_thermodynamic_profile(in_profiles, out_thermodynamic_profiles)
+      visualize_material_table(in_adiabatic_profile, in_material_table, out_material_table, fig_dpi = fig_dpi)
+      visualize_material_profile(in_profiles, out_material_profiles, fig_dpi = fig_dpi)
+      visualize_thermodynamic_profile(in_profiles, out_thermodynamic_profiles, fig_dpi = fig_dpi)
     },
     error = function(e) {
       log_error(paste("drawing issue:", conditionMessage(e)))

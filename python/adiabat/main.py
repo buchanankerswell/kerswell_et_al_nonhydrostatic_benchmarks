@@ -4,8 +4,9 @@ from pathlib import Path
 from burnman import Composite, minerals
 from profiles import AdiabaticProfile, DrivingForceProfile
 
+
 def parse_arguments() -> Namespace:
-    """Parse command line arguments."""
+    """Read command-line arguments."""
     parser = ArgumentParser(description="Generate an isentropic adiabat using BurnMan")
 
     parser.add_argument("model_id", type=str, help="ID of the Perple_X model")
@@ -13,16 +14,18 @@ def parse_arguments() -> Namespace:
     parser.add_argument("out_data_dir", type=str, help="Output data directory")
     parser.add_argument("out_fig_dir", type=str, help="Output figure directory")
 
-    parser.add_argument("--potential-temperature", type=float, default=1573.0, help="Potential temperature in K (default: 1573.0)")
-    parser.add_argument("--out-table-resolution", type=int, default=128, help="Resolution of the Perple_X table (default: 128)")
-    parser.add_argument("--out-profile-resolution", type=int, default=501, help="Resolution of the adiabat profile (default: 501)")
-    parser.add_argument("--planet-radius", type=float, default=6370e3, help="Planet radius in meters (default: 6370e3)")
-    parser.add_argument("--surface-gravity", type=float, default=9.81, help="Surface gravity in m/s² (default: 9.81)")
+    parser.add_argument("--potential-temperature", type=float, default=1573.0, help="Potential temperature (K) (default: 1573.0)")
+    parser.add_argument("--out-table-resolution", type=int, default=128, help="Perple_X table resolution (count) (default: 128)")
+    parser.add_argument("--out-profile-resolution", type=int, default=501, help="Adiabat profile resolution (count) (default: 501)")
+    parser.add_argument("--planet-radius", type=float, default=6370e03, help="Planet radius (m) (default: 6370e03)")
+    parser.add_argument("--surface-gravity", type=float, default=9.81, help="Surface gravity (m/s^2) (default: 9.81)")
+    parser.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI; draft 100, manuscript 330)")
 
     return parser.parse_args()
 
+
 def main() -> None:
-    """Main function to generate ASPECT profiles."""
+    """Build the BurnMan adiabat and the 410/520/660 reaction tables."""
     args = parse_arguments()
 
     out_data_dir = Path(args.out_data_dir)
@@ -55,7 +58,7 @@ def main() -> None:
         bg = minerals.SLB_2024.bridgmanite([mg_frac, 1 - mg_frac, 0.0, 0.0, 0.0, 0.0, 0.0])
         fp = minerals.SLB_2024.ferropericlase([mg_frac, 1 - mg_frac, 0.0, 0.0, 0.0])
 
-        # Define mantle materials (note composite mole fractions != moles in balanced rxn)
+        # Mantle materials (mixture fractions differ from the balanced-reaction moles)
         upper_mantle = Composite([ol], [1.0], name="upper-mantle")
         upper_mtz = Composite([wa], [1.0], name="upper-mtz")
         lower_mtz = Composite([ri], [1.0], name="lower-mtz")
@@ -69,6 +72,7 @@ def main() -> None:
             in_profile=adiabat,
             out_profile=out_reaction_410,
             out_fig_dir=out_fig_dir,
+            dpi=args.dpi,
         )
         reaction_410.visualize()
 
@@ -80,12 +84,12 @@ def main() -> None:
             in_profile=adiabat,
             out_profile=out_reaction_520,
             out_fig_dir=out_fig_dir,
+            dpi=args.dpi,
         )
         reaction_520.visualize()
 
-        # Note total n moles on either side of balanced rxn!
-        # 1 mol ri -> 1 mol bg + 0.25 mol fp (= 1.25 mol product)
-        # MgSiO4 -> MgSiO3 + 0.25 Mg4O4
+        # Balance the 660 reaction: 1 mol ringwoodite -> 1 mol bridgmanite
+        # + 0.25 mol ferropericlase (= 1.25 mol product).
         reaction_660 = DrivingForceProfile(
             material_a=lower_mtz,
             n_total_a=1,
@@ -94,8 +98,10 @@ def main() -> None:
             in_profile=adiabat,
             out_profile=out_reaction_660,
             out_fig_dir=out_fig_dir,
+            dpi=args.dpi,
         )
         reaction_660.visualize()
+
 
 if __name__ == "__main__":
     main()

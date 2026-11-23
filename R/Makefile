@@ -4,30 +4,28 @@
 # Include definitions
 include $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../project.mk)
 
-CLEAN := $(FIGS_KUBO) $(FIGS_STRUCTURE) $(FIGS_SEISMIC) $(POSTPROCESSED_CSV) $(POSTPROCESSED_MD)
+CLEAN := $(FIGS_STRUCTURE) $(FIGS_SEISMIC) $(POSTPROCESSED_MD)
 
-.PHONY: all visualize tables adiabat simulation seismic clean help
+.PHONY: all postprocess tables adiabat simulation seismic clean help
 
-all: visualize
-visualize: adiabat simulation seismic
+all: postprocess
+postprocess: adiabat simulation seismic tables
 
 tables: $(POSTPROCESSED_CSV)
-	@Rscript $(R)/tables.R $(R)/utils $(POSTPROCESSED_CSV) $(SIMULATION)/data
+	@Rscript $(R)/tables.R $(R)/utils $(POSTPROCESSED_CSV) $(SIMULATION)/results
 
 adiabat:
-	@for model in $(PERPLEX_MODELS); do Rscript $(R)/adiabat.R $(R)/utils $$model $(SIMULATION)/data $(FIGS)/adiabat; done
+	@for model in $(PERPLEX_MODELS); do Rscript $(R)/adiabat.R $(R)/utils $$model $(SIMULATION)/data $(FIGS)/adiabat $(FIG_DPI); done
 
-seismic: $(MESH_CSV_SW_SUITE) $(MESH_CSV_NC_SUITE)
-	@Rscript $(R)/seismic.R $(R)/utils $(SEISMIC_SW_SUITE) $(SEISMIC_NC_SUITE) $(FIGS_SEISMIC) $(FORCE_REWRITE)
+seismic: $(MESH_CSV_SINK_SUITE)
+	@Rscript $(R)/seismic.R $(R)/utils $(SEISMIC_SINK_SUITE) $(FIGS_SEISMIC) $(FORCE_REWRITE) $(PROFILE_REF_410_M) $(FIG_DPI)
 
-simulation: $(MESH_CSV_SW_SUITE) $(MESH_CSV_NC_SUITE) $(POSTPROCESSED_CSV)
-	@mkdir -p $(SIMULATION)/data
-	@Rscript $(R)/simulation.R $(R)/utils $(MESH_CSV_SW_SUITE) $(MESH_CSV_NC_SUITE) $(FIGS_STRUCTURE) $(FORCE_REWRITE) $(POSTPROCESSED_CSV)
+simulation: $(POSTPROCESSED_CSV)
+	@mkdir -p $(SIMULATION)/results
+	@Rscript $(R)/simulation.R $(R)/utils $(POSTPROCESSED_CSV) $(FIGS_STRUCTURE) $(FORCE_REWRITE) $(Z_LO) $(Z_MID) $(Z_HI) $(FIG_DPI)
 
-$(MESH_CSV_SW_SUITE):
-	@$(MAKE) --no-print-directory -C $(PYTHON) meshes-sw-suite
-$(MESH_CSV_NC_SUITE):
-	@$(MAKE) --no-print-directory -C $(PYTHON) meshes-nc-suite
+$(MESH_CSV_SINK_SUITE):
+	@$(MAKE) --no-print-directory -C $(PYTHON) meshes-sink-suite
 
 $(POSTPROCESSED_CSV):
 	@$(MAKE) --no-print-directory -C $(PYTHON) postprocess
@@ -37,9 +35,9 @@ clean:
 
 help:
 	$(call LOG_INFO,Available targets:)
-	$(call LOG_DETAIL,visualize   Visualize all results (SW + NC + TEST + combined))
+	$(call LOG_DETAIL,postprocess   Derive R results (figures + tables))
 	$(call LOG_DETAIL,adiabat     Visualize adiabatic profiles)
-	$(call LOG_DETAIL,simulation  Visualize combined simulation results)
+	$(call LOG_DETAIL,simulation  Visualize combined benchmark results)
 	$(call LOG_DETAIL,seismic     Visualize combined seismic profiles)
 	$(call LOG_DETAIL,tables      Write combined result tables)
 	$(call LOG_DETAIL,clean       Remove generated files (safe))

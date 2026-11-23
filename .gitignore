@@ -8,9 +8,17 @@ bash/candi
 perplex/**/*-table.txt
 perplex/**/*-profile.txt
 simulation/configs
-simulation/data
+simulation/data/*
+!simulation/data/olivine-wadsleyite-profile-Mg100.tsv
+!simulation/data/wadsleyite-ringwoodite-profile-Mg100.tsv
+!simulation/data/ringwoodite-postspinel-profile-Mg100.tsv
+!simulation/data/depth-datum.tsv
+!simulation/data/PYR-material-table.tab
+!simulation/data/PYR-adiabatic-profile.tsv
 simulation/results
 simulation/plugins/CMakeFiles
+simulation/plugins/build
+simulation/configs/*.run
 simulation/plugins/Makefile
 simulation/plugins/CMakeCache.txt
 simulation/plugins/aspect*
@@ -18,6 +26,7 @@ simulation/plugins/cmake_install.cmake
 simulation/plugins/lib*.so
 simulation/plugins/.cache
 simulation/plugins/compile_commands.json
+**/.ruff_cache/
 python/*/__pycache__
 python/*/*/__pycache__
 python/*/data

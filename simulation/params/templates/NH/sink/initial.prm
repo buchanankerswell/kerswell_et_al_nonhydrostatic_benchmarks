@@ -1,0 +1,21 @@
+subsection Initial composition model
+  set List of model names = function
+
+  subsection Function
+    set Variable names      = x, y
+    set Function expression = (y<{transition-ol-wd} ? 1 : 0); \
+                              (y<{transition-ol-wd} ? 3200 : 3850); \
+                              2.0e+09 + 3900*{gravity}*(1.0e+06-y); \
+                              {block-expr}
+  end
+end
+
+subsection Initial temperature model
+  set List of model names = adiabatic
+
+  subsection Adiabatic
+    subsection Function
+      set Function expression = 0; 0; 3500; 0
+    end
+  end
+end

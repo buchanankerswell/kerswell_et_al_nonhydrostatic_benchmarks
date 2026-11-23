@@ -1,6 +1,6 @@
 ensure_output_dir <- function(out_path) {
   parent_dir <- dirname(out_path)
-  if (!dir.exists(parent_dir)) dir.create(parent_dir)
+  if (!dir.exists(parent_dir)) dir.create(parent_dir, recursive = TRUE)
 }
 
 plot_exists <- function(out_path) {
@@ -12,7 +12,7 @@ plot_exists <- function(out_path) {
 }
 
 parse_logical <- function(x) {
-  if (is.na(x)) {
+  if (length(x) != 1L || is.na(x)) {
     return(FALSE)
   }
   x <- tolower(x)

@@ -1,0 +1,5 @@
+subsection Compositional fields
+  set Number of fields            = 4
+  set Names of fields             = xi_ol_wd, density_field, relaxed_pressure, block
+  set Compositional field methods = field, prescribed field, field, field
+end

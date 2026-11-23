@@ -16,8 +16,9 @@ from scipy.optimize import newton
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 # Constants
-EARTH_RADIUS: float = 6370e3  # m
-SURFACE_GRAVITY: float = 9.81  # m/s/s
+EARTH_RADIUS: float = 6370e03  # m
+SURFACE_GRAVITY: float = 9.81  # m/s^2
+
 
 class LiveIndenter:
     def __init__(self, original_stdout, indent="    "):
@@ -48,13 +49,14 @@ class LiveIndenter:
         # Keeps the output synchronized
         self.terminal.flush()
 
+
 @dataclass
 class AdiabaticProfile:
     """
-    Generates (isentropic) adiabatic profile from a Perple_X model.
+    Isentropic (constant-entropy) temperature-pressure profile from a Perple_X model.
 
-    This class uses BurnMan's PerplexMaterial to evaluate material properties
-    along an isentrope starting from a potential temperature.
+    Uses BurnMan to evaluate material properties along the isentrope that
+    starts at the potential temperature (K).
     """
 
     model_id: str
@@ -101,7 +103,7 @@ class AdiabaticProfile:
 
     @property
     def material(self) -> PerplexMaterial:
-        """"""
+        """BurnMan material backed by the Perple_X table."""
         if self._material is None:
             self._material = PerplexMaterial(self.out_table)
 
@@ -109,7 +111,7 @@ class AdiabaticProfile:
 
     @property
     def pressures(self) -> np.ndarray:
-        """"""
+        """Profile pressures (Pa)."""
         if self._pressures is None:
             bounds = self.material.bounds[0]
             self._pressures = np.linspace(bounds[0], bounds[1], self.out_profile_resolution)
@@ -118,7 +120,7 @@ class AdiabaticProfile:
 
     @property
     def temperatures(self) -> np.ndarray:
-        """"""
+        """Profile temperatures (K)."""
         if self._temperatures is None:
             self._temperatures = self._evaluate_isentrope_temperatures()
 
@@ -126,7 +128,7 @@ class AdiabaticProfile:
 
     @property
     def properties(self) -> dict[str, np.ndarray]:
-        """"""
+        """Material properties along the profile (SI units per key)."""
         if self._properties is None:
             self._properties = self._evaluate_material_properties()
 
@@ -134,7 +136,7 @@ class AdiabaticProfile:
 
     @property
     def velocities(self) -> dict[str, np.ndarray]:
-        """"""
+        """Seismic velocities and their temperature derivatives (m/s, m/s/K)."""
         if self._velocities is None:
             self._velocities = self._evaluate_velocity_derivatives()
 
@@ -142,7 +144,7 @@ class AdiabaticProfile:
 
     @property
     def depths(self) -> np.ndarray:
-        """"""
+        """Profile depths (m)."""
         if self._depths is None:
             self._depths, self._gravity = self._evaluate_depth_gravity_profiles()
 
@@ -150,7 +152,7 @@ class AdiabaticProfile:
 
     @property
     def gravity(self) -> np.ndarray:
-        """"""
+        """Profile gravity (m/s^2)."""
         if self._gravity is None:
             self._depths, self._gravity = self._evaluate_depth_gravity_profiles()
 
@@ -348,9 +350,10 @@ class AdiabaticProfile:
 
         log_artifact(self.out_profile)
 
+
 @dataclass
 class DrivingForceProfile:
-    """"""
+    """Reaction driving-energy table for one mineral pair (e.g. olivine to wadsleyite)."""
 
     material_a: Material
     n_total_a: float
@@ -359,6 +362,7 @@ class DrivingForceProfile:
     in_profile: AdiabaticProfile
     out_profile: Path
     out_fig_dir: Path
+    dpi: int = 100
     _depths: np.ndarray | None = field(default=None, init=False)
     _pressures: np.ndarray | None = field(default=None, init=False)
     _temperatures: np.ndarray | None = field(default=None, init=False)
@@ -786,7 +790,7 @@ class DrivingForceProfile:
         return np.ravel(self.volume[1] - self.volume[0])
 
     def _evaluate_equilibrium_depth(self):
-        """"""
+        """Depth (m) where the Gibbs energy difference changes sign."""
         # Find index where delta_gibbs crosses zero (sign change)
         signs = np.sign(self.delta_gibbs)
         sign_changes = np.where(np.diff(signs) != 0)[0]
@@ -993,11 +997,11 @@ class DrivingForceProfile:
         return dP_grid, dT_grid, driving_force_grid, levels
 
     @staticmethod
-    def _set_rc_params() -> None:
+    def _set_rc_params(dpi: int = 100) -> None:
         """"""
         plt.rcParams.update(
             {
-                "figure.dpi": 300,
+                "figure.dpi": dpi,
                 "savefig.bbox": "tight",
                 "axes.facecolor": "0.9",
                 "legend.frameon": False,
@@ -1049,7 +1053,7 @@ class DrivingForceProfile:
         ymin = depths_grid_P.min() / 1e3
         ymax = depths_grid_P.max() / 1e3
 
-        self._set_rc_params()
+        self._set_rc_params(self.dpi)
 
         fig, axes = plt.subplots(1, 2, figsize=(6.5, 3.5), sharey=True)
 
@@ -1065,7 +1069,6 @@ class DrivingForceProfile:
         axes[0].clabel(contour_0_P, fmt={0: "$\\Delta{G}$ = 0"}, fontsize=10)
         axes[0].set_xlabel("$\\hat{P}$ (GPa)")
         axes[0].set_ylabel("Depth (km)")
-        axes[0].set_title("$\\hat{T}$ = 0 K")
         axes[0].tick_params(axis="both", which="both", length=0)
 
         _ = axes[1].contourf(dT_grid, depths_grid_T / 1e3, driving_force_grid_T / 1e3, levels=np.round(levels_T / 1e3, 1), cmap="PuOr_r")
@@ -1079,7 +1082,6 @@ class DrivingForceProfile:
         axes[1].clabel(contour_T, fmt="%.1f", fontsize=10)
         axes[1].clabel(contour_0_T, fmt={0: "$\\Delta{G}$ = 0"}, fontsize=10)
         axes[1].set_xlabel("$\\hat{T}$ (K)")
-        axes[1].set_title("$\\hat{P}$ = 0 GPa")
         axes[1].tick_params(axis="both", which="both", length=0)
 
         plt.tight_layout()

@@ -1,128 +1,113 @@
-# Nominal equilibrium depths (m -> km): transition depth from the Mg100
-# Perple_X profile plus the ASPECT depth correction used at runtime.
-NOMINAL_410_KM <- 359.2 + 5.0
-NOMINAL_520_KM <- 506.2 + 5.0
-NOMINAL_660_KM <- 599.7 + 15.0
+# Profile-reference 410 depth (km, true depth): the Gibbs energy
+# difference is zero in the BurnMan isentrope at 422.6 km.
+# Passed explicitly by R/seismic.R.
+nominal_410_sink_km <- 422.6
+
+# Shared damping palette (same families as the structure panels). Per-value
+# shades keep the paired Bimpl/Rel values distinct. None-family variants
+# (CFL twins, no-feedback controls, off-default resolutions) get their own
+# shades so every run in a panel is unique. Mirrors python DAMP_COLORS
+# in simulation/mesh/config.py hex-for-hex.
+damp_pal <- c(
+  "None" = "#000000", "None_CFL1.0" = "#737373",
+  "None_Off" = "#08306B", "None_Res5" = "#969696", "None_Res7" = "#525252",
+  "Bimpl1e19" = "#EF3B2C", "Bimpl1e19_CFL0.25" = "#FB6A4A", "Bimpl1e19_Res7" = "#FC9272",
+  "Bimpl1e18" = "#E41A1C", "Bimpl1e20" = "#A50F15",
+  "Bexpl1e19" = "#74ADD1", "Bexpl1e20" = "#377EB8",
+  "Rel3.156e8" = "#C7E9C0", "Rel3.156e9" = "#A1D99B",
+  "Rel3.156e11_CFL0.25" = "#ADDD8E", "Rel3.156e11_Res7" = "#4DAF4A",
+  "Rel3.156e12" = "#00441B",
+  "Rel3.156e10" = "#A6D96A", "Rel3.156e11" = "#1B7837",
+  "Cap1e8" = "#984EA3", "Cap2e8" = "#C51B7D",
+  "Cap2e8_CFL0.25" = "#F768A1", "Cap2e8_Res5" = "#F1B6DA", "Cap2e8_Res7" = "#8C0B4B",
+  "Cap4e8" = "#762A83"
+)
 
 read_seismic_profile <- function(filepath) {
   df <- read_csv(filepath, show_col_types = FALSE)
   fname <- basename(filepath)
   df |>
     mutate(
-      model_id = fname,
-      tstep = as.numeric(str_extract(fname, "(?<=_t)[0-9]+(?=_)")),
-      z_ri = as.numeric(str_extract(fname, "(?<=Zri)[0-9e.+-]+")),
-      depth = depth / 1e3,
+      model_id = str_extract(fname, "(?<=seismic-profile-).*(?=-t[0-9]+-representative\\.csv)"),
+      timestep = as.numeric(str_extract(fname, "(?<=-t)[0-9]+(?=-representative\\.csv)")),
+      depth = true_depth_km,
       trace_x = trace_x / 1e3,
     )
 }
 
-read_matched_profiles <- function(data_dir, suite_label) {
-  files <- list.files(data_dir, pattern = "slab_.*_t100_representative\\.csv", full.names = TRUE)
-  matched <- files[str_detect(basename(files), fixed("EtaTherm5_EtaTrans1-1-1-1_MG100_Vel5e-02"))]
-  if (!length(matched)) {
-    log_error(paste("no matched-forcing slab profiles in:", data_dir))
+read_suite_profiles <- function(data_dir, suite_label) {
+  files <- list.files(data_dir, pattern = "seismic-profile-.*-t[0-9]+-representative\\.csv", full.names = TRUE)
+  if (!length(files)) {
+    log_error(paste("no representative seismic profiles in:", data_dir))
     return(NULL)
   }
-  map_df(matched, read_seismic_profile) |>
-    mutate(suite = suite_label)
+  df <- map_df(files, read_seismic_profile) |> mutate(suite = suite_label)
+  df |>
+    group_by(model_id) |>
+    filter(timestep == max(timestep)) |>
+    ungroup()
 }
 
 read_init_profile <- function(data_dir) {
-  files <- list.files(data_dir, pattern = "slab_.*_t0_representative\\.csv", full.names = TRUE)
+  files <- list.files(data_dir, pattern = "seismic-profile-.*DynpOn_DampNone.*-t0-representative\\.csv", full.names = TRUE)
   if (!length(files)) {
     return(NULL)
   }
   read_seismic_profile(files[1]) |> filter(!is.na(seismic_Vp))
 }
 
-visualize_seismic_comparison <- function(data_dir_sw, data_dir_nc, out_path, force_rewrite = FALSE) {
+visualize_seismic_comparison <- function(data_dir_sink, out_path, nominal_sink_km = nominal_410_sink_km,
+                                         force_rewrite = FALSE, fig_dpi = 100) {
   if (!force_rewrite && plot_exists(out_path)) {
     return(invisible())
   }
-  df <- bind_rows(
-    read_matched_profiles(data_dir_sw, "SW suite"),
-    read_matched_profiles(data_dir_nc, "NC suite")
-  )
+  df <- read_suite_profiles(data_dir_sink, "Sink")
   if (is.null(df) || !nrow(df)) {
     return(invisible())
   }
-  df <- df |> mutate(suite = factor(suite,
-    levels = c("SW suite", "NC suite")
-  ))
-  df_init <- read_init_profile(data_dir_sw)
+  df <- df |>
+    mutate(
+      suite = factor(suite, levels = c("Sink")),
+      damp = str_extract(model_id, "(?<=_Damp)[A-Za-z]+[\\d.e+-]*"),
+      cfl = str_extract(model_id, "(?<=_CFL)[\\d.]+"),
+      res = str_extract(model_id, "(?<=_Res)[0-9]+"),
+      dynp = factor(str_extract(model_id, "(?<=_Dynp)(On|Off)"), levels = c("On", "Off"))
+    ) |>
+    mutate(damp = ifelse(!is.na(cfl), paste0(damp, "_CFL", cfl), damp)) |>
+    mutate(damp = ifelse(dynp == "Off", paste0(damp, "_Off"), damp)) |>
+    mutate(damp = ifelse(!is.na(res) & res != "6", paste0(damp, "_Res", res), damp))
+  df_init_sink <- read_init_profile(data_dir_sink)
 
-  lim_vp <- range(c(df$seismic_Vp, if (!is.null(df_init)) df_init$seismic_Vp), na.rm = TRUE)
+  lim_vp <- range(c(
+    df$seismic_Vp,
+    if (!is.null(df_init_sink)) df_init_sink$seismic_Vp
+  ), na.rm = TRUE)
 
-  # Nominal-transition bands (light gray, matching the setup diagram) drawn
-  # first so profiles render on top of them.
-  nominal_bands <- function() {
-    list(
-      annotate("rect", xmin = -Inf, xmax = Inf, ymin = NOMINAL_410_KM - 10, ymax = NOMINAL_410_KM + 10, fill = "grey80", alpha = 0.7),
-      annotate("rect", xmin = -Inf, xmax = Inf, ymin = NOMINAL_520_KM - 10, ymax = NOMINAL_520_KM + 10, fill = "grey80", alpha = 0.7),
-      annotate("rect", xmin = -Inf, xmax = Inf, ymin = NOMINAL_660_KM - 10, ymax = NOMINAL_660_KM + 10, fill = "grey80", alpha = 0.7)
-    )
-  }
-
-  p_panel <- function(suite_label, labels = TRUE) {
+  seismic_suite_panel <- function(suite_label, init_df, nominal_km) {
     d <- df |> filter(suite == suite_label)
-    panel <-
-      ggplot(d, aes(x = seismic_Vp, y = depth, group = model_id)) +
-      nominal_bands() +
-      geom_path(aes(color = z_ri), linewidth = 2.0, alpha = 0.85) +
+    panel <- ggplot(d, aes(x = seismic_Vp, y = depth, group = model_id)) +
+      annotate("rect", xmin = -Inf, xmax = Inf, ymin = nominal_km - 10, ymax = nominal_km + 10, fill = "grey80", alpha = 0.7) +
+      geom_path(aes(color = damp, linetype = dynp), linewidth = 1.6, alpha = 0.85) +
       scale_y_reverse() +
       scale_x_continuous(limits = lim_vp, breaks = c(8, 9, 10, 11, 12)) +
-      scale_color_continuous_sequential(
-        palette = "YlOrRd",
-        rev = FALSE,
-        trans = "log10",
-        breaks = if (labels) c(1e-9, 1e-7, 1e-5) else c(1e-2, 1e0, 1e2),
-        labels = label_log()
-      ) +
-      labs(title = suite_label, x = expression(V[p] ~ (km / s)), y = "Depth (km)", color = expression(Z[ri])) +
-      theme_bw(base_size = 24) +
+      scale_color_manual(values = damp_pal, drop = TRUE, na.value = "grey50", name = "Damping") +
+      scale_linetype_manual(values = c("On" = "solid", "Off" = "dashed"), drop = FALSE, name = "Feedback") +
+      labs(x = expression(V[p] ~ "(km/s)"), y = "Depth (km)") +
+      theme_bw(base_size = 14) +
       theme_profile_comparison()
-
-    if (!is.null(df_init)) {
-      panel <- panel + geom_path(data = df_init, color = "black", linewidth = 1.4, show.legend = FALSE)
+    if (!is.null(init_df)) {
+      panel <- panel + geom_path(data = init_df, color = "black", linewidth = 1.2, show.legend = FALSE)
     }
-
-    if (labels) {
-      panel <- panel + list(
-        annotate("text", x = 8.05, y = NOMINAL_410_KM + 40, label = "410", size = 6.5, hjust = 0, color = "gray30"),
-        annotate("text", x = 8.05, y = NOMINAL_520_KM + 40, label = "520", size = 6.5, hjust = 0, color = "gray30"),
-        annotate("text", x = 8.05, y = NOMINAL_660_KM + 40, label = "660", size = 6.5, hjust = 0, color = "gray30"),
-        annotate("segment", x = 9.3, xend = 9.3, y = 300, yend = 200, arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 1.0),
-        annotate("text", x = 9.3, y = 190, label = "-T", vjust = 0, parse = TRUE, size = 6),
-        annotate("segment", x = 9.3, xend = 9.3, y = 400, yend = 500, arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 1.0),
-        annotate("text", x = 9.3, y = 515, label = "-Z[ol]", vjust = 1, parse = TRUE, size = 6),
-        annotate("segment", x = 10.1, xend = 10.1, y = 430, yend = 330, arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 1.0),
-        annotate("text", x = 10.1, y = 320, label = "-T", vjust = 0, parse = TRUE, size = 6),
-        annotate("segment", x = 10.1, xend = 10.1, y = 550, yend = 650, arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 1.0),
-        annotate("text", x = 10.1, y = 665, label = "-Z[wd]", vjust = 1, parse = TRUE, size = 6),
-        annotate("segment", x = 10.9, xend = 10.9, y = 720, yend = 820, arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 1.0),
-        annotate("text", x = 10.9, y = 835, label = "-T~-Z[ri]", vjust = 1, parse = TRUE, size = 6)
-      )
-    } else {
-      panel <- panel + list(
-        annotate("segment", x = 9.3, xend = 9.3, y = 260, yend = 160, arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 1.0),
-        annotate("text", x = 9.3, y = 150, label = "-T", vjust = 0, parse = TRUE, size = 6),
-        annotate("segment", x = 10.0, xend = 10.0, y = 370, yend = 270, arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 1.0),
-        annotate("text", x = 10.0, y = 260, label = "-T", vjust = 0, parse = TRUE, size = 6),
-        annotate("segment", x = 10.9, xend = 10.9, y = 700, yend = 800, arrow = arrow(length = unit(0.25, "cm"), type = "closed"), linewidth = 1.0),
-        annotate("text", x = 10.9, y = 815, label = "-T", vjust = 1, parse = TRUE, size = 6)
-      )
-    }
-    panel
+    panel + annotate("text", x = 8.05, y = nominal_km + 30, label = "410", size = 4, hjust = 0, color = "gray30")
   }
 
-  p <- p_panel("SW suite") |
-    (p_panel("NC suite", FALSE) + theme(axis.text.y = element_blank(), axis.title.y = element_blank()))
-  ggsave(out_path, plot = p, width = 8.25, height = 6.0, dpi = 300, bg = "white", create.dir = TRUE)
+  p <- seismic_suite_panel("Sink", df_init_sink, nominal_sink_km)
+  p <- p + theme(legend.position = "right")
+  ggsave(out_path, plot = p, width = 6.5, height = 5.0, dpi = fig_dpi, bg = "white", create.dir = TRUE)
   log_artifact(out_path)
 }
 
-# Tuned theme for the SW/NC comparison figure.
+# Tuned theme for the sink profile figure.
 theme_profile_comparison <- function() {
   theme(
     panel.grid.major = element_blank(),
@@ -130,18 +115,17 @@ theme_profile_comparison <- function() {
     panel.background = element_rect(fill = "grey90"),
     panel.spacing.x = unit(1.5, "cm"),
     plot.margin = margin(5, 5, 5, 5),
-    plot.title = element_text(hjust = 0.5, size = 26, face = "bold", margin = margin(0, 0, 10, 0)),
+    plot.title = element_text(hjust = 0.5, size = 22, face = "bold", margin = margin(0, 0, 10, 0)),
     axis.ticks = element_blank(),
-    legend.justification = "right",
-    legend.position = "inside",
-    legend.position.inside = c(0.93, 0.90),
-    legend.direction = "horizontal",
+    legend.position = "right",
+    legend.justification = NULL,
+    legend.direction = "vertical",
     legend.key.height = unit(0.8, "lines"),
     legend.key.width = unit(1.2, "lines"),
     legend.box.margin = margin(2, 2, 2, 2),
     legend.margin = margin(),
-    legend.title = element_text(size = 22, vjust = 1),
-    legend.text = element_text(size = 16, margin = margin(5, 0, 0, 0)),
+    legend.title = element_text(size = 14, vjust = 1),
+    legend.text = element_text(size = 11.2, margin = margin(5, 0, 0, 0)),
     legend.background = element_blank(),
     legend.ticks = element_line(color = "black", linewidth = 0.4),
     legend.ticks.length = unit(0.2, "lines"),

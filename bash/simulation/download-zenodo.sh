@@ -29,12 +29,12 @@ sha256_file() {
 }
 
 complete() {
-  [ -f "${PROJECT_ROOT}/simulation/data/postprocessed.csv" ] &&
-    [ "$(find "${PROJECT_ROOT}/simulation/results" -maxdepth 1 -name 'slab_*' 2>/dev/null | wc -l)" -ge 132 ]
+  [ -f "${PROJECT_ROOT}/simulation/results/postprocessed.csv" ] &&
+    [ "$(find "${PROJECT_ROOT}/simulation/results" -maxdepth 1 -name 'NH_*' 2>/dev/null | wc -l)" -ge 25 ]
 }
 
 if [ "${FORCE}" != "1" ] && complete; then
-  log_info "Found local data (132 models + postprocessed.csv), skipping download"
+  log_info "Found local data (25 models + postprocessed.csv), skipping download"
   exit 0
 fi
 
@@ -52,7 +52,10 @@ log_info "Verifying checksums"
 for f in ${FILES}; do
   expected="$(awk -v name="${f}" '$2 == name {print $1}' "${STAGE}/SHA256SUMS")"
   actual="$(sha256_file "${STAGE}/${f}")"
-  [ "${actual}" = "${expected}" ] || { log_error "checksum mismatch: ${f}"; exit 1; }
+  [ "${actual}" = "${expected}" ] || {
+    log_error "checksum mismatch: ${f}"
+    exit 1
+  }
 done
 
 log_info "Extracting to ${PROJECT_ROOT}"

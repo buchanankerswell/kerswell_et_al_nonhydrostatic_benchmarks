@@ -10,5 +10,7 @@ dependencies:
   - matplotlib
   - pillow
   - pyvista
+  - ruff
   - pip:
       - burnman
+      - numba>=0.60 # 0.60+ imports on the NumPy 2.x that conda-forge pulls in; 0.59 breaks BurnMan

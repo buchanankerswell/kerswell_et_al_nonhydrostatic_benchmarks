@@ -90,6 +90,7 @@ get_profile_metadata <- function(filepath) {
   name_a <- get_abbr(parts[1])
   name_b <- get_abbr(parts[2])
 
+  # Pressure windows (Pa) framing each mineral pair in plots.
   file_limits <- if (name_a == "ol" && name_b == "wd") {
     c(0e9, 17e9)
   } else if (name_a == "wd" && name_b == "ri") {
@@ -100,6 +101,7 @@ get_profile_metadata <- function(filepath) {
     c(0, 40e9)
   }
 
+  # Stability range (Pa) of each mineral, for background shading.
   phase_limits <- list(ol = c(5e9, 17e9), wd = c(12e9, 23e9), ri = c(17e9, 27e9), ps = c(20e9, 40e9))
   list(name_a = name_a, name_b = name_b, limits = file_limits, phase_limits = phase_limits, delta_label = paste0(name_a, "-", name_b))
 }
@@ -121,7 +123,7 @@ theme_profile <- function() {
     legend.key.width = unit(1, "cm"),
     legend.box.margin = margin(2, 2, 2, 2),
     legend.margin = margin(),
-    legend.title = element_text(vjust = 0, size = 20),
+    legend.title = element_text(vjust = 0, size = 14),
     legend.background = element_blank()
   )
 }
@@ -136,8 +138,8 @@ theme_table <- function() {
     plot.tag.location = "panel",
     plot.tag = element_text(margin = margin(5, 0, 0, -5), hjust = 0, face = "bold", color = "white"),
     axis.ticks = element_blank(),
-    legend.justification = c(1, 0),
-    legend.position = "inside",
+    legend.justification = c(0.5, 1),
+    legend.position = "top",
     legend.position.inside = c(1.0, 1.0),
     legend.direction = "horizontal",
     legend.key.height = unit(1.15, "lines"),
@@ -147,13 +149,13 @@ theme_table <- function() {
     legend.frame = element_rect(color = "black", linewidth = 0.6),
     legend.box.margin = margin(15, 5, 15, 5),
     legend.margin = margin(5, 5, 5, 5),
-    legend.title = element_text(vjust = 1, size = 24),
-    legend.text = element_text(size = 20, margin = margin(5, 0, 0, 0)),
+    legend.title = element_text(vjust = 1, size = 14),
+    legend.text = element_text(size = 11.2, margin = margin(5, 0, 0, 0)),
     legend.background = element_blank()
   )
 }
 
-visualize_thermodynamic_profile <- function(profile_paths, out_path) {
+visualize_thermodynamic_profile <- function(profile_paths, out_path, fig_dpi = 100) {
   if (plot_exists(out_path)) {
     return(invisible())
   }
@@ -222,15 +224,15 @@ visualize_thermodynamic_profile <- function(profile_paths, out_path) {
     scale_y_reverse() +
     scale_color_brewer(palette = "Set1") +
     labs(x = NULL, y = "Pressure (GPa)", color = NULL) +
-    theme_bw(base_size = 36) +
+    theme_bw(base_size = 14) +
     theme_profile() +
     theme(
       strip.background = element_blank(),
-      strip.text = element_text(size = 32, face = "bold"),
+      strip.text = element_text(size = 14, face = "bold"),
       legend.position = "inside",
       legend.direction = "vertical",
       legend.position.inside = c(0.01, 0.22),
-      legend.text = element_text(size = 28),
+      legend.text = element_text(size = 11.2),
       legend.title = element_text(margin = margin()),
       legend.box.background = element_rect(fill = "grey90", color = NA)
     )
@@ -244,26 +246,26 @@ visualize_thermodynamic_profile <- function(profile_paths, out_path) {
     scale_x_continuous(n.breaks = 5, guide = guide_axis(check.overlap = TRUE), expand = expansion(mult = 0.10)) +
     scale_y_reverse() +
     labs(x = NULL, y = "Pressure (GPa)", linetype = NULL) +
-    theme_bw(base_size = 36) +
+    theme_bw(base_size = 14) +
     theme_profile() +
     theme(
       plot.margin = margin(5, 5, 5, 5),
       strip.background = element_blank(),
-      strip.text = element_text(size = 32, face = "bold"),
+      strip.text = element_text(size = 14, face = "bold"),
       legend.position = "inside",
       legend.direction = "vertical",
       legend.position.inside = c(0.01, 0.85),
-      legend.text = element_text(size = 28),
+      legend.text = element_text(size = 11.2),
       legend.title = element_text(margin = margin()),
       legend.box.background = element_rect(fill = "grey90", color = NA)
     )
 
-  p <- p0 / p1 & theme(legend.key.width = unit(2, "cm"))
-  ggsave(out_path, plot = p, width = 15, height = 13)
+  p <- p0 / p1 & theme(legend.key.width = unit(1, "cm"))
+  ggsave(out_path, plot = p, width = 6.5, height = 5.6, dpi = fig_dpi)
   log_artifact(out_path)
 }
 
-visualize_material_profile <- function(profile_paths, out_path) {
+visualize_material_profile <- function(profile_paths, out_path, fig_dpi = 100) {
   if (plot_exists(out_path)) {
     return(invisible())
   }
@@ -315,25 +317,25 @@ visualize_material_profile <- function(profile_paths, out_path) {
     scale_y_reverse() +
     scale_color_brewer(palette = "Set1") +
     labs(x = NULL, y = "Pressure (GPa)", color = NULL) +
-    theme_bw(base_size = 36) +
+    theme_bw(base_size = 14) +
     theme_profile() +
     theme(
       strip.background = element_blank(),
-      strip.text = element_text(size = 32, face = "bold"),
+      strip.text = element_text(size = 14, face = "bold"),
       legend.position = "inside",
       legend.direction = "vertical",
       legend.position.inside = c(0.01, 0.19),
-      legend.key.width = unit(2, "cm"),
-      legend.text = element_text(size = 28),
+      legend.key.width = unit(1, "cm"),
+      legend.text = element_text(size = 11.2),
       legend.title = element_text(margin = margin()),
       legend.box.background = element_rect(fill = "grey90", color = NA)
     )
 
-  ggsave(out_path, plot = p, width = 20, height = 7, dpi = 300)
+  ggsave(out_path, plot = p, width = 6.5, height = 3.0, dpi = fig_dpi)
   log_artifact(out_path)
 }
 
-visualize_material_table <- function(profile_path, table_path, out_path) {
+visualize_material_table <- function(profile_path, table_path, out_path, fig_dpi = 100) {
   if (plot_exists(out_path)) {
     return(invisible())
   }
@@ -352,8 +354,14 @@ visualize_material_table <- function(profile_path, table_path, out_path) {
     filter(pressure >= 0 & pressure <= 43 & temperature >= 1053 & temperature <= 2673)
 
   props <- c("entropy", "density")
-  units <- c("density" = "g/cm^3", "thermal_expansivity" = "K%*%10^-5", "compressibility" = "Pa%*%10^-12", "specific_heat" = "KJ/K~kg", "entropy" = "kJ/K~kg")
-  labs <- c("density" = "bar(rho)", "thermal_expansivity" = "bar(alpha)", "compressibility" = "bar(beta)", "specific_heat" = "bar(C[p])", "entropy" = "bar(S)")
+  units <- c(
+    "density" = "g/cm^3", "thermal_expansivity" = "K%*%10^-5", "compressibility" = "Pa%*%10^-12",
+    "specific_heat" = "KJ/K~kg", "entropy" = "kJ/K~kg"
+  )
+  labs <- c(
+    "density" = "bar(rho)", "thermal_expansivity" = "bar(alpha)", "compressibility" = "bar(beta)",
+    "specific_heat" = "bar(C[p])", "entropy" = "bar(S)"
+  )
   color_map <- c("density" = "mako", "thermal_expansivity" = "magma", "compressibility" = "mako", "specific_heat" = "magma", "entropy" = "mako")
 
   color_lims <- list(
@@ -390,8 +398,9 @@ visualize_material_table <- function(profile_path, table_path, out_path) {
       ) +
       labs(x = "Temperature (K)", y = "Pressure (GPa)", fill = custom_labeller(props[1])) +
       coord_cartesian(expand = FALSE) +
-      theme_bw(base_size = 26) +
-      theme_table()
+      theme_bw(base_size = 14) +
+      theme_table() +
+      theme(axis.title.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
     p2 <-
       ggplot() +
@@ -407,13 +416,12 @@ visualize_material_table <- function(profile_path, table_path, out_path) {
       ) +
       labs(x = "Temperature (K)", y = "Pressure (GPa)", fill = custom_labeller(props[2])) +
       coord_cartesian(expand = FALSE) +
-      theme_bw(base_size = 26) +
-      theme_table() +
-      theme(axis.title.y = element_blank(), axis.text.y = element_blank())
+      theme_bw(base_size = 14) +
+      theme_table()
 
-    p <- p1 + p2
+    p <- p1 / p2
 
-    ggsave(out_path, plot = p, width = 10.5, height = 5.5, dpi = 300, bg = "white", create.dir = TRUE)
+    ggsave(out_path, plot = p, width = 3.5, height = 6.0, dpi = fig_dpi, bg = "white", create.dir = TRUE)
     log_artifact(out_path)
   })
 }

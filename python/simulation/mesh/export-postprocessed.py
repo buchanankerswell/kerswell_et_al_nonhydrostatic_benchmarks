@@ -1,14 +1,15 @@
-"""Export the per-slab postprocessed table for the combined suite analysis.
+"""Export the per-benchmark postprocessed table for the sink analysis.
 
-Reads each suite's structure-summary-{tag}.csv and seismic-profile-cache-{tag}.pkl
-from the flattened simulation/data/ dir, interpolates core nonadiabatic
-temperature at the measured 410/660 transition depths, and splits measured
+Reads the sink structure-summary and seismic-profile cache
+from the flattened simulation/results/ dir, interpolates the temperature
+anomaly at the measured 410 transition depth, and splits measured
 displacement into thermal offset (gamma*hat_T/(rho*g)) and kinetic
-contribution (measured minus thermal).
+contribution (measured minus thermal). One row per model (max timestep).
 """
 
 import argparse
 import pickle
+import re
 from pathlib import Path
 
 import numpy as np
@@ -17,27 +18,30 @@ import pandas as pd
 from simulation.params.transitions import (
     find_surface_depth_offset,
     find_transition,
+    nominal_410_for_uid,
     read_dG_profile,
 )
 from utils.logging import log_artifact, log_info
 
-RHO = 4100.0
-GRAV = 9.81
+RHO_DEFAULT = 4100.0  # kg/m^3, mirrors project.mk REF_DENSITY
+
+UID_RE = re.compile(
+    r"^NH_(?P<suite>Sink)_Dynp(?P<dynp>On|Off)_Damp(?P<dampkind>[A-Za-z]+)(?P<dampval>[\d.e]*)"
+    r"(?:_Block(?P<block>\d+))?_Z(?P<z>[\d.e+-]+)_Res(?P<res>\d+)$"
+)
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Export postprocessed table.")
-    parser.add_argument("--data-dir", required=True, help="Flattened simulation/data dir")
-    parser.add_argument("--skip-test", action="store_true", help="Skip T1-T4 test rows")
+    parser = argparse.ArgumentParser(description="Export sink postprocessed table.")
+    parser.add_argument("--data-dir", required=True, help="Flattened simulation/results dir")
     parser.add_argument("--out-csv", required=True, help="Output CSV path")
-    parser.add_argument("--profile-ol-wd", required=True)
-    parser.add_argument("--profile-wd-ri", required=True)
-    parser.add_argument("--profile-ri-ps", required=True)
-    parser.add_argument("--model-height", type=float, required=True)
-    parser.add_argument("--surface-pressure", type=float, required=True)
-    parser.add_argument("--depth-corr-ol-wd", type=float, default=0.0)
-    parser.add_argument("--depth-corr-wd-ri", type=float, default=0.0)
-    parser.add_argument("--depth-corr-ri-ps", type=float, default=0.0)
+    parser.add_argument("--profile-ol-wd", required=True, help="Olivine-wadsleyite thermodynamic profile TSV path")
+    parser.add_argument("--model-height", type=float, required=True, help="Model height (m)")
+    parser.add_argument("--surface-pressure", type=float, required=True, help="Surface pressure (Pa)")
+    parser.add_argument("--depth-corr-ol-wd", type=float, default=0.0, help="Depth correction for the olivine-wadsleyite transition (m)")
+    parser.add_argument("--nominal-410-sink400", type=float, default=None, help="Runtime-adiabat 410 nominal (m), sink")
+    parser.add_argument("--gravity", type=float, default=9.81, help="Gravity (m/s^2) (project.mk GRAVITY)")
+    parser.add_argument("--ref-density", type=float, default=None, help="Reference density (kg/m^3) for the thermal split (project.mk REF_DENSITY)")
     parser.add_argument("--force", action="store_true", help="Overwrite output.")
     return parser.parse_args()
 
@@ -57,6 +61,13 @@ def interp_at(rep, field, depth):
     return float(np.interp(depth, d[m], v[m]))
 
 
+def col_like(df, *needles):
+    for c in df.columns:
+        if all(n in c for n in needles):
+            return c
+    raise KeyError(f"no column matching {needles} in {list(df.columns)}")
+
+
 def main():
     args = parse_arguments()
     out_path = Path(args.out_csv)
@@ -66,101 +77,73 @@ def main():
 
     ref_headers, ref_data = read_dG_profile(args.profile_ol_wd)
     surface_offset = find_surface_depth_offset(ref_headers, ref_data, args.surface_pressure)
-    rxn410, gamma410 = nominal_transition(
-        args.profile_ol_wd, args.model_height, surface_offset, args.depth_corr_ol_wd
-    )
-    _, _ = nominal_transition(
-        args.profile_wd_ri, args.model_height, surface_offset, args.depth_corr_wd_ri
-    )
-    rxn660, gamma660 = nominal_transition(
-        args.profile_ri_ps, args.model_height, surface_offset, args.depth_corr_ri_ps
-    )
-    log_info(f"nominal 410={rxn410 / 1e3:.1f} km gamma={gamma410:.3e}; "
-             f"nominal 660={rxn660 / 1e3:.1f} km gamma={gamma660:.3e}")
+    rxn410, gamma410 = nominal_transition(args.profile_ol_wd, args.model_height, surface_offset, args.depth_corr_ol_wd)
+    nominals = (args.nominal_410_sink400,)
+    use_runtime_nominal = all(n is not None for n in nominals)
 
     rows = []
     data_dir = Path(args.data_dir)
-    sources = [("sw-suite", "sw"), ("nc-suite", "nc")]
-    if not args.skip_test:
-        sources.append(("test-suite", "test"))
-
-    for suite_key, tag in sources:
+    for tag in ("sink",):
         summary_csv = data_dir / f"structure-summary-{tag}.csv"
-        if not summary_csv.exists():
+        seis_cache = data_dir / f"seismic-profile-cache-{tag}.pkl"
+        if not summary_csv.exists() or not seis_cache.exists():
             continue
-        loc = pd.read_csv(summary_csv)
-        with open(data_dir / f"seismic-profile-cache-{tag}.pkl", "rb") as f:
+        try:
+            loc = pd.read_csv(summary_csv)
+        except pd.errors.EmptyDataError:
+            continue
+        if loc.empty:
+            continue
+        with open(seis_cache, "rb") as f:
             seis = pickle.load(f)
-        slabs = loc[loc["model_id"].str.startswith("slab_")]
-        slabs = slabs[slabs["timestep"] == 100]
-        if suite_key == "test-suite":
-            # TEST suite holds only T1-T4 (cold, b=1); include all rows.
-            # Map to nc-suite for scenario indices 16-19 (see below).
-            pass
-        for _, r in slabs.iterrows():
-            mid = r["model_id"]
-            ts = int(r["timestep"])
+        models = loc[loc["model_id"].str.startswith("NH_")]
+        rate_col = col_like(loc, "reaction_rate", "410")
+        vmax_col = col_like(loc, "velocity_vertical", "410")
+        for mid, grp in models.groupby("model_id"):
+            m = UID_RE.match(mid)
+            if not m:
+                log_info(f"skip non-UID model: {mid}")
+                continue
+            # Final-state table: skip runs that never reached the last output.
+            if not (data_dir / mid / "solution" / "solution-00020.pvtu").exists():
+                log_info(f"skip incomplete run (no final output): {mid}")
+                continue
+            ts = int(grp["timestep"].max())
+            r = grp[grp["timestep"] == ts].iloc[0]
             try:
                 rep = seis[mid][ts]["representative"]
             except KeyError:
                 continue
-            rate = float(r["max_reaction_rate_660"])
-            vmax = float(r["max_velocity_vertical_660"])
-            disp660 = float(r["displacement_660"])
-            hatT660 = interp_at(rep, "nonadiabatic_temperature", rxn660 + disp660)
-            therm660 = gamma660 * hatT660 / (RHO * GRAV)
             disp410 = float(r["displacement_410"])
-            hatT410 = interp_at(rep, "nonadiabatic_temperature", rxn410 + disp410)
-            therm410 = gamma410 * hatT410 / (RHO * GRAV)
-            suite = "nc-suite" if suite_key == "test-suite" else suite_key
-            rows.append({
-                "suite": suite,
-                "model_id": mid,
-                "timestep": ts,
-                "z_ol_wd": float(r["z_ol_wd"]),
-                "z_ri_ps": float(r["z_ri_ps"]),
-                "eta_therm": float(r["eta_therm"]),
-                "eta_trans_ri_ps": float(r["eta_trans_ri_ps"]),
-                "prescribed_velocity": float(r["prescribed_velocity"]),
-                "disp660_km": disp660 / 1e3,
-                "width660_km": abs(float(r["width_660"])) / 1e3,
-                "rate660": rate,
-                "vmax660": vmax,
-                "kin660_km": (disp660 - therm660) / 1e3,
-                "therm660_km": therm660 / 1e3,
-                "hatT660": hatT660,
-                "L_km": (10.0 * vmax / rate) if rate > 0 else np.nan,
-                "disp410_km": disp410 / 1e3,
-                "width410_km": abs(float(r["width_410"])) / 1e3,
-                "kin410_km": (disp410 - therm410) / 1e3,
-                "therm410_km": therm410 / 1e3,
-                "is_T": bool(suite == "nc-suite" and float(r["z_ol_wd"]) < 100),
-            })
+            rho = args.ref_density if args.ref_density is not None else RHO_DEFAULT
+            rxn = nominal_410_for_uid(mid, *nominals) if use_runtime_nominal else rxn410
+            hatT410 = interp_at(rep, "nonadiabatic_temperature", rxn + disp410)
+            therm410 = gamma410 * hatT410 / (rho * args.gravity)
+            dampkind = m.group("dampkind")
+            dampval = m.group("dampval") or "0"
+            rows.append(
+                {
+                    "suite": tag,
+                    "model_id": mid,
+                    "timestep": ts,
+                    "damp": f"{dampkind}{dampval}" if dampkind != "None" else "None",
+                    "dynp": 1 if m.group("dynp") == "On" else 0,
+                    "res": int(m.group("res")),
+                    "z": m.group("z"),
+                    "disp410_km": disp410 / 1e3,
+                    "width410_km": abs(float(r["width_410"])) / 1e3,
+                    "rate410_per_Ma": float(r[rate_col]),
+                    "vmax410_cm_per_yr": float(r[vmax_col]),
+                    "kin410_km": (disp410 - therm410) / 1e3,
+                    "therm410_km": therm410 / 1e3,
+                    "hatT410_K": hatT410,
+                }
+            )
 
     df = pd.DataFrame(rows)
-    base_vels = [0.05, 0.1]
-    base_therms = [5.0, 10.0]
-    base_trans = [50.0, 1.0]
-    scenarios = []
-    for _, r in df.iterrows():
-        offset = 0 if r["suite"] == "sw-suite" else 1
-        if r["is_T"]:
-            if float(r["prescribed_velocity"]) < 0.15:
-                scenarios.append(16 if float(r["z_ol_wd"]) < 5.0 else 17)
-            else:
-                scenarios.append(18 if float(r["z_ol_wd"]) < 5.0 else 19)
-        else:
-            vel_i = base_vels.index(float(r["prescribed_velocity"]))
-            therm_j = base_therms.index(float(r["eta_therm"]))
-            trans_k = base_trans.index(float(r["eta_trans_ri_ps"]))
-            scenarios.append(
-                trans_k * (len(base_vels) * len(base_therms)) + vel_i * len(base_therms) + therm_j + 8 * offset
-            )
-    df["scenario"] = scenarios
-
     out_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_path, index=False)
-    log_info(f"postprocessed: {len(df)} rows")
+    log_info(f"Postprocessed table holds {len(df)} complete runs")
     log_artifact(out_path)
 
 

@@ -1,0 +1,15 @@
+# Time inputs below are in years; ASPECT converts them to seconds
+# internally. Values come from project.mk.
+set Dimension                     = 2
+set Use years instead of seconds  = true
+set End time                      = {end-time}
+set Adiabatic surface temperature = {surface-temperature}
+set Surface pressure              = {surface-pressure}
+set Nonlinear solver scheme       = single Advection, single Stokes
+set Nonlinear solver tolerance    = {solver-tolerance}
+set Use operator splitting        = true
+set Max nonlinear iterations      = {max-solver-iter}
+set CFL number                    = {cfl}
+set Maximum time step             = {max-solver-tstep}
+set Resume computation            = auto
+set Additional shared libraries   = {aspect-plugin}

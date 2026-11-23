@@ -15,7 +15,7 @@ _log_width() {
   # stdout is often piped (e.g. make | tee), so ask the controlling
   # terminal directly for the real screen width.
   local tty_cols
-  tty_cols=$( { stty size < /dev/tty 2>/dev/null; } 2>/dev/null | awk '{print $2}')
+  tty_cols=$({ stty size </dev/tty 2>/dev/null; } 2>/dev/null | awk '{print $2}')
   if [[ "$tty_cols" =~ ^[0-9]+$ ]] && ((tty_cols > 0)); then
     printf '%s' "$tty_cols"
     return

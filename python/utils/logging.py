@@ -1,13 +1,5 @@
-"""Shared gutter logging for python scripts.
-
-Glyphs live in the 4-char gutter only; continuation lines indent 4 spaces.
-  " .. " info step | " -- " detail | " -> " artifact | " !! " warning | " XX " error | " xx " deletion
-Lines wrap at screen width (shutil.get_terminal_size, fallback 80), except
-progress bars which are fixed at 80 columns.
-
-Colors (muted gutter, cyan steps, green artifacts, yellow warnings, red
-errors) emit only when stdout is a tty and NO_COLOR is unset. Messages
-are wrapped before color codes are added, so widths stay exact either way.
+"""Shared gutter logging for python scripts (" .. " info, " -> " artifact,
+" !! " warning, " XX " error). Colors only on a live terminal.
 """
 
 import atexit
@@ -149,17 +141,11 @@ class Spinner:
 # ---------------------------------------------------------------------------
 # Native stderr filtering
 # ---------------------------------------------------------------------------
-# macOS graphics frameworks (Metal/CoreAnalytics) report a benign notice on
-# stderr whenever a rendering context is torn down:
-#   "Context leak detected, CoreAnalytics returned false"
-# VTK builds a fresh off-screen render window per figure, so a full suite run
-# trips this repeatedly and the notice lands in the middle of the tqdm bar.
-# The renders themselves are unaffected -- the notice comes from Apple's own
-# framework stack, not from VTK or pyvista -- and it is written by native
-# code straight to file descriptor 2, so it never passes through Python.
-# Dropping it therefore needs a descriptor-level filter rather than a
-# sys.stderr wrapper. The pattern is matched without its trailing text
-# because the wording of the tail varies between macOS releases.
+# macOS prints a harmless notice ("Context leak detected...") on stderr
+# whenever a render window closes, landing mid progress bar. It is written
+# by native code straight to fd 2, so only a descriptor-level filter (not
+# a sys.stderr wrapper) can drop it. Tails vary by release, so match the
+# head only.
 _NATIVE_NOISE = (b"Context leak detected",)
 
 _stderr_filter_installed = False

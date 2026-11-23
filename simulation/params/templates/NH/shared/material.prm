@@ -1,0 +1,40 @@
+subsection Material model
+  set Model name = NH kinetics
+
+  subsection NH kinetics
+    subsection Reaction chain
+      set Kinetic models = Interface controlled growth
+
+      subsection Interface controlled growth
+        set Kinetic prefactors    = {z-kin}
+        set Activation enthalpies = {h-kin}
+        set Activation volumes    = {v-kin}
+      end
+    end
+
+    set Data directory  = {benchmark-data-dir}
+    set Data file names = olivine-wadsleyite-profile-Mg{mg-num}.tsv
+
+    set Phase viscosity prefactors = 1.0, 1.0
+
+    set Viscosity                  = {eta-ref}
+    set Minimum viscosity          = {eta-min}
+    set Maximum viscosity          = {eta-max}
+    set Thermal viscosity exponent = 0
+    set Gibbs viscosity width      = {eta-gibbs}
+
+    set Use dynamic pressure correction for density = {dynp-density}
+    set Use dynamic pressure correction for gibbs   = {dynp-gibbs}
+
+    set Block density excess = {block-excess}
+
+    set Use ambient reference column = {ambient-reference}
+    set Ambient block top y          = {block-top-y}
+    set Ambient block bottom y       = {block-bottom-y}
+    set Gravity magnitude            = {gravity}
+
+    set Relaxation time for dynamic pressure  = {relax-time}
+    set Explicit bulk viscosity               = {explicit-zeta}
+    set Maximum dynamic pressure correction   = {max-cap}
+  end
+end

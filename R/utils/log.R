@@ -1,10 +1,5 @@
-# Shared gutter logging for R scripts (auto-sourced with the other utils).
-# Glyphs live in the 4-char gutter only; continuation lines indent 4 spaces.
-#   " .. " info step | " -- " detail | " -> " artifact | " !! " warning | " XX " error | " xx " deletion
-# Lines wrap at screen width (cli::console_width, else getOption("width")).
-# Colors (muted gutter, cyan steps, green artifacts, yellow warnings, red
-# errors) rely on cli, which strips them when piped or NO_COLOR is set.
-# Lines wrap before styling, so widths stay exact either way.
+# Shared gutter logging for R scripts (" .. " info, " -> " artifact,
+# " !! " warning, " XX " error). Colors only on a live terminal.
 
 .log_width <- function() {
   cols <- suppressWarnings(as.integer(Sys.getenv("COLUMNS", unset = NA)))

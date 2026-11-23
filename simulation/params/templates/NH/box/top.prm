@@ -1,0 +1,12 @@
+# NH box 1-reaction benchmark {uid}.
+set Output directory = {output-dir}
+
+include {config-dir}/{uid}.globals.prm
+include {config-dir}/{uid}.solver.prm
+include {config-dir}/{uid}.geometry.prm
+include {config-dir}/{uid}.boundary.prm
+include {config-dir}/{uid}.composition.prm
+include {config-dir}/{uid}.initial.prm
+include {config-dir}/{uid}.physics.prm
+include {config-dir}/{uid}.material.prm
+include {config-dir}/{uid}.postprocess.prm

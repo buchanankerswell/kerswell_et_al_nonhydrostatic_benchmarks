@@ -24,16 +24,16 @@ Pandoc is a universal document converter used to build a PDF version of the manu
 
 ```bash
 # Clone this repository
-git clone https://github.com/buchanankerswell/kerswell_et_al_660_kinetics.git
+git clone https://github.com/buchanankerswell/kerswell_et_al_nonhydrostatic_benchmarks.git
 
 # Change into the directory
-cd kerswell_et_al_660_kinetics
+cd kerswell_et_al_nonhydrostatic_benchmarks
 
 # Get data and reproduce figures
 make build
 ```
 
-The full set of ASPECT solution files and 660 structural measurement dataset are downloaded from the [Zenodo dataset record](https://doi.org/10.5281/zenodo.24120946) during the build.
+The full set of ASPECT solution files and benchmark structural measurement dataset are downloaded from the Zenodo dataset record (TBD; see `ZENODO_DATASET_DOI` in `project.mk`) during the build.
 
 To run the simulations from scratch instead, link your installs at the project root as `<aspect_install_dir> -> aspect/` and `<dealii_install_dir> -> dealii/` (needed only for this step), then run `make models`. See [candi](https://github.com/dealii/candi) (deal.II >= v9.7.0) and [ASPECT](https://github.com/geodynamics/aspect) (ASPECT >= 3.1.0) for installation instructions.
 

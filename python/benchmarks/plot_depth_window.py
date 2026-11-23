@@ -1,0 +1,269 @@
+"""Depth-window composition figure for one NH run.
+
+One figure, 4 rows (steps) x 3 columns (field panels) + 1 context column
+(block shape for the sink). Panels show a narrow
+depth window centered on the phase transition with a per-figure shared
+symmetric color scale computed from window data only, so the localized
+pressure signal sets the scale.
+
+For sinking-block runs the pressure/density panels show the TRUE ambient-
+referenced driver: the file values plus the static block load included in
+the 1D adiabatic reference (must match BLOCK_Y_TOP/BLOCK_Y_BOT and GRAVITY
+in project.mk).
+
+Usage (repo root):
+  PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python
+    python/benchmarks/plot_depth_window.py --model NH_Sink_..._Res6
+    --steps 00002 00006 00012 00020 --out figs/benchmarks/depth-window-S1.png
+"""
+
+import argparse
+import os
+import re
+import sys
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+import pyvista as pv
+from matplotlib import patches
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
+from simulation.mesh.config import S_PER_MA
+from simulation.params.transitions import load_depth_datum, model_to_true_km
+from utils.logging import log_artifact
+
+# Ambient-reference block-load correction: the 1D adiabatic reference
+# includes the initial block load, so add the static load back below
+# the block column.
+
+RESULTS = os.path.join(os.environ.get("PROJECT_ROOT", "."), "simulation/results")
+
+SETS = {
+    "set0": [
+        ("nonadiabatic_pressure", "PuOr_r", 1e-6, "$\\hat{P}$ (MPa)", "sym"),
+        ("nonadiabatic_density", "BrBG", 1e-3, "$\\hat{\\rho}$ (g/cm$^3$)", "sym"),
+        ("velocity_vertical", "PiYG", 1e2, "$\\vec{u}_y$ (cm/yr)", "sym"),
+    ],
+    "set1": [
+        ("dG_driving_0", "PuOr_r", 1e-3, "$dG$ (kJ/mol)", "sym"),
+        ("reaction_rate_C0", "RdGy_r", S_PER_MA, "$\\dot{X}$ (1/Ma)", "signedlog"),
+        ("xi_ol_wd", "GnBu", 1.0, "$\\xi$", "fixed01"),
+    ],
+}
+
+PANEL_W = 1500
+
+
+def transform(values, mode):
+    if mode == "signedlog":
+        return np.sign(values) * np.log10(1.0 + np.abs(values))
+    return values
+
+
+def read_step(model, step, block_top_m=875e3, block_bot_m=725e3, gravity=9.81):
+    """Read one output step: mesh, points, and ambient-corrected pressure/density (Pa, kg/m^3)."""
+    step = step.zfill(5)
+    path = os.path.join(RESULTS, model, "solution", "solution-" + step + ".pvtu")
+    m = pv.read(path)
+    p = np.asarray(m["p"])
+    out = {
+        "mesh": m,
+        "points": np.asarray(m.points),
+        "nonadiabatic_pressure": p - np.asarray(m["adiabatic_pressure"]),
+        "nonadiabatic_density": np.asarray(m["density"]) - np.asarray(m["adiabatic_density"]),
+        "velocity_vertical": np.asarray(m["velocity"])[:, 1],
+    }
+    if "block" in m.point_data:
+        out["block"] = np.asarray(m["block"])
+        bm = re.search(r"Block(\d+)", model)
+        excess = float(bm.group(1)) if bm else 0.0
+        if excess:
+            y = out["points"][:, 1]
+            overlap = np.where(
+                y < block_bot_m,
+                block_top_m - block_bot_m,
+                np.where(y < block_top_m, block_top_m - y, 0.0),
+            )
+            out["nonadiabatic_pressure"] = out["nonadiabatic_pressure"] + excess * gravity * overlap
+            depth = 1e6 - y
+            in_window = (depth > 1e6 - block_top_m) & (depth < 1e6 - block_bot_m)
+            out["nonadiabatic_density"] = out["nonadiabatic_density"] + excess * in_window
+    for name in ("dG_driving_0", "reaction_rate_C0", "xi_ol_wd"):
+        if name in m.point_data:
+            out[name] = np.asarray(m[name])
+    return out
+
+
+def step_time_ma(model, step):
+    """Model time (Ma) for one output step, read from timeseries.csv (time_yr in years)."""
+    ts = os.path.join(RESULTS, model, "timeseries.csv")
+    want = "solution-" + step.zfill(5)
+    try:
+        with open(ts) as f:
+            header = f.readline().strip().split(",")
+            ti, oi = header.index("time_yr"), header.index("output")
+            for line in f:
+                parts = line.strip().split(",")
+                if parts[oi] == want:
+                    return float(parts[ti]) / 1e6
+    except OSError:
+        pass
+    return int(step) * 0.25
+
+
+def window_clim(steps_data, field, scale, mode, yc, half):
+    vals = []
+    for d in steps_data:
+        y = d["points"][:, 1]
+        vals.append(transform(d[field][(y >= yc - half) & (y <= yc + half)] * scale, mode))
+    vals = np.concatenate(vals)
+    if mode == "fixed01":
+        return (0.0, 1.0)
+    m = float(np.max(np.abs(vals[np.isfinite(vals)])))
+    return (-m, m)
+
+
+def render_window_panel(data, field, cmap, scale, mode, clim, yc, half, cx, domain_w_m):
+    mesh = data["mesh"].copy()
+    mesh.point_data["__window"] = transform(data[field] * scale, mode)
+    height_px = max(int(PANEL_W * (2 * half) / domain_w_m), 50)
+    pl = pv.Plotter(off_screen=True, window_size=[PANEL_W, height_px], lighting="none")
+    pl.background_color = "#FFFFFF"
+    pl.add_mesh(mesh, scalars="__window", cmap=cmap, clim=clim, show_scalar_bar=False, show_edges=False, lighting=False)
+    pl.camera_position = [(cx, yc, 1e6), (cx, yc, 0.0), (0.0, 1.0, 0.0)]
+    pl.enable_parallel_projection()
+    pl.camera.parallel_scale = half
+    img = pl.screenshot(return_img=True)
+    pl.close()
+    pv.close_all()
+    return img
+
+
+def draw_block_shape(ax, data, nominal_y, yc, half, x0, x1, ticks=True):
+    face = "#E5E5E5"
+    ax.set_facecolor(face)
+    ax.set_xlim(x0, x1)
+    ax.set_ylim(0, 1e6)
+    ax.set_aspect("equal")
+    ax.add_patch(patches.Rectangle((x0, yc - half), x1 - x0, 2 * half, facecolor="#BFBFBF", edgecolor="black", linewidth=1.0))
+    ax.axhline(nominal_y, color="black", linewidth=2.0)
+    if "block" in data:
+        pts = data["points"][data["block"] > 0.5]
+        if pts.shape[0]:
+            stride = max(pts.shape[0] // 2000, 1)
+            ax.scatter(pts[::stride, 0], pts[::stride, 1], s=4, color="#B36B00", edgecolors="none", zorder=4)
+    if ticks:
+        set_depth_ticks(ax)
+    else:
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+
+def set_depth_ticks(ax):
+    depths_km = [0, 250, 500, 750, 1000]
+    ax.set_yticks([1e6 - d * 1e3 for d in depths_km])
+    ax.set_yticklabels([str(d) for d in depths_km])
+    ax.tick_params(axis="y", labelright=True, labelleft=False, length=0)
+    ax.set_xticks([])
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--model", required=True, help="Run UID to render")
+    ap.add_argument("--steps", nargs=4, required=True, help="Output numbers to render (4 steps)")
+    ap.add_argument("--nominal-410-m", type=float, default=379957.0, help="Runtime-adiabat 410 nominal (m) (project.mk NOMINAL_410_SINK400)")
+    ap.add_argument("--window-half-m", type=float, default=50e03, help="Depth-window half-height (m)")
+    ap.add_argument("--set", choices=["set0", "set1"], default="set0", help="Field set to render")
+    ap.add_argument("--block-top-m", type=float, default=875e03, help="Block top (m) (project.mk BLOCK_Y_TOP)")
+    ap.add_argument("--block-bottom-m", type=float, default=725e03, help="Block bottom (m) (project.mk BLOCK_Y_BOT)")
+    ap.add_argument("--gravity", type=float, default=9.81, help="Gravity (m/s^2) (project.mk GRAVITY)")
+    ap.add_argument(
+        "--clims-json", default=None, help="Standardized color limits JSON path from compute_window_clims.py; overrides per-figure scaling"
+    )
+    ap.add_argument("--out", required=True, help="Output figure path")
+    ap.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI; draft 100, manuscript 330)")
+    args = ap.parse_args()
+    fields = SETS[args.set]
+
+    nominal_y = 1e6 - args.nominal_410_m
+    yc = nominal_y
+    half = args.window_half_m
+
+    steps_data = [read_step(args.model, s, args.block_top_m, args.block_bottom_m, args.gravity) for s in args.steps]
+    times = [step_time_ma(args.model, s) for s in args.steps]
+    suite = "sink"
+    datum = load_depth_datum(str(Path(RESULTS).parent / "data" / "depth-datum.tsv"))
+    true_ticks = ["%.0f" % v for v in model_to_true_km(tuple((1e6 - y) / 1e3 for y in (yc + half, yc, yc - half)), datum, suite)]
+    if args.clims_json:
+        import json
+
+        with open(args.clims_json) as f:
+            std = json.load(f)
+        clims = {f[0]: tuple(std[suite][args.set][f[0]]) for f in fields}
+    else:
+        clims = {f[0]: window_clim(steps_data, f[0], f[2], f[4], yc, half) for f in fields}
+
+    # Domain extent from the mesh itself, so the square sink
+    # setup frames correctly instead of assuming a fixed width.
+    xs = steps_data[0]["points"][:, 0]
+    x0, x1 = float(xs.min()), float(xs.max())
+    cx, domain_w_m = (x0 + x1) / 2.0, max(x1 - x0, 1e3)
+
+    # Panel widths follow the data aspect so screenshots fill their axes
+    # with no stretching and no empty margins. The model-domain schematic
+    # rides as a small inset in each third-column panel.
+    r = domain_w_m / (2 * half)
+    fig_w = min(1.55 * (3 * r) + 1.0, 20.0)
+    fig = plt.figure(figsize=(fig_w, 8.5))
+    gs = fig.add_gridspec(
+        5,
+        3,
+        height_ratios=[1, 1, 1, 1, 0.135],
+        width_ratios=[r, r, r],
+        hspace=0.08,
+        wspace=0.06,
+    )
+
+    for i, (data, t) in enumerate(zip(steps_data, times)):
+        for j, (field, cmap, scale, label, mode) in enumerate(fields):
+            ax = fig.add_subplot(gs[i, j])
+            img = render_window_panel(data, field, cmap, scale, mode, clims[field], yc, half, cx, domain_w_m)
+            ax.imshow(img, aspect="auto", extent=[0, 1, yc - half, yc + half])
+            ax.text(
+                0.03,
+                0.88,
+                "%.2f Ma" % t,
+                transform=ax.transAxes,
+                va="top",
+                bbox=dict(facecolor="white", alpha=0.8, edgecolor="none", pad=2),
+            )
+            if j == 0:
+                ax.set_yticks([yc - half, yc, yc + half])
+                ax.set_yticklabels(true_ticks)
+            else:
+                ax.set_yticks([])
+            ax.set_xticks([])
+            if i == 0:
+                ax.set_title(label, fontsize=14)
+            if j == 2:
+                ax_in = inset_axes(ax, width="14%", height="62%", loc="lower right", borderpad=0.8)
+                draw_block_shape(ax_in, data, nominal_y, yc, half, x0, x1, ticks=False)
+                if i == 0:
+                    ax_in.set_title("Domain", fontsize=9, fontweight="bold", pad=2)
+
+    for j, (field, cmap, scale, label, mode) in enumerate(fields):
+        ax = fig.add_subplot(gs[4, j])
+        ax.set_axis_off()
+        sm = plt.cm.ScalarMappable(cmap=plt.get_cmap(cmap), norm=plt.Normalize(*clims[field]))
+        plt.colorbar(sm, ax=ax, orientation="horizontal", fraction=1.0, aspect=26, shrink=0.5)
+
+    fig.savefig(args.out, dpi=args.dpi, bbox_inches="tight")
+    log_artifact(args.out)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

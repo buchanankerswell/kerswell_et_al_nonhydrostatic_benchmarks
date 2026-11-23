@@ -3,28 +3,18 @@ import re
 import sys
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class PrmGenerator:
-    """
-    Container for ASPECT parameter file template mapping.
-
-    Attributes:
-        template_path (str): Path to the input .prm template.
-        output_path (str): Path where the rendered file will be saved.
-        mapping (dict[str, str]): Key-value pairs for placeholder substitution.
-    """
+    """Fill {key} placeholders in a .prm template and write the result."""
 
     template_path: str
     output_path: str
     mapping: dict[str, str]
 
-def parse_arguments() -> argparse.Namespace:
-    """
-    Handles command-line argument parsing for PRM generation.
 
-    Returns:
-        argparse.Namespace: The parsed command-line arguments.
-    """
+def parse_arguments() -> argparse.Namespace:
+    """Read template path, output path, and key=value pairs from the command line."""
     parser = argparse.ArgumentParser(description="Generate ASPECT .prm files from templates by replacing {key} placeholders.")
     parser.add_argument("template", help="Path to the .prm template file")
     parser.add_argument("output", help="Path to save the generated .prm file")
@@ -32,16 +22,9 @@ def parse_arguments() -> argparse.Namespace:
 
     return parser.parse_args()
 
+
 def generate_prm(config: PrmGenerator) -> None:
-    """
-    Performs placeholder substitution and cleans up formatting for ASPECT .prm files.
-
-    Args:
-        config: A PrmGenerator instance containing paths and parameter mappings.
-
-    Raises:
-        IOError: If files cannot be read or written.
-    """
+    """Substitute placeholders, tidy comma spacing, and write the file."""
     try:
         with open(config.template_path, "r") as f:
             content: str = f.read()
@@ -62,10 +45,9 @@ def generate_prm(config: PrmGenerator) -> None:
         print(f" XX Error: Failed to generate {config.output_path}: {e}")
         sys.exit(1)
 
+
 def main() -> None:
-    """
-    Main execution logic: parses CLI pairs into a mapping and triggers generation.
-    """
+    """Build the key-value mapping from CLI pairs and generate the file."""
     args: argparse.Namespace = parse_arguments()
 
     # Convert list of 'key=value' into a dictionary with error checking
@@ -80,6 +62,7 @@ def main() -> None:
     config = PrmGenerator(template_path=args.template, output_path=args.output, mapping=param_map)
 
     generate_prm(config)
+
 
 if __name__ == "__main__":
     main()

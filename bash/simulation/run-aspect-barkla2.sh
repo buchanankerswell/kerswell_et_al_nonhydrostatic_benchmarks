@@ -4,7 +4,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ ! -r "${LOG_SH:-}" ]]; then
   for candidate in "${PROJECT_ROOT:-}/bash/utils/log.sh" "$SCRIPT_DIR/../utils/log.sh"; do
-    [[ -r "$candidate" ]] && { LOG_SH="$candidate"; break; }
+    [[ -r "$candidate" ]] && {
+      LOG_SH="$candidate"
+      break
+    }
   done
 fi
 

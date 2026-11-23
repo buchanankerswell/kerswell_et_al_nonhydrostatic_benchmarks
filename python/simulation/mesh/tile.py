@@ -7,6 +7,7 @@ from config import MeshConfig
 from utils.logging import log_warn
 from PIL import Image, ImageDraw, ImageFont
 
+
 @dataclass
 class ImageTiler:
     """Tiles per-field mesh plots side-by-side and saves the combined images.
@@ -22,7 +23,6 @@ class ImageTiler:
     field2: str
     field3: str | None = None
     tags: str | None = None  # Up to 3 characters, one per panel (e.g. "abc")
-    fps: int = 10
     tag_size: int = 188  # Font size in points
 
     tiles_dir: Path = field(init=False)
@@ -32,7 +32,6 @@ class ImageTiler:
     images_field3: list[Path] = field(init=False)
     fields_list: list[str] = field(init=False)
     field_file_maps: list[str | None] = field(init=False)
-    tiled_images: list[Path] = field(default_factory=list, init=False)
 
     verbosity: int = 1
 
@@ -68,7 +67,7 @@ class ImageTiler:
         """Return a list of three per-panel tag characters (or None) from self.tags.
 
         Pads with None if self.tags has fewer than three characters. Whitespace
-        padding characters are normalised to None so they do not appear in
+        padding characters are normalized to None so they do not appear in
         annotations or filenames.
         """
         if self.tags is None:
@@ -115,6 +114,24 @@ class ImageTiler:
         draw.text((25, 10), tag, font=self._get_default_font(), fill="black")
         return image
 
+    def _crop_whitespace(self, image: Image.Image, pad: int = 8) -> Image.Image:
+        """Crop near-white borders around panel content (screenshots pad the mesh)."""
+        import numpy as np
+
+        gray = np.asarray(image.convert("L"))
+        rows = np.where((gray < 250).any(axis=1))[0]
+        cols = np.where((gray < 250).any(axis=0))[0]
+        if rows.size == 0 or cols.size == 0:
+            return image
+        return image.crop(
+            (
+                max(int(cols.min()) - pad, 0),
+                max(int(rows.min()) - pad, 0),
+                min(int(cols.max()) + pad, image.width),
+                min(int(rows.max()) + pad, image.height),
+            )
+        )
+
     def _concatenate_images_horizontally(self, images: list[Image.Image]) -> Image.Image:
         """Return a new RGB image with all images pasted side-by-side.
 
@@ -127,12 +144,14 @@ class ImageTiler:
         Returns:
             Combined RGB Image.
         """
-        widths, heights = zip(*(img.size for img in images))
-        combined = Image.new("RGB", (sum(widths), max(heights)), color=(255, 255, 255))
+        cropped = [self._crop_whitespace(img) for img in images]
+        widths, heights = zip(*(img.size for img in cropped))
+        gap = 24
+        combined = Image.new("RGB", (sum(widths) + gap * (len(cropped) - 1), max(heights)), color=(255, 255, 255))
         x_offset = 0
-        for img in images:
+        for img in cropped:
             combined.paste(img, (x_offset, 0))
-            x_offset += img.size[0]
+            x_offset += img.size[0] + gap
         return combined
 
     def _build_tile_path(self, timestep: str, tags: list[str | None]) -> Path:
@@ -188,14 +207,11 @@ class ImageTiler:
         combined = self._concatenate_images_horizontally(annotated)
         combined.save(out_tile)
 
-        self.tiled_images.append(out_tile)
-
     def tile_images(self) -> None:
         """Tile all matched timestep images across the configured fields.
 
         Iterates over paired image sequences, validates timestep alignment,
-        and delegates each matched set to _tile_single. Results accumulate
-        in self.tiled_images.
+        and delegates each matched set to _tile_single.
         """
         tags = self._parse_tags()
 

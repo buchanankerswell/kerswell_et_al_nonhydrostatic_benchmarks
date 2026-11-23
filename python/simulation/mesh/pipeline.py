@@ -3,37 +3,55 @@ import pickle
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Generator
+from typing import Generator, NamedTuple
 
 import numpy as np
 import pandas as pd
 import pyvista as pv
 from config import MeshConfig
-from utils.logging import gutter_tqdm, log_error, log_warn
+from utils.logging import gutter_tqdm, log_error, log_info, log_warn
 from plotter import MeshPlotter
 from postprocess import MeshPostProcessor
 from preprocess import MeshPreProcessor
-from simulation.params.transitions import PhaseTransition
+from simulation.params.transitions import PhaseTransition, model_to_true_km
+
+
+class TransInfo(NamedTuple):
+    """One measured phase transition: rate field, cache keys, and runtime geometry."""
+
+    rate_field: str
+    x_key: str
+    disp_key: str
+    width_key: str
+    trans_y: float
+    rxn_depth: float
+
 
 @dataclass
 class BasePipeline:
-    """
-    Shared infrastructure for all pipeline variants.
-
-    Provides file discovery, mesh loading, timestep filtering, and the phase-transition metadata tables used by both post-processing and plotting.
-    """
+    """Shared file discovery, mesh loading, and timestep filtering for all pipeline variants."""
 
     config: MeshConfig
     pvtu_in_dirs: dict[str, Path]
     tsteps: list[int]
     trans_data: dict[str, PhaseTransition]
     verbosity: int = 0
+    suite_tag: str = ""
+    trace_x: float | None = None
+    depth_datum: dict | None = None
+    plot_tsteps: list[int] | None = None
+    block_top_m: float = 875e03
+    block_bot_m: float = 725e03
+    gravity: float = 9.81
+    # Representative-trace guard (m, project.mk TRACE_X_STEP_LIMIT): max x
+    # jump between depth slices before the trace re-anchors.
+    x_step_limit_m: float = 150e03
 
     def __post_init__(self) -> None:
-        self.preprocessor = MeshPreProcessor(self.verbosity)
+        self.preprocessor = MeshPreProcessor(self.verbosity, self.block_top_m, self.block_bot_m, self.gravity)
         self._pvtu_file_cache: dict | None = None
         self.trans_info: dict = {
-            "X_wd": (
+            "xi_ol_wd": TransInfo(
                 "reaction_rate_C0",
                 "profile_x_410",
                 "displacement_410",
@@ -41,24 +59,25 @@ class BasePipeline:
                 self.trans_data["X_wd"].y,
                 self.trans_data["X_wd"].depth,
             ),
-            "X_ps": (
-                "reaction_rate_C2",
-                "profile_x_660",
-                "displacement_660",
-                "width_660",
-                self.trans_data["X_ps"].y,
-                self.trans_data["X_ps"].depth,
-            ),
         }
 
-    def _iter_valid_timesteps(self, pvtu_files: list[Path], timesteps: list[int]) -> Generator[tuple[Path, int], None, None]:
+    def _iter_valid_timesteps(
+        self, pvtu_files: list[Path], timesteps: list[int], only: list[int] | None = None
+    ) -> Generator[tuple[Path, int], None, None]:
         """
         Yield (path, timestep) pairs that are in the requested timestep list.
 
         Skips sentinel value -1, which marks files whose timestep could not be parsed from the filename.
+        A requested -1 means the last output per model (benchmark suites use
+        varying output counts, so no single fixed number fits all runs).
+        Pass only= to restrict to a subset (used for test-mode renders).
         """
+        steps = self.tsteps if only is None else only
+        if -1 in steps and pvtu_files:
+            yield pvtu_files[-1], timesteps[-1]
+            return
         for pvtu_path, tstep in zip(pvtu_files, timesteps):
-            if tstep != -1 and tstep in self.tsteps:
+            if tstep != -1 and tstep in steps:
                 yield pvtu_path, tstep
 
     def _load_mesh(self, pvtu_path: Path) -> pv.UnstructuredGrid | None:
@@ -122,76 +141,6 @@ class BasePipeline:
         model_entries.sort(key=lambda x: self._extract_sort_key(x[0]))
         return dict(model_entries)
 
-    def _get_prams_from_model_uid(self, model_id_str: str) -> tuple[float, float, float, float, float, float, float, float, float, float]:
-        """
-        Parse z_ol_wd, z_wd_ri, z_ri_ps, eta_therm, prescribed_velocity, and prescribed_temperature_anomaly from a model ID string.
-
-        Searches the string for tokens of the form:
-            Zol<val>, Zwd<val>, Zri<val>, EtaTherm<val>, Vel<val>, Temp<Val>
-        where <val> may be in standard or scientific notation (e.g., 1.4e+04).
-
-        The order of parameters and presence of additional fields are ignored.
-        Returns (nan, nan, nan, nan, nan, nan) and warns if any parameter cannot be found or parsed.
-        """
-
-        def extract_float(pattern: str) -> float:
-            match = re.search(pattern, model_id_str)
-            return float(match.group(1)) if match else np.nan
-
-        def extract_str(pattern: str) -> str | None:
-            match = re.search(pattern, model_id_str)
-            return match.group(1) if match else None
-
-        try:
-            z_ol_wd = extract_float(r"Zol([0-9.+\-eE]+)")
-            z_wd_ri = extract_float(r"Zwd([0-9.+\-eE]+)")
-            z_ri_ps = extract_float(r"Zri([0-9.+\-eE]+)")
-            eta_therm = extract_float(r"EtaTherm([0-9.+\-eE]+)")
-            prescribed_velocity = extract_float(r"Vel([0-9.+\-eE]+)")
-            prescribed_temperature_anomaly = extract_float(r"Temp([0-9.+\-eE]+)")
-            eta_phases_raw = extract_str(r"EtaTrans([0-9.+\-eE]+(?:-[0-9.+\-eE]+)*)")
-            eta_phases_values = [float(x) for x in eta_phases_raw.split("-")] if eta_phases_raw else [np.nan] * 4
-            eta_trans_ol_wd = eta_phases_values[1] / eta_phases_values[0]
-            eta_trans_wd_ri = eta_phases_values[2] / eta_phases_values[1]
-            eta_trans_ri_ps = eta_phases_values[3] / eta_phases_values[2]
-            mg_num = extract_float(r"MG([0-9.+\-eE]+)")
-
-            if any(
-                np.isnan(
-                    [
-                        z_ol_wd,
-                        z_wd_ri,
-                        z_ri_ps,
-                        eta_therm,
-                        eta_trans_ol_wd,
-                        eta_trans_wd_ri,
-                        eta_trans_ri_ps,
-                        prescribed_velocity,
-                        prescribed_temperature_anomaly,
-                        mg_num,
-                    ]
-                )
-            ):
-                raise ValueError("Missing one or more parameters")
-
-            return (
-                z_ol_wd,
-                z_wd_ri,
-                z_ri_ps,
-                eta_therm,
-                eta_trans_ol_wd,
-                eta_trans_wd_ri,
-                eta_trans_ri_ps,
-                prescribed_velocity,
-                prescribed_temperature_anomaly,
-                mg_num,
-            )
-
-        except Exception as e:
-            if self.verbosity >= 1:
-                log_warn(f"could not extract parameters from model_id '{model_id_str}': {e}")
-            return np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan
-
     def _extract_sort_key(self, model_id: str) -> tuple:
         """Return a (prefix, number) sort key so model IDs sort numerically by trailing integer."""
         match = re.match(r"(.*?)(\d+)$", model_id)
@@ -200,12 +149,10 @@ class BasePipeline:
             return (prefix, int(number))
         return (model_id, float("inf"))
 
+
 @dataclass
 class PostProcessingPipeline(BasePipeline):
-    """
-    Iterates over all models and timesteps, measures phase transition structure, and caches per-model seismic profiles and transition summaries for
-    downstream use.
-    """
+    """Measure the 410 transition in every model and step, caching profiles and summaries."""
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -217,8 +164,9 @@ class PostProcessingPipeline(BasePipeline):
         """
         Run post-processing over all models and timesteps.
 
-        For each mesh, derives computed fields, measures phase transition structure at each discontinuity defined in trans_info, and
-        extracts seismic profiles for all configured fields at the best-representative x-position.
+        For each mesh, derive computed fields, measure the transition
+        position and width along the representative trace, and store depth
+        profiles for the configured fields.
 
         Args:
             transition_summary_cache_path: If provided, pickle the structure summary cache to this path.
@@ -226,7 +174,7 @@ class PostProcessingPipeline(BasePipeline):
             force_reprocess:               Overwrite existing cache if it exists.
 
         Returns:
-            transition_summary_cache dict: cache[model_id][tstep] -> entry dict with structure measurements, depth profiles, and scalar maxima.
+            transition_summary_cache dict: cache[model_id][tstep] -> entry with measurements, profiles, and scalar maxima.
             seismic_profile_cache dict:    cache[model_id][tstep] -> full depth profiles for all fields.
         """
         transition_summary_cache = {}
@@ -252,34 +200,8 @@ class PostProcessingPipeline(BasePipeline):
                         log_error(f"could not load cache: {e}")
 
         requested = set(self.pvtu_in_dirs)
-        if (
-            not force_reprocess
-            and requested
-            and all(transition_summary_cache.get(m) and seismic_profile_cache.get(m) for m in requested)
-        ):
+        if not force_reprocess and requested and all(transition_summary_cache.get(m) and seismic_profile_cache.get(m) for m in requested):
             return transition_summary_cache, seismic_profile_cache
-
-        eta_therm_vals = set()
-        velocity_vals = set()
-        eta_trans_vals = set()
-
-        for model_id, _ in self._get_ordered_pvtu_files().items():
-            _, _, _, eta_therm, _, _, eta_trans_ri_ps, velocity, _, _ = self._get_prams_from_model_uid(model_id)
-
-            if not np.isnan(eta_therm):
-                eta_therm_vals.add(eta_therm)
-            if not np.isnan(velocity):
-                velocity_vals.add(velocity)
-            if not np.isnan(eta_trans_ri_ps):
-                eta_trans_vals.add(eta_trans_ri_ps)
-
-        velocity_vals = sorted(velocity_vals)
-        eta_therm_vals = sorted(eta_therm_vals)
-        eta_trans_vals = sorted(eta_trans_vals, reverse=True)
-
-        velocity_idx = {v: j for j, v in enumerate(velocity_vals)}
-        eta_therm_idx = {v: i for i, v in enumerate(eta_therm_vals)}
-        eta_trans_idx = {v: k for k, v in enumerate(eta_trans_vals)}
 
         model_items = self._get_ordered_pvtu_files().items()
         pbar = gutter_tqdm(model_items, desc="Postprocessing", unit="model")
@@ -288,21 +210,6 @@ class PostProcessingPipeline(BasePipeline):
                 if self.verbosity >= 1:
                     log_warn(f"no result files for model: {model_id}")
                 continue
-
-            z_ol_wd, z_wd_ri, z_ri_ps, eta_therm, eta_trans_ol_wd, eta_trans_wd_ri, eta_trans_ri_ps, velocity, temperature, mg_num = (
-                self._get_prams_from_model_uid(model_id)
-            )
-
-            try:
-                i = velocity_idx[velocity]
-                j = eta_therm_idx[eta_therm]
-                k = eta_trans_idx[eta_trans_ri_ps]
-            except Exception as e:
-                if self.verbosity >= 1:
-                    log_warn(f"could not compute scenario for {model_id}: {e}")
-                continue
-
-            scenario = k * (len(velocity_vals) * len(eta_therm_vals)) + i * len(eta_therm_vals) + j
 
             transition_summary_cache[model_id] = {}
             seismic_profile_cache[model_id] = {}
@@ -313,31 +220,16 @@ class PostProcessingPipeline(BasePipeline):
                     continue
 
                 for field_name in self.config.file_map:
-                    self.preprocessor.prepare_mesh(mesh, field_name)
+                    self.preprocessor.prepare_mesh(mesh, field_name, model_id)
 
-                entry = {
-                    "time": self.preprocessor.get_mesh_time_myr(mesh, model_id, tstep),
-                    "z_ol_wd": z_ol_wd,
-                    "z_wd_ri": z_wd_ri,
-                    "z_ri_ps": z_ri_ps,
-                    "eta_therm": eta_therm,
-                    "eta_trans_ol_wd": eta_trans_ol_wd,
-                    "eta_trans_wd_ri": eta_trans_wd_ri,
-                    "eta_trans_ri_ps": eta_trans_ri_ps,
-                    "prescribed_velocity": velocity,
-                    "prescribed_temperature_anomaly": temperature,
-                    "mg_num": mg_num,
-                    "scenario": scenario,
-                }
+                entry = {"time": self.preprocessor.get_mesh_time_ma(mesh, model_id, tstep)}
 
                 depth_data = mesh.point_data["depth"]
                 d_min, d_max = np.min(depth_data), np.max(depth_data)
                 requested_depths = np.linspace(d_min, d_max, num=500)
                 y_max = mesh.bounds[3]
                 y_slicing_grid = y_max - requested_depths
-                representative_trace = self._extract_representative_trace(
-                    mesh, y_slicing_grid, requested_depths, x_step_limit=150e3
-                )
+                representative_trace = self._extract_representative_trace(mesh, y_slicing_grid, requested_depths, x_step_limit=self.x_step_limit_m)
 
                 trace_depths = representative_trace["trace_x"]["depths"]
                 trace_x_vals = representative_trace["trace_x"]["values"]
@@ -382,13 +274,14 @@ class PostProcessingPipeline(BasePipeline):
         """
         Export a flattened summary of the cache to a csv file.
 
-        Runs post-processing if no cache is provided. Column format lists are derived from trans_info so they stay in sync if transitions
-        are added or removed.
+        Column formats come from trans_info so they stay in sync if
+        transitions are added or removed.
 
         Args:
             csv_path:        Destination path for the summary csv file.
-            cache:           Pre-computed cache dict; runs self.run() if None.
-            cache_path:      If provided, pickle the result cache to this path.
+            transition_summary_cache: Pre-computed cache dict; runs self.run() if None.
+            transition_summary_cache_path: Pickle path passed to self.run() when no cache is given.
+            seismic_profile_cache_path:    Pickle path passed to self.run() when no cache is given.
             force_reprocess: Overwrite existing cache if it exists.
 
         Returns:
@@ -398,17 +291,8 @@ class PostProcessingPipeline(BasePipeline):
             transition_summary_cache, _ = self.run(transition_summary_cache_path, seismic_profile_cache_path, force_reprocess)
 
         float_cols = []
-        scientific_cols = ["z_ol_wd", "z_wd_ri", "z_ri_ps", "prescribed_velocity"]
-        integer_cols = [
-            "time",
-            "eta_therm",
-            "eta_trans_ol_wd",
-            "eta_trans_wd_ri",
-            "eta_trans_ri_ps",
-            "prescribed_temperature_anomaly",
-            "mg_num",
-            "scenario",
-        ]
+        scientific_cols = []
+        integer_cols = ["time"]
 
         for rate_field, x_key, disp_key, width_key, _, _ in self.trans_info.values():
             suffix = x_key.split("_")[-1]
@@ -446,9 +330,15 @@ class PostProcessingPipeline(BasePipeline):
         out_dir.mkdir(parents=True, exist_ok=True)
 
         for model_id, timesteps in seismic_profile_cache.items():
+            # Final-state profiles: skip runs that never reached the last output.
+            model_dir = self.pvtu_in_dirs.get(model_id) if self.pvtu_in_dirs else None
+            if model_dir is not None and not (model_dir / "solution" / "solution-00020.pvtu").exists():
+                if self.verbosity >= 1:
+                    log_info(f"skip incomplete run (no final output): {model_id}")
+                continue
             for tstep, suffix_dict in timesteps.items():
                 for suffix, fields_dict in suffix_dict.items():
-                    csv_path = out_dir / f"seismic_profile_{model_id}_t{tstep}_{suffix}.csv"
+                    csv_path = out_dir / f"seismic-profile-{model_id}-t{tstep}-{suffix}.csv"
 
                     if all(f in fields_dict for f in export_fields):
                         raw_z = fields_dict[target_fields[0]]["depths"]
@@ -457,6 +347,8 @@ class PostProcessingPipeline(BasePipeline):
 
                         uniform_z = np.linspace(np.min(raw_z), np.max(raw_z), 1000)
                         export_data = {"depth": uniform_z}
+                        if self.depth_datum is not None and self.suite_tag == "sink":
+                            export_data["true_depth_km"] = model_to_true_km(uniform_z / 1e3, self.depth_datum, self.suite_tag)
 
                         for f in export_fields:
                             from scipy.interpolate import interp1d
@@ -473,7 +365,12 @@ class PostProcessingPipeline(BasePipeline):
                             export_data[f] = f_interp(uniform_z)
 
                         df = pd.DataFrame(export_data)
-                        cols = ["depth", "trace_x"] + [f for f in target_fields if f != "trace_x"]
+                        cols = (
+                            ["depth"]
+                            + (["true_depth_km"] if "true_depth_km" in export_data else [])
+                            + ["trace_x"]
+                            + [f for f in target_fields if f != "trace_x"]
+                        )
                         df[cols].to_csv(csv_path, index=False)
 
     def _process_transition(
@@ -489,24 +386,23 @@ class PostProcessingPipeline(BasePipeline):
         rate_field: str,
     ) -> None:
         """
-        Measure one phase transition along the pre-computed representative trace and populate the entry dict in-place.
+        Measure one phase transition along the representative trace and fill in the entry dict.
 
-        All depth profiles and scalar maxima are derived from representative_trace, ensuring that the transition structure and the seismic
-        profiles are extracted from the same trace rather than from separate per-column scans.
-
-        x_position is set to the trace x-coordinate interpolated at the measured transition depth (rxn_depth + displacement).  When no
-        valid crossing is found the transition keys are written as nan and the method returns early.
+        Depth profiles and scalar maxima all come from the same trace, not
+        from separate per-column scans. x_position is the trace x-coordinate
+        at the measured transition depth (rxn_depth + displacement). When no
+        valid crossing is found the transition keys are written as nan.
 
         Args:
             representative_trace: Output of _extract_representative_trace.
-            entry:                  Summary dict to populate in-place.
-            phase_field:            Phase fraction field (e.g. 'X_wd').
-            x_key:                  Cache key for the x_position scalar.
-            disp_key:               Cache key for the displacement scalar.
-            width_key:              Cache key for the transition width scalar.
-            suffix:                 Short tag used to namespace max-value keys ('410', '660').
-            rxn_depth:              Nominal equilibrium reaction depth (m).
-            rate_field:             Reaction-rate field whose maximum is also recorded.
+            entry:                Summary dict to populate in-place.
+            phase_field:          Phase fraction field (e.g. 'xi_ol_wd').
+            x_key:                Cache key for the x_position scalar.
+            disp_key:             Cache key for the displacement scalar.
+            width_key:            Cache key for the transition width scalar.
+            suffix:               Short tag used to namespace max-value keys ('410').
+            rxn_depth:            Nominal equilibrium reaction depth (m).
+            rate_field:           Reaction-rate field whose maximum is also recorded.
         """
         if phase_field not in representative_trace:
             return
@@ -560,19 +456,15 @@ class PostProcessingPipeline(BasePipeline):
         rxn_depth: float,
     ) -> dict[str, float]:
         """
-        Measure phase transition displacement and width from a pre-sampled trace profile.
-
-        Unlike measure_discontinuity_structure, which scans many vertical columns and picks the best one heuristically, this method accepts a single
-        depth profile that was already sampled along the maximum-thermal-anomaly trace and applies _evaluate_transition_structure directly to it.
+        Measure transition displacement and width from one sampled trace profile.
 
         Args:
             trace_depths:       Depth coordinates of the trace (m), not necessarily sorted.
-            trace_phase_values: Phase fraction values sampled along the trace, aligned with trace_depths.  Expected to be broadly 0 → 1.
+            trace_phase_values: Phase fraction values sampled along the trace, expected to run broadly 0 -> 1.
             rxn_depth:          Nominal equilibrium reaction depth (m).
 
         Returns:
-            Dict with keys 'displacement' and 'width' (m).  Both are nan if the profile is too corrupt or no valid crossing is found.  'x_position'
-            is set to nan; the caller is responsible for interpolating it from the trace_x array.
+            Dict with keys 'displacement' and 'width' (m), nan when the profile is unusable or has no valid crossing.
         """
         if trace_depths.size < 2 or trace_phase_values.size < 2:
             return {"x_position": np.nan, "displacement": np.nan, "width": np.nan}
@@ -596,16 +488,34 @@ class PostProcessingPipeline(BasePipeline):
         depth_grid: np.ndarray,
         target_field: str = "nonadiabatic_temperature",
         anomaly_threshold: float = 250,
-        x_buffer: float = 50e3,
-        x_step_limit: float = 150e3,
+        x_buffer: float = 50e03,
+        x_step_limit: float = 150e03,
     ) -> dict:
         """
-        Extract the representative vertical trace by following one coherent thermal feature.
-
-        The trace follows the coldest slab material. At each slice the search is confined to a neighbourhood of
-        the previous position, so the trace slides laterally with the feature (by at most
-        ``x_step_limit`` per slice) instead of hopping onto an unrelated one.
+        Extract the representative vertical trace: the vertical line nearest
+        the fixed trace x at every depth. The fallback branch below follows
+        a coherent anomaly instead (unused by the isothermal sink suite):
+        at each slice the search stays near the previous position, so the
+        trace slides with the feature instead of jumping to another one.
         """
+
+        all_fields = list(mesh.point_data.keys())
+        representative_trace = {f: {"depths": depth_grid.copy(), "values": np.full(depth_grid.shape, np.nan)} for f in all_fields + ["trace_x"]}
+
+        if self.trace_x is not None:
+            for idx, y_val in enumerate(y_grid):
+                slice_poly = mesh.slice(normal="y", origin=(0, y_val, 0))
+                if slice_poly.n_points == 0:
+                    continue
+                slice_x = slice_poly.points[:, 0]
+                active_idx = int(np.argmin(np.abs(slice_x - self.trace_x)))
+                representative_trace["trace_x"]["values"][idx] = slice_x[active_idx]
+                for f in all_fields:
+                    val = slice_poly.point_data[f][active_idx]
+                    scalar = np.linalg.norm(val) if np.ndim(val) > 0 else float(val)
+                    scale = self.config.scaling_map.get(f, 1.0)
+                    representative_trace[f]["values"][idx] = scalar * scale
+            return representative_trace
 
         anomaly_full = mesh.point_data[target_field]
         idx_sig = np.where(np.abs(anomaly_full) > anomaly_threshold)[0]
@@ -616,7 +526,7 @@ class PostProcessingPipeline(BasePipeline):
         else:
             roi_mesh = mesh
 
-        # Slabs are defined by cold material; follow the dominant extreme
+        # Cold slabs read as negative anomalies; follow the stronger extreme
         # so the trace never locks onto an opposite-signed feature.
         score_sign = -1.0 if np.abs(np.nanmin(anomaly_full)) > np.abs(np.nanmax(anomaly_full)) else 1.0
 
@@ -647,8 +557,8 @@ class PostProcessingPipeline(BasePipeline):
                 else:
                     active_idx = int(np.argmin(np.abs(slice_x - last_valid_x)))
 
-            # Only advance the anchor while the trace still sits on a strong anomaly, so it keeps
-            # its place through regions where the feature has faded out.
+            # Hold the anchor where the feature has faded, so the trace keeps
+            # its place instead of wandering.
             if np.abs(slice_anomaly[active_idx]) >= anomaly_threshold:
                 last_valid_x = slice_x[active_idx]
 
@@ -663,25 +573,8 @@ class PostProcessingPipeline(BasePipeline):
         return representative_trace
 
     def _cache_to_summary(self, cache: dict) -> list[dict]:
-        """
-        Flatten the nested cache into a list of row dicts for DataFrame construction.
-
-        Output columns are derived from trans_info so they remain consistent if transitions are added or removed.
-        """
-        keys = [
-            "time",
-            "z_ol_wd",
-            "z_wd_ri",
-            "z_ri_ps",
-            "eta_therm",
-            "eta_trans_ol_wd",
-            "eta_trans_wd_ri",
-            "eta_trans_ri_ps",
-            "prescribed_velocity",
-            "prescribed_temperature_anomaly",
-            "mg_num",
-            "scenario",
-        ]
+        """Flatten the nested cache into row dicts for the summary table."""
+        keys = ["time"]
         for rate_field, x_key, disp_key, width_key, _, _ in self.trans_info.values():
             suffix = x_key.split("_")[-1]
             keys.extend([x_key, disp_key, width_key])
@@ -703,14 +596,10 @@ class PostProcessingPipeline(BasePipeline):
         with open(path, "wb") as f:
             pickle.dump(cache, f)
 
+
 @dataclass
 class PlottingPipeline(BasePipeline):
-    """
-    Renders mesh field plots for all models and timesteps.
-
-    Optionally annotates phase fraction field plots with the transition profile position and depth bounds derived from a pre-computed
-    post-processing cache.
-    """
+    """Render mesh field plots for all models and timesteps, annotated with the measured transition position."""
 
     cache: dict = field(default_factory=dict)
 
@@ -742,18 +631,17 @@ class PlottingPipeline(BasePipeline):
                     log_warn(f"no result files for model: {model_id}")
                 continue
 
-            model_id_padded = re.sub(r"B(\d+)", lambda m: f"B{int(m.group(1)):0{2}d}", model_id)
-            out_fig_dir = self.config.default_fig_dir / "meshes" / model_id_padded
+            out_fig_dir = self.config.default_fig_dir / "meshes" / model_id
             out_fig_dir.mkdir(parents=True, exist_ok=True)
 
-            for pvtu_path, tstep in self._iter_valid_timesteps(pvtu_files, timesteps):
+            for pvtu_path, tstep in self._iter_valid_timesteps(pvtu_files, timesteps, only=self.plot_tsteps):
                 needed_fields = []
                 for field_name in fields_to_plot:
                     if field_name not in self.config.file_map:
                         continue
 
                     field_id = self.config.file_map.get(field_name, field_name.replace("_", "-"))
-                    out_path = out_fig_dir / f"{model_id_padded.replace('_', '-')}-{field_id}-{str(tstep).zfill(4)}.png"
+                    out_path = out_fig_dir / f"{model_id.replace('_', '-')}-{field_id}-{str(tstep).zfill(4)}.png"
 
                     if not out_path.exists():
                         needed_fields.append((field_name, out_path))
@@ -768,7 +656,7 @@ class PlottingPipeline(BasePipeline):
                 cached_data = self.cache.get(model_id, {}).get(tstep, {})
 
                 for field_name, out_path in needed_fields:
-                    self.preprocessor.prepare_mesh(mesh, field_name)
+                    self.preprocessor.prepare_mesh(mesh, field_name, model_id)
                     if not self.preprocessor.check_mesh(mesh, field_name):
                         continue
 
@@ -818,6 +706,7 @@ class PlottingPipeline(BasePipeline):
         with open(cache_path, "rb") as f:
             return pickle.load(f)
 
+
 @dataclass
 class FullPipeline(BasePipeline):
     """
@@ -851,18 +740,37 @@ class FullPipeline(BasePipeline):
         """
         out_profile_dir = out_profile_dir or Path("postprocess_data")
 
-        post_processor = PostProcessingPipeline(self.config, self.pvtu_in_dirs, self.tsteps, self.trans_data, self.verbosity)
+        post_processor = PostProcessingPipeline(
+            config=self.config,
+            pvtu_in_dirs=self.pvtu_in_dirs,
+            tsteps=self.tsteps,
+            trans_data=self.trans_data,
+            verbosity=self.verbosity,
+            suite_tag=self.suite_tag,
+            trace_x=self.trace_x,
+            depth_datum=self.depth_datum,
+        )
         transition_summary_cache, seismic_profile_cache = post_processor.run(
             transition_summary_cache_path, seismic_profile_cache_path, force_reprocess
         )
 
         if save_csv:
-            csv_path = csv_path or Path("structure-summary-sw.csv")
+            csv_path = csv_path or Path("structure-summary.csv")
             post_processor.export_transition_summary(csv_path, transition_summary_cache, transition_summary_cache_path)
 
             if fields_for_seismic_profiles:
                 post_processor.export_seismic_profiles(out_profile_dir, fields_for_seismic_profiles, seismic_profile_cache)
 
-        plotter = PlottingPipeline(self.config, self.pvtu_in_dirs, self.tsteps, self.trans_data, self.verbosity, transition_summary_cache)
+        plotter = PlottingPipeline(
+            config=self.config,
+            pvtu_in_dirs=self.pvtu_in_dirs,
+            tsteps=self.tsteps,
+            trans_data=self.trans_data,
+            verbosity=self.verbosity,
+            suite_tag=self.suite_tag,
+            trace_x=self.trace_x,
+            cache=transition_summary_cache,
+            plot_tsteps=self.plot_tsteps,
+        )
         plotter._pvtu_file_cache = post_processor._pvtu_file_cache
         plotter.run(fields_to_plot, plot_ids)

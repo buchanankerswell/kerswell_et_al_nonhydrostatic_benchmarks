@@ -1,0 +1,16 @@
+subsection Geometry model
+  set Model name = box
+
+  subsection Box
+    set X extent      = {model-width}
+    set Y extent      = {model-height}
+    set X repetitions = {mesh-x}
+    set Y repetitions = {mesh-y}
+  end
+end
+
+subsection Mesh refinement
+  set Initial adaptive refinement        = 0
+  set Initial global refinement          = {mesh-refine-global}
+  set Time steps between mesh refinement = 0
+end
