@@ -3,8 +3,9 @@
 ba = "ba"
 Ba = "Ba"
 
-# Journal shorthand in research notes
+# Journal shorthand in research notes; PN appears inside PNGs in handoffs
 Commun = "Commun"
+PN = "PN"
 
 # Bibliography entries and publisher templates contain arbitrary tokens;
 # draft .tex is generated from manuscript.md; perplex/ ships thermodynamic
