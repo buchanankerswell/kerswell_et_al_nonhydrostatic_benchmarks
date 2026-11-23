@@ -43,7 +43,12 @@ write_postprocessed_summary_table <- function(postprocessed_csv, out_dir, quiet 
     ) |>
     mutate(across(c(`$\\dot{X}_\\mathrm{max}$ (1/Ma)`), ~ formatC(.x, format = "e", digits = 2))) |>
     mutate(across(c(`Z (1/s/K)`), ~ formatC(as.numeric(.x), format = "e", digits = 2))) |>
-    mutate(across(c(`$\\delta z_{410}$ (km)`, `$\\delta w_{410}$ (km)`, `$\\delta z_t$ (km)`, `$\\delta z_k$ (km)`), ~ formatC(.x, format = "f", digits = 1)))
+    mutate(
+      across(
+        c(`$\\delta z_{410}$ (km)`, `$\\delta w_{410}$ (km)`, `$\\delta z_t$ (km)`, `$\\delta z_k$ (km)`),
+        ~ formatC(.x, format = "f", digits = 1)
+      )
+    )
 
   col_align <- c("l", "l", "l", rep("r", ncol(formatted) - 3))
 
