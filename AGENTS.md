@@ -37,3 +37,7 @@ the undamped full-feedback baseline; S2 is the no-feedback reference. Treat
 script and rerunning the target. CI runs static checks only (markdownlint,
 typos, R, Python); models need HPC and stay local. Put session logs and
 handoffs in `notes/`.
+
+Old handoff files under `research/nonhydrostatic_benchmarks/` survive only in
+committed history. They carry retired naming and stale content; `notes/` is the
+live set.
