@@ -20,13 +20,14 @@ CLEAN := $(PYTHON)/**/__pycache__ \
 	 $(DATA_MESH_SINK_SUITE) \
 	 $(POSTPROCESSED_CSV) \
 	 $(SIMULATION)/results/lateral-pressure.csv \
-	 $(SIMULATION)/results/pressure-history-summary.csv
+	 $(SIMULATION)/results/pressure-history-summary.csv \
+	 $(SIMULATION)/results/relaxed-mean-check.csv
 
-.PHONY: all postprocess sync-barkla extract-timeseries pressure-history-summary lateral-oscillation mesh-step-sensitivity depth-window-figures setup-sketch benchmarks adiabat meshes-sink-suite clean help
+.PHONY: all postprocess sync-barkla extract-timeseries pressure-history-summary lateral-oscillation mesh-step-sensitivity depth-window-figures setup-sketch benchmarks adiabat meshes-sink-suite timescales relaxed-mean-check clean help
 
 all: postprocess
 postprocess: adiabat meshes-sink-suite $(POSTPROCESSED_CSV) extract-timeseries setup-sketch benchmarks
-benchmarks: pressure-history-summary lateral-oscillation mesh-step-sensitivity depth-window-figures
+benchmarks: pressure-history-summary lateral-oscillation mesh-step-sensitivity depth-window-figures timescales relaxed-mean-check
 
 setup-sketch:
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/setup/domains.py --suite sink --width-m $(MODEL_WIDTH_SINK) --height-m $(MODEL_HEIGHT_SINK) \
@@ -86,6 +87,23 @@ mesh-step-sensitivity: pressure-history-summary $(POSTPROCESSED_CSV)
 	  --postprocessed $(POSTPROCESSED_CSV) \
 	  --out-dir $(FIGS)/benchmarks \
 	  --z-mid $(Z_MID) --cfl-sink $(CFL_SINK) --dpi $(FIG_DPI)
+
+# Phase-change / relaxation timescales and the relaxed-mean bias check. Both
+# read CSV products only; figures land in figs/benchmarks (gitignored).
+timescales: pressure-history-summary lateral-oscillation $(POSTPROCESSED_CSV)
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_timescales.py \
+	  --structure $(SIMULATION)/results/structure-summary-sink.csv \
+	  --postprocessed $(POSTPROCESSED_CSV) \
+	  --summary $(SIMULATION)/results/pressure-history-summary.csv \
+	  --out-dir $(FIGS)/benchmarks \
+	  --viz-out-yr $(VIZ_OUT_SINK_SUITE) --max-solver-tstep-yr $(MAX_SOLVER_TSTEP) \
+	  --end-time-yr $(END_SINK) --dpi $(FIG_DPI)
+
+relaxed-mean-check: lateral-oscillation
+	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/check_relaxed_mean.py \
+	  --lateral $(SIMULATION)/results/lateral-pressure.csv \
+	  --out-csv $(SIMULATION)/results/relaxed-mean-check.csv \
+	  --fig-dir $(FIGS)/benchmarks --dpi $(FIG_DPI)
 
 # Depth-window composition figures (one per run per field set: set0 is
 # pressure/density/vertical-flow, set1 is drive/rate/fraction). Steps and
@@ -182,6 +200,8 @@ help:
 	$(call LOG_DETAIL,pressure-history-summary Summarize range: vtu extrema + flow/point/depth plots)
 	$(call LOG_DETAIL,lateral-oscillation Lateral oscillation diagnostic (transient steps, sink))
 	$(call LOG_DETAIL,mesh-step-sensitivity Mesh + step sensitivity: range vs refinement and step size)
+	$(call LOG_DETAIL,timescales       Phase-change / relaxation timescale ladder + reaction history)
+	$(call LOG_DETAIL,relaxed-mean-check Settled lateral mean vs oscillation power (mean bias check))
 	$(call LOG_DETAIL,depth-window-figures Draw depth-window compositions for all runs with solutions)
 	$(call LOG_DETAIL,setup-sketch     Draw setup domain sketches (initial + boundary conditions))
 	$(call LOG_DETAIL,clean              Remove generated files (safe))

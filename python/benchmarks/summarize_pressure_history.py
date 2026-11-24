@@ -2,10 +2,11 @@
 
 Reads per-run timeseries.csv and writes a summary CSV plus comparison plots.
 Runs and plot lists come from the Makefiles; without them the script finds
-NH_Sink_* runs. Each run is measured against
-paired runs from its own UID: the undamped control (Damp token -> DampNone)
-and the no-feedback control (DynpOn -> DynpOff). Positive reduction = damped;
-positive error = overshoot vs no feedback.
+NH_Sink_* runs. Each run is measured two ways: against paired runs from its
+own UID (undamped control, no-feedback control), and against fixed suite-wide
+references (S1 undamped, S2 no feedback). The fixed columns are defined for
+every run, including mesh/CFL variants whose paired control never completed.
+Positive reduction = damped; positive error = overshoot vs the reference.
 
 Usage (repo root):
   PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
@@ -56,7 +57,7 @@ def largest_of(run):
     return float((s["pmax"] - s["pmin"]).max())
 
 
-def summarize(run, by_run):
+def summarize(run, by_run, base, ref):
     s = load_vtu_series(run)
     if s is None or len(s["t"]) < 2:
         log_warn(f"skip {run}: single output, no history to compare")
@@ -89,6 +90,8 @@ def summarize(run, by_run):
         "reduction_vs_control": (round((cp - largest) / cp, 3) if cp else None),
         "nofeedback_run": nofb,
         "rel_err_vs_nofeedback": (round((largest - np_) / np_, 3) if np_ else None),
+        "reduction_vs_baseline": (round((base - largest) / base, 3) if base else None),
+        "rel_err_vs_reference": (round((largest - ref) / ref, 3) if ref else None),
         **parse_uid_columns(run),
     }
 
@@ -131,6 +134,8 @@ def main():
     ap.add_argument("--plot-sink", nargs="*", default=None, help="Sink run UIDs to plot")
     ap.add_argument("--out-csv", default="simulation/results/pressure-history-summary.csv", help="Output summary CSV path")
     ap.add_argument("--fig-dir", default="figs/benchmarks", help="Output figure directory")
+    ap.add_argument("--baseline-run", default="NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6", help="Fixed undamped baseline (S1)")
+    ap.add_argument("--reference-run", default="NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6", help="Fixed no-feedback reference (S2)")
     ap.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI; draft 100, manuscript 330)")
     args = ap.parse_args()
     apply_bench_style(args.dpi)
@@ -141,10 +146,13 @@ def main():
         p = largest_of(r)
         if p is not None:
             largest[r] = p
+    base, ref = largest.get(args.baseline_run), largest.get(args.reference_run)
+    if base is None or ref is None:
+        log_warn("fixed baseline or reference run missing; fixed-reference columns will be blank")
 
     rows = []
     for r in sink:
-        row = summarize(r, largest)
+        row = summarize(r, largest, base, ref)
         if row:
             rows.append({"suite": "sink", **row})
 

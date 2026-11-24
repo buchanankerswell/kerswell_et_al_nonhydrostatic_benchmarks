@@ -4,7 +4,8 @@ Reads the history summary plus the postprocessed boundary table and draws
 a combined figure: largest pressure range against mesh refinement and
 against the step size (shared y-axis), plus a 410-displacement-error figure
 (measured front position minus the no-feedback equilibrium at the same
-resolution) against the same two axes.
+resolution, falling back to a fixed reference run when that resolution has
+no no-feedback twin) against the same two axes.
 
 Usage (repo root):
   PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
@@ -40,9 +41,16 @@ def read_rows(path, want):
     return rows
 
 
-def boundary_offset(post, suite, z_mid):
+def boundary_offset(post, suite, z_mid, reference_run):
+    """Front-position error vs the no-feedback equilibrium.
+
+    Prefers a same-resolution no-feedback control. Runs at resolutions with no
+    such twin fall back to the fixed reference run, so the mesh-sweep panels
+    keep their Res5/Res7 points instead of going blank.
+    """
     err = {}
     controls = {}
+    global_ref = None
     for r in post:
         if r["suite"] != suite or r["z"] != z_mid:
             continue
@@ -52,10 +60,15 @@ def boundary_offset(post, suite, z_mid):
             continue
         if r["dynp"] == "0" and r["damp"] == "None":
             controls[r["res"]] = disp
-        err.setdefault(r["run"] if "run" in r else r["model_id"], (r, disp))
+        key = r["run"] if "run" in r else r["model_id"]
+        if key == reference_run:
+            global_ref = disp
+        err.setdefault(key, (r, disp))
     out = {}
     for run, (r, disp) in err.items():
         control = controls.get(r["res"])
+        if control is None:
+            control = global_ref
         out[run] = disp - control if control is not None else float("nan")
     return out
 
@@ -67,6 +80,7 @@ def main():
     ap.add_argument("--out-dir", default="figs/benchmarks", help="Output figure directory")
     ap.add_argument("--z-mid", default="4.44e-04", help="Intermediate reaction rate (1/s/K) (project.mk Z_MID)")
     ap.add_argument("--cfl-sink", type=float, default=0.5, help="Sink suite default CFL number, dimensionless (project.mk CFL_SINK)")
+    ap.add_argument("--error-reference", default="NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6", help="Fallback no-feedback reference run (S2)")
     ap.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI; draft 100, manuscript 330)")
     args = ap.parse_args()
     apply_bench_style(args.dpi)
@@ -84,7 +98,7 @@ def main():
     offsets = {}
     if post:
         for suite in ("sink",):
-            offsets.update(boundary_offset(post, suite, args.z_mid))
+            offsets.update(boundary_offset(post, suite, args.z_mid, args.error_reference))
 
     outdir = Path(args.out_dir)
     outdir.mkdir(parents=True, exist_ok=True)
