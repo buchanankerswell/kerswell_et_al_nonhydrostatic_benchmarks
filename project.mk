@@ -34,7 +34,7 @@ PLOT_SINK_RUNS   = $(filter %_Z$(Z_MID)_Res6,$(UIDS_SINK_SUITE))
 TIMESTEPS := 000 001 002 003 004 005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020
 # Mesh render steps (subset of TIMESTEPS). Postprocessing always covers all
 # synced outputs; only the mesh plots are selective. Test with e.g.
-# make visualize MESH_TIMESTEPS="004 006 008". Manuscript runs use all.
+# make postprocess MESH_TIMESTEPS="004 006 008". Manuscript runs use all.
 MESH_TIMESTEPS ?= $(TIMESTEPS)
 FORCE_DOWNLOAD := 0
 ZENODO_DATASET_DOI := TODO-no-dataset-yet

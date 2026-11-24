@@ -1,11 +1,7 @@
-# Benchmark design 2026-11-24: spurious pressure feedback, frozen suite, S1 baseline
+# Benchmark design: spurious pressure feedback, frozen suite, S1 baseline
 
-Branch `agent/benchmark-design-pipeline` (from `agent/session-handoff-2026-11-23`).
-Supersedes the 2026-11-23 merged handoff for design decisions; physics notes in
-the 11-19 ambient handoff and Batch 0 scores in the 11-22 notes still stand.
-
-I am using the research-methodology, hypothesis-testing, and
-quantitative-analysis skills to frame this.
+Branch `agent/benchmark-design-pipeline`. Framing uses the research-methodology,
+hypothesis-testing, and quantitative-analysis skills.
 
 ## Classification
 
@@ -31,8 +27,8 @@ pressure -> rate -> density -> pressure rings instead of relaxing.
   rate driven by dynamic pressure = undamped discrete feedback at the
   front width (~3.5 km, ~0.9 dx at Res6).
 
-Rejected already by Batch 0: H0 is out (S1 grid 156 MPa vs S2 0.1 MPa at
-step 6; CFL1.0 grid 9 MPa at fixed fronts). The live question is which
+Scored against existing outputs: H0 is out (S1 grid 156 MPa vs S2 0.1 MPa
+at step 6; CFL1.0 grid 9 MPa at fixed fronts). The live question is which
 damper kills the grid band while holding the lateral mean (physical load).
 
 ## Variable matrix
@@ -57,7 +53,7 @@ Batch B (S15-S18): Bimpl1e18, Bexpl1e20, Cap1e8/4e8 at Res6.
 Batch C (S19-S24): Res7 x {None, Cap2e8, Rel e11, Bimpl1e19} + Res5 x
 {None, Cap2e8}. Res7 puts ~2 cells across the front.
 
-## Falsification (pre-registered, Batch 0 thresholds)
+## Falsification (pre-registered thresholds)
 
 - Relaxed tau rejected if peak-grid reduction under 20% vs S1 or final
   displacement drift over 10% across the tau sweep.
@@ -89,12 +85,13 @@ Batch C (S19-S24): Res7 x {None, Cap2e8, Rel e11, Bimpl1e19} + Res5 x
   `extract_lateral_pressure`, `export-postprocessed` (skips incomplete runs
   without final output, skips non-UID and `_CFL` models in the final-state
   table by design).
-- Make targets are thin wrappers: `visualize` (canonical; `postprocess`
-  kept as alias) = adiabat + meshes + postprocessed table + timeseries +
-  setup sketch + `benchmarks` group (pressure-history-summary,
-  lateral-oscillation, mesh-step-sensitivity, depth-window-figures).
-- R `visualize` reads the Python CSVs; arg order stays `(util_dir first)`.
-- Regeneration: `make clean && make visualize` reproduces all figures from
+- Make targets, one descriptive target each, no aliases:
+  `postprocess` = adiabat + meshes-sink-suite + postprocessed table +
+  extract-timeseries + setup-sketch + `benchmarks` group
+  (pressure-history-summary, lateral-oscillation, mesh-step-sensitivity,
+  depth-window-figures).
+- R `postprocess` reads the Python CSVs; arg order stays `(util_dir first)`.
+- Regeneration: `make clean && make postprocess` reproduces all figures from
   synced results; `MESH_TIMESTEPS` subsets mesh renders only.
 
 ## Figures (four required families)
@@ -103,11 +100,11 @@ Batch C (S19-S24): Res7 x {None, Cap2e8, Rel e11, Bimpl1e19} + Res5 x
    profiles at the peak step.
 2. Diminishment magnitude: lateral-oscillation summary (mean/std/grid vs
    step) + reduction_vs_control / rel_err_vs_nofeedback table.
-3. Timescales: reaction rate vs viscous/diffusive relaxation (rate410,
+3. Timescales: reaction rate vs viscous relaxation (rate410,
    flow diminishment, tau window [30 yr, 100 kyr]).
 4. Convergence: mesh-step-sensitivity (range vs Res and CFL) + depth-window
    compositions at fixed clims.
 
-Central for the manuscript: lateral-oscillation summary + pressure-history
+Central for the manuscript: lateral-oscillation summary + pressure history
 + mesh-step-sensitivity. Still missing: rerun under fixed clims for all
 models, the relaxed-mean bias check, and crashed-run resubmit decisions.

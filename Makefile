@@ -4,9 +4,9 @@
 # Include definitions
 include project.mk
 
-.PHONY: build models sync-barkla visualize postprocess manuscript download environments clean deep-clean format help
+.PHONY: build models sync-barkla postprocess manuscript download environments clean deep-clean format help
 
-build: environments download visualize manuscript
+build: environments download postprocess manuscript
 	$(call LOG_INFO,Study built successfully!)
 
 models:
@@ -15,11 +15,9 @@ models:
 sync-barkla:
 	@$(MAKE) --no-print-directory -C $(BASH) sync-barkla
 
-visualize:
-	@$(MAKE) --no-print-directory -C $(PYTHON) visualize
-	@$(MAKE) --no-print-directory -C $(R) visualize
-
-postprocess: visualize
+postprocess:
+	@$(MAKE) --no-print-directory -C $(PYTHON) postprocess
+	@$(MAKE) --no-print-directory -C $(R) postprocess
 
 manuscript:
 	@$(MAKE) --no-print-directory -C $(DRAFT) all
@@ -56,8 +54,7 @@ help:
 	$(call LOG_DETAIL,build          Fetch data and reproduce tables, figures, and manuscript)
 	$(call LOG_DETAIL,models         Run all NH benchmark models (needs aspect/dealii links))
 	$(call LOG_DETAIL,sync-barkla    Sync data from Barkla2 (sink suite))
-	$(call LOG_DETAIL,visualize       Derive data products and render all figures (python + R))
-	$(call LOG_DETAIL,postprocess    Alias for visualize (kept for compatibility))
+	$(call LOG_DETAIL,postprocess     Derive data products and render all figures (python + R))
 	$(call LOG_DETAIL,manuscript     Render manuscript + SI + response)
 	$(call LOG_DETAIL,download       Fetch archived datasets from Zenodo)
 	$(call LOG_DETAIL,environments   Create Conda environments)

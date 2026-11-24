@@ -22,18 +22,15 @@ CLEAN := $(PYTHON)/**/__pycache__ \
 	 $(SIMULATION)/results/lateral-pressure.csv \
 	 $(SIMULATION)/results/pressure-history-summary.csv
 
-.PHONY: all visualize postprocess sync-barkla extract-timeseries timeseries pressure-history-summary pressure-history lateral-oscillation lateral mesh-step-sensitivity scaling depth-window-figures depth-window setup-sketch setup benchmarks adiabat meshes meshes-sink-suite clean help
+.PHONY: all postprocess sync-barkla extract-timeseries pressure-history-summary lateral-oscillation mesh-step-sensitivity depth-window-figures setup-sketch benchmarks adiabat meshes-sink-suite clean help
 
-all: visualize
-visualize: adiabat meshes-sink-suite $(POSTPROCESSED_CSV) extract-timeseries setup-sketch benchmarks
-postprocess: visualize
+all: postprocess
+postprocess: adiabat meshes-sink-suite $(POSTPROCESSED_CSV) extract-timeseries setup-sketch benchmarks
 benchmarks: pressure-history-summary lateral-oscillation mesh-step-sensitivity depth-window-figures
 
 setup-sketch:
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/setup/domains.py --suite sink --width-m $(MODEL_WIDTH_SINK) --height-m $(MODEL_HEIGHT_SINK) \
 	  --transition-y-m $(TRANSITION_Y_OL_WD) --trace-x-m $(TRACE_X_SINK) --nominal-m $(NOMINAL_410_SINK400) --probes "$(POINTS_SINK)" --out $(FIGS_SETUP)/sink-domain.png --dpi $(FIG_DPI)
-
-setup: setup-sketch
 
 sync-barkla:
 	@$(MAKE) --no-print-directory -C $(BASH) sync-barkla
@@ -60,8 +57,6 @@ extract-timeseries:
 	    --block-top-m=$(BLOCK_Y_TOP) --block-bottom-m=$(BLOCK_Y_BOT) --gravity=$(GRAVITY); \
 	done
 
-timeseries: extract-timeseries
-
 pressure-history-summary: extract-timeseries
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/summarize_pressure_history.py \
 	  --runs $(UIDS_SINK_SUITE) \
@@ -79,15 +74,11 @@ pressure-history-summary: extract-timeseries
 	  --block-top-m=$(BLOCK_Y_TOP) --block-bottom-m=$(BLOCK_Y_BOT) --gravity=$(GRAVITY) \
 	  --out $(FIGS)/benchmarks/lateral-profiles-sink.png --dpi $(FIG_DPI)
 
-pressure-history: pressure-history-summary
-
 lateral-oscillation:
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/extract_lateral_pressure.py \
 	  --models $(UIDS_SINK_SUITE) --nominal-m=$(NOMINAL_410_SINK400) \
 	  --block-top-m=$(BLOCK_Y_TOP) --block-bottom-m=$(BLOCK_Y_BOT) --gravity=$(GRAVITY) \
 	  --out-csv $(SIMULATION)/results/lateral-pressure.csv --fig-dir $(FIGS)/benchmarks --dpi $(FIG_DPI)
-
-lateral: lateral-oscillation
 
 mesh-step-sensitivity: pressure-history-summary $(POSTPROCESSED_CSV)
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_mesh_step_sensitivity.py \
@@ -96,15 +87,11 @@ mesh-step-sensitivity: pressure-history-summary $(POSTPROCESSED_CSV)
 	  --out-dir $(FIGS)/benchmarks \
 	  --z-mid $(Z_MID) --cfl-sink $(CFL_SINK) --dpi $(FIG_DPI)
 
-meshes: meshes-sink-suite
-
 # Depth-window composition figures (one per run per field set: set0 is
 # pressure/density/vertical-flow, set1 is drive/rate/fraction). Steps and
 # nominals match the existing figures. Outputs carry the full run UID.
 # Runs without synced solutions are skipped, so this works before and
 # after sync-barkla (steps from project.mk DEPTH_WINDOW_STEPS).
-
-scaling: mesh-step-sensitivity
 
 depth-window-figures:
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/compute_window_clims.py \
@@ -125,8 +112,6 @@ depth-window-figures:
 	      --out $(FIGS)/benchmarks/depth-window-$$model-$$s.png --set $$s --dpi $(FIG_DPI); \
 	  done; \
 	done
-
-depth-window: depth-window-figures
 
 # Shared mesh recipe: $(1)=suite tag, $(2)=models, $(3)=visualize ids,
 # $(4)=fig dir, $(5)=410 nominal (m), $(6)=trace x (m), $(7)=model height (m).
@@ -188,23 +173,15 @@ clean:
 
 help:
 	$(call LOG_INFO,Available targets:)
-	$(call LOG_DETAIL,visualize        Derive data products and render all figures (meshes, setup, benchmarks))
-	$(call LOG_DETAIL,postprocess      Alias for visualize (kept for compatibility))
-	$(call LOG_DETAIL,benchmarks       Run all benchmark diagnostics (pressure-history, lateral, scaling, depth-window))
+	$(call LOG_DETAIL,postprocess      Derive data products and render all figures (meshes, setup, benchmarks))
+	$(call LOG_DETAIL,benchmarks       Run all benchmark diagnostics (history, oscillation, sensitivity, windows))
 	$(call LOG_DETAIL,sync-barkla        Fetch simulation results from Barkla2 (delegates to bash))
 	$(call LOG_DETAIL,adiabat            Build PerpleX phase profiles + adiabat figures)
-	$(call LOG_DETAIL,meshes             Visualize ASPECT models (sink, full mode))
-	$(call LOG_DETAIL,meshes-sink-suite   Visualize NH sinking-block benchmarks)
+	$(call LOG_DETAIL,meshes-sink-suite   Render NH sinking-block benchmark meshes)
 	$(call LOG_DETAIL,extract-timeseries Extract per-run pressure/boundary/stats histories from solutions)
-	$(call LOG_DETAIL,timeseries       Alias for extract-timeseries)
 	$(call LOG_DETAIL,pressure-history-summary Summarize range: vtu extrema + flow/point/depth plots)
-	$(call LOG_DETAIL,pressure-history Alias for pressure-history-summary)
 	$(call LOG_DETAIL,lateral-oscillation Lateral oscillation diagnostic (transient steps, sink))
-	$(call LOG_DETAIL,lateral          Alias for lateral-oscillation)
 	$(call LOG_DETAIL,mesh-step-sensitivity Mesh + step sensitivity: range vs refinement and step size)
-	$(call LOG_DETAIL,scaling          Alias for mesh-step-sensitivity)
 	$(call LOG_DETAIL,depth-window-figures Draw depth-window compositions for all runs with solutions)
-	$(call LOG_DETAIL,depth-window     Alias for depth-window-figures)
 	$(call LOG_DETAIL,setup-sketch     Draw setup domain sketches (initial + boundary conditions))
-	$(call LOG_DETAIL,setup            Alias for setup-sketch)
 	$(call LOG_DETAIL,clean              Remove generated files (safe))
