@@ -6,10 +6,11 @@ include $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../project.mk)
 
 CLEAN := $(FIGS_STRUCTURE) $(FIGS_SEISMIC) $(POSTPROCESSED_MD)
 
-.PHONY: all postprocess tables adiabat simulation seismic clean help
+.PHONY: all visualize postprocess tables adiabat simulation seismic clean help
 
-all: postprocess
-postprocess: adiabat simulation seismic tables
+all: visualize
+visualize: adiabat simulation seismic tables
+postprocess: visualize
 
 tables: $(POSTPROCESSED_CSV)
 	@Rscript $(R)/tables.R $(R)/utils $(POSTPROCESSED_CSV) $(SIMULATION)/results
@@ -28,14 +29,15 @@ $(MESH_CSV_SINK_SUITE):
 	@$(MAKE) --no-print-directory -C $(PYTHON) meshes-sink-suite
 
 $(POSTPROCESSED_CSV):
-	@$(MAKE) --no-print-directory -C $(PYTHON) postprocess
+	@$(MAKE) --no-print-directory -C $(PYTHON) visualize
 
 clean:
 	@$(call SAFE_RM_LIST,$(CLEAN))
 
 help:
 	$(call LOG_INFO,Available targets:)
-	$(call LOG_DETAIL,postprocess   Derive R results (figures + tables))
+	$(call LOG_DETAIL,visualize      Derive R results (figures + tables))
+	$(call LOG_DETAIL,postprocess    Alias for visualize (kept for compatibility))
 	$(call LOG_DETAIL,adiabat     Visualize adiabatic profiles)
 	$(call LOG_DETAIL,simulation  Visualize combined benchmark results)
 	$(call LOG_DETAIL,seismic     Visualize combined seismic profiles)
