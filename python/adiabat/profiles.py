@@ -1015,15 +1015,9 @@ class DrivingForceProfile:
 
     @staticmethod
     def _plot_exists(out_path: Path) -> bool:
-        """"""
         if out_path.exists():
             return True
-
-        if not out_path.parent.exists():
-            out_path.parent.mkdir(parents=True, exist_ok=True)
-
-        log_artifact(out_path)
-
+        out_path.parent.mkdir(parents=True, exist_ok=True)
         return False
 
     def _visualize_delta_PT_contours_fill(
@@ -1033,10 +1027,10 @@ class DrivingForceProfile:
         contour_lims_T: tuple[float, float] = (-600, 600),
         n_contours: int = 100,
     ) -> None:
-        """"""
         out_path = self.out_fig_dir / f"driving-force-contours-fill-{self.material_a.name}-{self.material_b.name}.png"
 
-        self._plot_exists(out_path)
+        if self._plot_exists(out_path):
+            return
 
         depths_grid_P, dP_grid, driving_force_grid_P, levels_P = self._get_driving_force_grid_fixed_dT(
             depth_lims=depth_lims,
@@ -1086,3 +1080,4 @@ class DrivingForceProfile:
 
         plt.tight_layout()
         fig.savefig(out_path)
+        log_artifact(out_path)

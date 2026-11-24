@@ -1,17 +1,4 @@
-"""Depth profiles for the sink suite: transformed fraction, driving energy, rate, and pressure.
-
-Reads the mesh representative cache (final step) and overlays the
-profile nominal 410 against the point where the reaction driving energy
-is zero, locating the max reaction rate in depth. Prints the offset
-numbers that separate the static nominal-vs-runtime frame shift from
-dynamic-pressure effects.
-
-Usage (repo root):
-  PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/benchmarks/plot_depth_profiles.py --runs <uid ...> \\
-      --suite-tag sink --profile simulation/data/olivine-wadsleyite-profile-Mg100.tsv \\
-      --out figs/benchmarks/depth-profiles-sink.png
-"""
+"""Final-state depth profiles of phase fraction, driving energy, rate, and pressure."""
 
 import argparse
 import os
@@ -34,6 +21,7 @@ from simulation.params.transitions import (
     model_to_true_km,
     read_dG_profile,
 )
+from utils.artifacts import add_force_argument, outputs_exist
 from utils.logging import log_artifact, log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
@@ -49,7 +37,6 @@ def clean(field):
 
 
 def load_rep(run, tag):
-    # Final-state profiles: only complete runs (through the last output).
     if not (RESULTS / run / "solution" / "solution-00020.pvtu").exists():
         raise OSError(f"incomplete run (no final output): {run}")
     with open(RESULTS / f"seismic-profile-cache-{tag}.pkl", "rb") as f:
@@ -82,7 +69,12 @@ def main():
     ap.add_argument("--nominal-m", type=float, default=None, help="Runtime-adiabat 410 nominal (m); defaults to profile + depth correction")
     ap.add_argument("--out", required=True, help="Output figure path")
     ap.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI; draft 100, manuscript 330)")
+    add_force_argument(ap)
     args = ap.parse_args()
+
+    if outputs_exist(args.out, args.force):
+        return
+
     apply_bench_style(args.dpi)
 
     prof_eq, prof_peq, gamma = profile_equilibrium(args.profile, args.model_height, args.surface_pressure)
@@ -97,7 +89,7 @@ def main():
         try:
             rep, ts = load_rep(run, args.suite_tag)
         except (OSError, KeyError) as e:
-            log_warn(f"skip {run}: {e}")
+            log_warn(f"skip {run} ({e})")
             continue
         zx, xi = clean(rep["xi_ol_wd"])
         zd, dg = clean(rep["dG_driving_0"])

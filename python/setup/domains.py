@@ -1,21 +1,10 @@
-"""Minimal domain sketch for the sinking-block benchmark.
-
-Draws domain dims, boundary-condition labels, the initial phase-fraction
-step, the runtime-adiabat 410 nominal band, the fixed representative
-trace, point probes, and the dense block outline. All geometry comes from
-project.mk constants passed as CLI args; nothing is hardcoded.
-
-Usage (repo root):
-  PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/setup/domains.py --suite sink --width-m 1000000 --height-m 1000000 \\
-      --transition-y-m 640800 --trace-x-m 500000 --nominal-m 379957 \\
-      --probes "500000,635800;500000,800000" --out figs/setup/sink-domain.png
-"""
+"""Domain sketch for the sinking-block benchmark."""
 
 import argparse
 import os
 from pathlib import Path
 
+from utils.artifacts import add_force_argument, outputs_exist
 from utils.logging import log_artifact
 
 import matplotlib
@@ -107,7 +96,12 @@ def main():
     ap.add_argument("--probes", default="", help="Probe points as x,y (m);x,y (m)")
     ap.add_argument("--out", required=True, help="Output figure path")
     ap.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI; draft 100, manuscript 330)")
+    add_force_argument(ap)
     args = ap.parse_args()
+
+    if outputs_exist(args.out, args.force):
+        return
+
     apply_bench_style(args.dpi)
     draw_domain(
         args.suite,

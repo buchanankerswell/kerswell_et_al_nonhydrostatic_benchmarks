@@ -50,7 +50,6 @@ $(POSTPROCESSED_CSV):
 	  --gravity=$(GRAVITY) \
 	  --ref-density=$(REF_DENSITY) \
 	  --force
-	$(call LOG_ARTIFACT,$@)
 
 extract-timeseries:
 	@for run in $(UIDS_SINK_SUITE); do \
@@ -88,8 +87,6 @@ mesh-step-sensitivity: pressure-history-summary $(POSTPROCESSED_CSV)
 	  --out-dir $(FIGS)/benchmarks \
 	  --z-mid $(Z_MID) --cfl-sink $(CFL_SINK) --dpi $(FIG_DPI)
 
-# Phase-change / relaxation timescales and the relaxed-mean bias check. Both
-# read CSV products only; figures land in figs/benchmarks (gitignored).
 timescales: pressure-history-summary lateral-oscillation $(POSTPROCESSED_CSV)
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_timescales.py \
 	  --structure $(SIMULATION)/results/structure-summary-sink.csv \
@@ -105,12 +102,6 @@ relaxed-mean-check: lateral-oscillation
 	  --out-csv $(SIMULATION)/results/relaxed-mean-check.csv \
 	  --fig-dir $(FIGS)/benchmarks --dpi $(FIG_DPI)
 
-# Depth-window composition figures (one per run per field set: set0 is
-# pressure/density/vertical-flow, set1 is drive/rate/fraction). Steps and
-# nominals match the existing figures. Outputs carry the full run UID.
-# Runs without synced solutions are skipped, so this works before and
-# after sync-barkla (steps from project.mk DEPTH_WINDOW_STEPS).
-
 depth-window-figures:
 	@PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/compute_window_clims.py \
 	  --models $(UIDS_SINK_SUITE) --out $(SIMULATION)/results/depth-window-clims.json \
@@ -121,7 +112,7 @@ depth-window-figures:
 	  ok=1; for st in $(DEPTH_WINDOW_STEPS); do \
 	    [ -f $(SIMULATION)/results/$$model/solution/solution-$$st.pvtu ] || ok=0; \
 	  done; \
-	  if [ $$ok -eq 0 ]; then echo "skip $$model (solutions missing)"; continue; fi; \
+	  if [ $$ok -eq 0 ]; then echo " !! Warning: skip $$model (solutions missing)"; continue; fi; \
 	  for s in set0 set1; do \
 	    PYTHONPATH=$(PYTHON) $(CONDA_PYTHON) -u $(PYTHON)/benchmarks/plot_depth_window.py \
 	      --model $$model --steps $(DEPTH_WINDOW_STEPS) --nominal-410-m $$nom \
@@ -200,8 +191,8 @@ help:
 	$(call LOG_DETAIL,pressure-history-summary Summarize range: vtu extrema + flow/point/depth plots)
 	$(call LOG_DETAIL,lateral-oscillation Lateral oscillation diagnostic (transient steps, sink))
 	$(call LOG_DETAIL,mesh-step-sensitivity Mesh + step sensitivity: range vs refinement and step size)
-	$(call LOG_DETAIL,timescales       Phase-change / relaxation timescale ladder + reaction history)
-	$(call LOG_DETAIL,relaxed-mean-check Settled lateral mean vs oscillation power (mean bias check))
+	$(call LOG_DETAIL,timescales       Characteristic timescales + reaction history)
+	$(call LOG_DETAIL,relaxed-mean-check Mean dynamic pressure vs oscillation size)
 	$(call LOG_DETAIL,depth-window-figures Draw depth-window compositions for all runs with solutions)
 	$(call LOG_DETAIL,setup-sketch     Draw setup domain sketches (initial + boundary conditions))
 	$(call LOG_DETAIL,clean              Remove generated files (safe))

@@ -1,13 +1,4 @@
-"""Extract benchmark time series from ASPECT solution/*.pvtu files.
-
-Maps visualization outputs to model time (yr) via the statistics file and
-records per-output diagnostics: pressure-anomaly minima and maxima, flow
-speed, and transformed-fraction bounds.
-
-Usage (run from repo root):
-  conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/benchmarks/extract_timeseries.py simulation/results/<run>
-"""
+"""Extract per-output pressure, flow, and phase-fraction diagnostics for one run."""
 
 import argparse
 import csv
@@ -18,10 +9,6 @@ import sys
 import numpy as np
 
 from utils.logging import log_warn
-
-# Ambient-reference block-load correction: the 1D adiabatic reference
-# includes the initial block load, so add the static load back below
-# the block column.
 
 
 def parse_statistics(path):
@@ -118,22 +105,22 @@ def main():
 
     sol_dir = os.path.join(args.run_dir, "solution")
     if not os.path.isdir(sol_dir):
-        log_warn(f"skip {args.run_dir}: no solution dir (run it or sync it first)")
+        log_warn(f"skip {args.run_dir} (no solution dir; run or sync it first)")
         return
     stats_path = os.path.join(args.run_dir, "statistics")
     try:
         mapping = parse_statistics(stats_path)
     except OSError:
-        log_warn(f"{args.run_dir}: no statistics file, times are NaN")
+        log_warn(f"skip {args.run_dir} (no statistics file; times are NaN)")
         mapping = {}
     try:
         write_stats_timeseries(stats_path, os.path.join(args.run_dir, "stats-timeseries.csv"))
     except OSError:
-        log_warn(f"{args.run_dir}: no statistics file, skipping stats-timeseries.csv")
+        log_warn(f"skip {args.run_dir} (no statistics file for stats-timeseries.csv)")
 
     pvtu = sorted(f for f in os.listdir(sol_dir) if f.endswith(".pvtu"))
     if not pvtu:
-        log_warn(f"skip {args.run_dir}: no solution outputs to tabulate")
+        log_warn(f"skip {args.run_dir} (no solution outputs)")
         return
     rows = []
     for f in pvtu:

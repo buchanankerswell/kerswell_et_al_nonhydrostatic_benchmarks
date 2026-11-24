@@ -1,16 +1,4 @@
-"""Lateral extent of the feedback variables across the 410 depth band.
-
-For one transient output step, bin mesh cells within a depth band around
-the runtime 410 nominal by lateral distance and plot the bin-mean
-transformed fraction, driving energy, reaction rate, and pressure
-anomaly. Companion to depth-profiles-sink.png (vertical extent).
-
-Usage (repo root):
-  PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/benchmarks/plot_lateral_profiles.py --runs <uid ...> \\
-    --suite-tag sink --step 00007 --nominal-m 379957 \\
-    --out figs/benchmarks/lateral-profiles-sink.png
-"""
+"""Bin-mean profiles across the model width at one transient 410 step."""
 
 import argparse
 import sys
@@ -25,6 +13,7 @@ from matplotlib.ticker import MaxNLocator
 
 from benchmarks.plot_depth_window import read_step
 from simulation.mesh.config import BENCH_TALL_W, S_PER_MA, apply_bench_style, bench_color, bench_label
+from utils.artifacts import add_force_argument, outputs_exist
 from utils.logging import log_artifact, log_warn
 
 N_BINS = 120
@@ -56,7 +45,12 @@ def main():
     ap.add_argument("--gravity", type=float, default=9.81, help="Gravity (m/s^2) (project.mk GRAVITY)")
     ap.add_argument("--out", required=True, help="Output figure path")
     ap.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI; draft 100, manuscript 330)")
+    add_force_argument(ap)
     args = ap.parse_args()
+
+    if outputs_exist(args.out, args.force):
+        return
+
     apply_bench_style(args.dpi)
 
     fields = [
@@ -72,7 +66,7 @@ def main():
         try:
             d = read_step(run, args.step, args.block_top_m, args.block_bottom_m, args.gravity)
         except OSError as e:
-            log_warn(f"skip {run}: {e}")
+            log_warn(f"skip {run} ({e})")
             continue
         x = d["points"][:, 0]
         depth = 1e6 - d["points"][:, 1]

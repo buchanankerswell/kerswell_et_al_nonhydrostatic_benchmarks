@@ -1,23 +1,4 @@
-"""Phase-change and relaxation timescales for the sink benchmark suite.
-
-Two panels:
-
-  left   reaction-rate history for representative runs. The inverse of the
-         settled rate is the phase-change timescale.
-  right  a log-time ladder placing the measured timescales (reaction, flow and
-         dynamic-pressure relaxation, oscillation peak, output cadence, solver
-         cap, run length) beside the relaxed-pressure tau window.
-
-Reads only CSV products of `make postprocess`; no VTU files are opened.
-
-Usage (repo root):
-  PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/benchmarks/plot_timescales.py \\
-    --structure simulation/results/structure-summary-sink.csv \\
-    --postprocessed simulation/results/postprocessed.csv \\
-    --summary simulation/results/pressure-history-summary.csv \\
-    --out-dir figs/benchmarks --dpi 100
-"""
+"""Reaction history and characteristic timescales for the sink suite."""
 
 import argparse
 import csv
@@ -34,17 +15,18 @@ import numpy as np
 
 from benchmarks.common import load_stats_series, load_vtu_series
 from simulation.mesh.config import BENCH_WIDE_W, apply_bench_style, bench_color, bench_label
+from utils.artifacts import add_force_argument, outputs_exist
 from utils.logging import log_artifact, log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 S_PER_YR = 3.156e7
 YR_PER_MA = 1e6
 
-S1 = "NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6"
-S2 = "NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6"
-REPRESENTATIVE = [
-    S1,
-    S2,
+UNDAMPED_BASELINE_RUN = "NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6"
+NO_FEEDBACK_REFERENCE_RUN = "NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6"
+REPRESENTATIVE_RUNS = [
+    UNDAMPED_BASELINE_RUN,
+    NO_FEEDBACK_REFERENCE_RUN,
     "NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res6",
     "NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res6",
 ]
@@ -53,7 +35,7 @@ TAU_RE = re.compile(r"^Rel([\d.e+-]+)$")
 
 def read_rows(path, want):
     if not path or not Path(path).exists():
-        log_warn("skip: missing " + str(path))
+        log_warn(f"skip {path} (missing)")
         return []
     with open(path) as f:
         return [r for r in csv.DictReader(f) if all(k in r for k in want)]
@@ -103,6 +85,16 @@ def pressure_efold_yr(run):
     return efold_yr(s["t"], s["pmax"] - s["pmin"])
 
 
+def min_solver_step_yr(run):
+    """Smallest interval between solver steps in the stats history (yr)."""
+    s = load_stats_series(run)
+    if not s:
+        return None
+    dt = np.diff(s["time_ma"]) * YR_PER_MA
+    dt = dt[np.isfinite(dt) & (dt > 0)]
+    return float(dt.min()) if dt.size else None
+
+
 def scalar(rows, run, key):
     for r in rows:
         if r.get("run") == run or r.get("model_id") == run:
@@ -133,19 +125,43 @@ def fmt_yr(v):
     return f"{v:.0f} yr"
 
 
+def ordered_ladder(t_rxn, t_flow, t_pressure, t_peak_yr, t_min_step, cadence_yr, max_step_yr, end_yr, taus):
+    """Ladder entries sorted by timescale, shortest first."""
+    ladder = [
+        (r"$\dot{X}^{-1}$ (phase transformation)", t_rxn),
+        ("Flow relaxation", t_flow),
+        (r"$\hat{P}$ relaxation", t_pressure),
+        (r"Largest $\hat{P}$ oscillation", t_peak_yr),
+        ("Output interval", cadence_yr),
+        ("Solver minimum step", t_min_step),
+        ("Solver maximum step", max_step_yr),
+        ("Run length", end_yr),
+    ]
+    if taus:
+        ladder.append((r"Relaxed $\tau$ window", min(taus)))
+    ladder.sort(key=lambda item: item[1] if item[1] is not None and np.isfinite(item[1]) else float("inf"))
+    return ladder
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--structure", default=str(RESULTS / "structure-summary-sink.csv"), help="Structure summary CSV (reaction-rate history)")
     ap.add_argument("--postprocessed", default=str(RESULTS / "postprocessed.csv"), help="Final-state boundary table CSV")
     ap.add_argument("--summary", default=str(RESULTS / "pressure-history-summary.csv"), help="Pressure-history summary CSV")
     ap.add_argument("--out-dir", default="figs/benchmarks", help="Output figure directory")
-    ap.add_argument("--representative", nargs="*", default=REPRESENTATIVE, help="Run UIDs drawn in the reaction-rate panel")
+    ap.add_argument("--representative", nargs="*", default=REPRESENTATIVE_RUNS, help="Run UIDs drawn in the reaction-rate panel")
     ap.add_argument("--cadence-ma", type=float, default=0.0, help="Output cadence in Ma; 0 derives it from --viz-out-yr")
     ap.add_argument("--viz-out-yr", type=float, default=2.5e5, help="Output cadence in yr (project.mk VIZ_OUT_SINK_SUITE)")
     ap.add_argument("--max-solver-tstep-yr", type=float, default=25e3, help="Solver cap in yr (project.mk MAX_SOLVER_TSTEP)")
     ap.add_argument("--end-time-yr", type=float, default=5e6, help="Run length in yr (project.mk END_SINK)")
     ap.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI)")
+    add_force_argument(ap)
     args = ap.parse_args()
+
+    out = Path(args.out_dir) / "timescales-sink.png"
+    if outputs_exist(out, args.force):
+        return
+
     apply_bench_style(args.dpi)
     cadence_ma = args.cadence_ma if args.cadence_ma > 0 else args.viz_out_yr / YR_PER_MA
 
@@ -155,32 +171,26 @@ def main():
 
     histories = reaction_histories(structure, cadence_ma)
     taus = tau_years(summary)
-    rate = scalar(post, S1, "rate410_per_Ma")
+    rate = scalar(post, UNDAMPED_BASELINE_RUN, "rate410_per_Ma")
     t_rxn = (1.0 / rate) * YR_PER_MA if rate else None
-    t_peak = scalar(summary, S1, "time_largest_Ma")
+    t_peak = scalar(summary, UNDAMPED_BASELINE_RUN, "time_largest_Ma")
     t_peak_yr = t_peak * YR_PER_MA if t_peak is not None else None
-    t_flow, t_pressure = flow_efold_yr(S1), pressure_efold_yr(S1)
+    t_flow = flow_efold_yr(UNDAMPED_BASELINE_RUN)
+    t_pressure = pressure_efold_yr(UNDAMPED_BASELINE_RUN)
+    t_min_step = min_solver_step_yr(UNDAMPED_BASELINE_RUN)
 
-    ladder = [
-        ("Phase change 1/Xdot", t_rxn),
-        ("Flow relaxation 1/e", t_flow),
-        ("P-hat relaxation 1/e", t_pressure),
-        ("Oscillation peak (S1)", t_peak_yr),
-        ("Output cadence", args.viz_out_yr),
-        ("Solver max step", args.max_solver_tstep_yr),
-        ("Run length", args.end_time_yr),
-    ]
-    names = [n for n, _ in ladder] + ["Relaxed tau window"]
-    tau_row = len(names) - 1
+    ladder = ordered_ladder(t_rxn, t_flow, t_pressure, t_peak_yr, t_min_step, args.viz_out_yr, args.max_solver_tstep_yr, args.end_time_yr, taus)
+    names = [name for name, _ in ladder]
+    tau_index = next((i for i, (name, _) in enumerate(ladder) if r"\tau" in name), None)
 
-    fig, (axr, axl) = plt.subplots(1, 2, figsize=(BENCH_WIDE_W * 1.7, 4.0), gridspec_kw={"width_ratios": [1.0, 1.35]})
+    fig, (ax_ladder, ax_rate) = plt.subplots(2, 1, figsize=(BENCH_WIDE_W, 5.6), gridspec_kw={"height_ratios": [1.6, 1.0]})
 
     for run in args.representative:
         series = histories.get(run)
         if not series:
-            log_warn("skip reaction curve: " + run)
+            log_warn(f"skip {run} (no reaction history)")
             continue
-        axr.plot(
+        ax_rate.plot(
             [p[0] for p in series],
             [p[1] for p in series],
             "o-",
@@ -189,45 +199,45 @@ def main():
             color=bench_color(run),
             label=bench_label(run),
         )
-    axr.set_xlabel("Time (Ma)")
-    axr.set_ylabel("$\\dot{X}_{max}$ (1/Ma)")
-    axr.set_yscale("log")
-    axr.set_title("Phase-change rate")
-    axr.legend(fontsize=8, frameon=False)
+    ax_rate.set_xlabel("Time (Ma)")
+    ax_rate.set_ylabel(r"$\dot{X}_{max}$ (1/Ma)")
+    ax_rate.set_yscale("log")
+    ax_rate.set_title("Phase transformation rate")
 
-    for i, (_, val) in enumerate(ladder):
-        if val is not None and np.isfinite(val):
-            axl.plot([val], [i], "o", color="#333333", ms=7)
-            axl.annotate(fmt_yr(val), (val, i), textcoords="offset points", xytext=(7, 0), fontsize=9, va="center")
+    for i, (_, value) in enumerate(ladder):
+        if i == tau_index:
+            continue
+        if value is not None and np.isfinite(value):
+            ax_ladder.plot([value], [i], "o", color="#333333", ms=7)
+            ax_ladder.annotate(fmt_yr(value), (value, i), textcoords="offset points", xytext=(7, 0), fontsize="small", va="center")
         else:
-            axl.annotate("n/a", (1.0, i), fontsize=9, va="center", color="#777777")
+            ax_ladder.annotate("n/a", (1.0, i), fontsize="small", va="center", color="#777777")
     if taus:
-        axl.axvspan(min(taus), max(taus), color="#1B7837", alpha=0.12)
+        ax_ladder.axvspan(min(taus), max(taus), color="#1B7837", alpha=0.12)
         for tau in taus:
-            axl.plot([tau], [tau_row], "|", color="#1B7837", ms=12, mew=1.6)
-        axl.annotate(
+            ax_ladder.plot([tau], [tau_index], "|", color="#1B7837", ms=12, mew=1.6)
+        ax_ladder.annotate(
             f"{fmt_yr(min(taus))} - {fmt_yr(max(taus))}",
-            (max(taus), tau_row),
+            (max(taus), tau_index),
             textcoords="offset points",
-            xytext=(7, 0),
-            fontsize=9,
+            xytext=(-8, 0),
+            ha="right",
+            fontsize="small",
             va="center",
         )
-    else:
-        axl.annotate("no relaxed runs", (1.0, tau_row), fontsize=9, va="center", color="#777777")
 
-    axl.set_yticks(range(len(names)))
-    axl.set_yticklabels(names, fontsize=9)
-    axl.set_ylim(len(names) - 0.5, -0.5)
-    axl.set_xscale("log")
-    axl.set_xlim(1, max(args.end_time_yr * 3, 1e7))
-    axl.set_xlabel("Time (yr, log)")
-    axl.set_title("Timescale ladder")
-    fig.subplots_adjust(left=0.21, right=0.97, wspace=0.45, top=0.88, bottom=0.13)
+    ax_ladder.set_yticks(range(len(names)))
+    ax_ladder.set_yticklabels(names)
+    ax_ladder.set_ylim(len(names) - 0.5, -0.5)
+    ax_ladder.set_xscale("log")
+    ax_ladder.set_xlim(1, max(args.end_time_yr * 3, 1e7))
+    ax_ladder.set_xlabel("Time (yr, log)")
+    ax_ladder.set_title("Characteristic timescales")
+    handles, labels = ax_rate.get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.0), ncol=2, frameon=False)
+    fig.subplots_adjust(left=0.34, right=0.97, hspace=0.45, top=0.92, bottom=0.11)
 
-    outdir = Path(args.out_dir)
-    outdir.mkdir(parents=True, exist_ok=True)
-    out = outdir / "timescales-sink.png"
+    out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=args.dpi)
     plt.close(fig)
     log_artifact(out)

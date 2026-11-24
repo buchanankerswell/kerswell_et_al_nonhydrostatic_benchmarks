@@ -1,19 +1,4 @@
-"""Pressure history across the sink NH benchmark.
-
-Reads per-run timeseries.csv and writes a summary CSV plus comparison plots.
-Runs and plot lists come from the Makefiles; without them the script finds
-NH_Sink_* runs. Each run is measured two ways: against paired runs from its
-own UID (undamped control, no-feedback control), and against fixed suite-wide
-references (S1 undamped, S2 no feedback). The fixed columns are defined for
-every run, including mesh/CFL variants whose paired control never completed.
-Positive reduction = damped; positive error = overshoot vs the reference.
-
-Usage (repo root):
-  PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/benchmarks/summarize_pressure_history.py --runs <uid ...> \\
-      --plot-sink <uid ...> \\
-      --out-csv simulation/results/pressure-history-summary.csv --fig-dir figs/benchmarks
-"""
+"""Summarize dynamic-pressure range history for the sink suite."""
 
 import argparse
 import csv
@@ -29,7 +14,8 @@ import numpy as np
 
 from common import load_stats_series, load_vtu_series, parse_uid_columns
 from simulation.mesh.config import BENCH_WIDE_W, UID_DAMP_RE, apply_bench_style, bench_color, bench_label
-from utils.logging import log_artifact, log_info, log_warn
+from utils.artifacts import add_force_argument, outputs_exist
+from utils.logging import log_artifact, log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
@@ -57,10 +43,10 @@ def largest_of(run):
     return float((s["pmax"] - s["pmin"]).max())
 
 
-def summarize(run, by_run, base, ref):
-    s = load_vtu_series(run)
-    if s is None or len(s["t"]) < 2:
-        log_warn(f"skip {run}: single output, no history to compare")
+def summarize(run, by_run, baseline_peak, reference_peak):
+    history = load_vtu_series(run)
+    if history is None or len(history["t"]) < 2:
+        log_warn(f"skip {run} (single output, no history)")
         return None
     stats = load_stats_series(run)
     if stats is not None and np.isfinite(stats["flow"]).any():
@@ -69,29 +55,29 @@ def summarize(run, by_run, base, ref):
         diminishment = round((highest_flow - final_flow) / highest_flow, 3) if highest_flow > 0 else None
     else:
         highest_flow, final_flow, diminishment = None, None, None
-    p2p = s["pmax"] - s["pmin"]
-    i = int(np.argmax(p2p))
-    largest = float(p2p[i])
-    ctrl, nofb = undamped_control(run), no_feedback_control(run)
-    cp, np_ = by_run.get(ctrl), by_run.get(nofb)
+    pressure_range = history["pmax"] - history["pmin"]
+    peak_index = int(np.argmax(pressure_range))
+    largest = float(pressure_range[peak_index])
+    control_run, no_feedback_run = undamped_control(run), no_feedback_control(run)
+    control_peak, no_feedback_peak = by_run.get(control_run), by_run.get(no_feedback_run)
     return {
         "run": run,
-        "control_run": ctrl,
-        "n_outputs": len(s["t"]),
+        "control_run": control_run,
+        "n_outputs": len(history["t"]),
         "largest_range_MPa": round(largest, 1),
-        "step_largest": int(i),
-        "time_largest_Ma": round(float(s["t"][i]), 3),
-        "final_range_MPa": round(float(p2p[-1]), 1),
-        "initial_range_MPa": round(float(p2p[0]), 1),
-        "max_xi_range": round(float(np.nanmax(s["xir"])), 3),
+        "step_largest": peak_index,
+        "time_largest_Ma": round(float(history["t"][peak_index]), 3),
+        "final_range_MPa": round(float(pressure_range[-1]), 1),
+        "initial_range_MPa": round(float(pressure_range[0]), 1),
+        "max_xi_range": round(float(np.nanmax(history["xir"])), 3),
         "highest_flow_speed_m_yr": (round(highest_flow, 3) if highest_flow is not None else None),
         "final_flow_speed_m_yr": (round(final_flow, 3) if final_flow is not None else None),
         "flow_diminishment": diminishment,
-        "reduction_vs_control": (round((cp - largest) / cp, 3) if cp else None),
-        "nofeedback_run": nofb,
-        "rel_err_vs_nofeedback": (round((largest - np_) / np_, 3) if np_ else None),
-        "reduction_vs_baseline": (round((base - largest) / base, 3) if base else None),
-        "rel_err_vs_reference": (round((largest - ref) / ref, 3) if ref else None),
+        "reduction_vs_control": (round((control_peak - largest) / control_peak, 3) if control_peak else None),
+        "nofeedback_run": no_feedback_run,
+        "rel_err_vs_nofeedback": (round((largest - no_feedback_peak) / no_feedback_peak, 3) if no_feedback_peak else None),
+        "reduction_vs_baseline": (round((baseline_peak - largest) / baseline_peak, 3) if baseline_peak else None),
+        "rel_err_vs_reference": (round((largest - reference_peak) / reference_peak, 3) if reference_peak else None),
         **parse_uid_columns(run),
     }
 
@@ -99,8 +85,8 @@ def summarize(run, by_run, base, ref):
 def plot_suite(runs, out_path, control, reference=None, dpi=100):
     runs = [r for r in runs if load_vtu_series(r) is not None]
     if not runs:
-        log_warn(f"skip {out_path.name}: no timeseries.csv found")
-        return
+        log_warn(f"skip {out_path.name} (no timeseries.csv found)")
+        return False
     fig, ax = plt.subplots(figsize=(BENCH_WIDE_W, 3.4))
     for run in runs:
         s = load_vtu_series(run)
@@ -121,6 +107,7 @@ def plot_suite(runs, out_path, control, reference=None, dpi=100):
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=dpi)
     plt.close(fig)
+    return True
 
 
 def paper_set(runs, ref):
@@ -134,10 +121,17 @@ def main():
     ap.add_argument("--plot-sink", nargs="*", default=None, help="Sink run UIDs to plot")
     ap.add_argument("--out-csv", default="simulation/results/pressure-history-summary.csv", help="Output summary CSV path")
     ap.add_argument("--fig-dir", default="figs/benchmarks", help="Output figure directory")
-    ap.add_argument("--baseline-run", default="NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6", help="Fixed undamped baseline (S1)")
-    ap.add_argument("--reference-run", default="NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6", help="Fixed no-feedback reference (S2)")
+    ap.add_argument("--baseline-run", default="NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res6", help="Fixed undamped baseline UID")
+    ap.add_argument("--reference-run", default="NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6", help="Fixed no-feedback reference UID")
     ap.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI; draft 100, manuscript 330)")
+    add_force_argument(ap)
     args = ap.parse_args()
+
+    out_csv = Path(args.out_csv)
+    out_fig = Path(args.fig_dir) / "pressure-history-sink.png"
+    if outputs_exist([out_csv, out_fig], args.force):
+        return
+
     apply_bench_style(args.dpi)
 
     sink = [r for r in (args.runs or discover("NH_Sink_")) if r.startswith("NH_Sink_")]
@@ -146,13 +140,13 @@ def main():
         p = largest_of(r)
         if p is not None:
             largest[r] = p
-    base, ref = largest.get(args.baseline_run), largest.get(args.reference_run)
-    if base is None or ref is None:
+    baseline_peak, reference_peak = largest.get(args.baseline_run), largest.get(args.reference_run)
+    if baseline_peak is None or reference_peak is None:
         log_warn("fixed baseline or reference run missing; fixed-reference columns will be blank")
 
     rows = []
     for r in sink:
-        row = summarize(r, largest, base, ref)
+        row = summarize(r, largest, baseline_peak, reference_peak)
         if row:
             rows.append({"suite": "sink", **row})
 
@@ -160,21 +154,18 @@ def main():
         log_warn("no NH_Sink_* runs with timeseries.csv found; nothing to summarize")
         return
 
-    out_csv = Path(args.out_csv)
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     with open(out_csv, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
-    log_info(f"Summarized pressure history for {len(rows)} runs into {out_csv}")
     log_artifact(out_csv)
 
-    figdir = Path(args.fig_dir)
     sink_paper = args.plot_sink if args.plot_sink is not None else paper_set(sink, 6)
-    und = next((r for r in sink_paper if "_DynpOn_DampNone_" in r), None)
-    nod = next((r for r in sink_paper if "_DynpOff_DampNone_" in r), None)
-    plot_suite(sink_paper, figdir / "pressure-history-sink.png", und, reference=nod, dpi=args.dpi)
-    log_artifact(figdir / "pressure-history-sink.png")
+    undamped_run = next((r for r in sink_paper if "_DynpOn_DampNone_" in r), None)
+    no_feedback_run = next((r for r in sink_paper if "_DynpOff_DampNone_" in r), None)
+    if plot_suite(sink_paper, out_fig, undamped_run, reference=no_feedback_run, dpi=args.dpi):
+        log_artifact(out_fig)
 
 
 if __name__ == "__main__":

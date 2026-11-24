@@ -1,12 +1,8 @@
 # Notes
 
-Working notes for the benchmark manuscript. They say what the current sink
-suite shows, what is still missing, and which figures carry the argument.
-Numbers come from `simulation/results/*.csv`, rebuilt by `make postprocess`.
+Working notes for the benchmark manuscript. They say what the current sink suite shows, what is still missing, and which figures present the argument. Numbers come from `simulation/results/*.csv`, rebuilt by `make postprocess`.
 
-Old handoff files under `research/nonhydrostatic_benchmarks/` live only in git
-history. They use retired naming conventions and stale box/660 references;
-`notes/` supersedes them.
+Old handoff files under `research/nonhydrostatic_benchmarks/` live only in git history. They use retired naming conventions and stale box/660 references; `notes/` supersedes them.
 
 - [Key results](key-results.md) — measured effects and the open gaps.
 - [Benchmark design](benchmark-design.md) — sweep expansion and ASPECT demos.

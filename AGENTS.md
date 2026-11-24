@@ -1,13 +1,10 @@
 # Repository guide
 
-Study of spurious pressure waves in compressible ASPECT models. Dynamic
-pressure drives kinetic phase changes; with zero bulk viscosity the loop
-produces spurious oscillations. The sink benchmark suite compares damping
-treatments. Read `notes/` for the framing, results, and open questions.
+Study of spurious pressure waves in compressible ASPECT models. Dynamic pressure drives kinetic phase transformations; with zero bulk viscosity the loop produces spurious oscillations. The sink benchmark suite compares damping treatments. Read `notes/` for the framing, results, and open questions.
 
 ## Layout
 
-- `project.mk` — suite UIDs, physical constants, and all Make variables. Start here.
+- `project.mk` — suite run names, physical constants, and all Make variables. Start here.
 - `simulation/local.mk` — registers the 25 sink runs.
 - `simulation/params/templates/NH/` — PRM templates (`shared/`, `sink/`).
 - `simulation/plugins/nh-kinetics.{cc,h}` — kinetic material-model plugin.
@@ -26,18 +23,12 @@ treatments. Read `notes/` for the framing, results, and open questions.
 - `make format` — format Python, R, bash, and C++.
 - `make clean` — remove generated files. `make deep-clean` also removes results.
 
-`FIG_DPI` (100 draft, 330 manuscript) and `MESH_TIMESTEPS` come from
-`project.mk`; pass them on the command line to override.
+`FIG_DPI` (100 draft, 330 manuscript) and `MESH_TIMESTEPS` come from `project.mk`; pass them on the command line to override.
 
 ## Conventions
 
-Run UIDs record what varies: `Dynp`, `Damp`, `Block`, `Z`, `Res`, `CFL`. S1 is
-the undamped full-feedback baseline; S2 is the no-feedback reference. Treat
-`simulation/results/` and `figs/` as build output: fix a figure by changing its
-script and rerunning the target. CI runs static checks only (markdownlint,
-typos, R, Python); models need HPC and stay local. Put session logs and
-handoffs in `notes/`.
+Run names record what varies: `Dynp`, `Damp`, `Block`, `Z`, `Res`, `CFL`. S1 is the undamped full-feedback baseline; S2 is the no-feedback reference. Treat `simulation/results/` and `figs/` as build output: fix a figure by changing its script and rerunning the target. CI runs static checks only (markdownlint, typos, R, Python); models need HPC and stay local. Put session logs and handoffs in `notes/`.
 
-Old handoff files under `research/nonhydrostatic_benchmarks/` survive only in
-committed history. They carry retired naming and stale content; `notes/` is the
-live set.
+Figure scripts skip outputs that already exist; pass `--force` or run `make clean` to redraw them.
+
+Old handoff files under `research/nonhydrostatic_benchmarks/` survive only in committed history. They use retired naming and stale content; `notes/` is the live set.

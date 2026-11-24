@@ -1,23 +1,4 @@
-"""Lateral dynamic-pressure oscillation diagnostic for the sink suite.
-
-Samples ambient-corrected driving pressure along the horizontal line at
-nominal 410 for the transient steps and reports, per run and step, the
-lateral mean (physical dynamic load), std/p2p (oscillation amplitude),
-and FFT band powers (long >200 km, mid 20-200 km, grid <20 km). The grid
-band is the numerical-oscillation metric; the mean tracks the physical
-feedback signal.
-
-Scoring reference is the undamped full-feedback run (DynpOn DampNone),
-not the no-feedback equilibrium: full feedback is expected to differ from
-equilibrium, and only the transient steps (block crossing the 410) are
-scored. Final states are intentionally excluded.
-
-Usage (repo root):
-  PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/benchmarks/extract_lateral_pressure.py \\
-    --nominal-m 379957 --out-csv simulation/results/lateral-pressure.csv \\
-    --fig-dir figs/benchmarks
-"""
+"""Dynamic-pressure diagnostics along the 410 for the transient sink steps."""
 
 import argparse
 import os
@@ -33,7 +14,8 @@ import numpy as np
 from benchmarks.plot_depth_window import read_step
 from simulation.mesh.config import BENCH_WIDE_W, apply_bench_style, bench_color, bench_label
 from simulation.params.transitions import load_depth_datum, model_to_true_km
-from utils.logging import log_artifact, log_info, log_warn
+from utils.artifacts import add_force_argument, outputs_exist
+from utils.logging import log_artifact, log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 DATUM = RESULTS.parent / "data" / "depth-datum.tsv"
@@ -112,7 +94,15 @@ def main():
     ap.add_argument("--out-csv", default=str(RESULTS / "lateral-pressure.csv"), help="Output CSV path")
     ap.add_argument("--fig-dir", default="figs/benchmarks", help="Output figure directory")
     ap.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI; draft 100, manuscript 330)")
+    add_force_argument(ap)
     args = ap.parse_args()
+
+    out_csv = Path(args.out_csv)
+    summary_fig = Path(args.fig_dir) / "lateral-oscillation-summary-sink.png"
+    profile_fig = Path(args.fig_dir) / "lateral-pressure-profile-sink.png"
+    if outputs_exist([out_csv, summary_fig, profile_fig], args.force):
+        return
+
     apply_bench_style(args.dpi)
 
     rows = []
@@ -125,7 +115,7 @@ def main():
             try:
                 (x, vals), t = lateral_slice(model, step, args.nominal_m, args.block_top_m, args.block_bottom_m, args.gravity)
             except Exception as e:
-                log_warn(f"skip {model} step {step}: {e}")
+                log_warn(f"skip {model} step {step} ({e})")
                 continue
             if x is None:
                 continue
@@ -150,7 +140,6 @@ def main():
         log_warn("no lateral samples collected")
         return
 
-    out_csv = Path(args.out_csv)
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     import csv
 
@@ -158,7 +147,6 @@ def main():
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
-    log_info(f"Scored {len(rows)} lateral pressure samples into {out_csv}")
     log_artifact(out_csv)
 
     ctrl = next((m for m in args.models if "_DynpOn_DampNone_" in m and "_CFL" not in m), args.models[0])
@@ -170,9 +158,6 @@ def main():
             return dict(lw=2.4, color=bench_color(model), label=bench_label(model), alpha=1.0)
         return dict(lw=1.3, color=bench_color(model), label=bench_label(model), alpha=0.85)
 
-    # Summary: the three step-history panels share one x-axis and one
-    # legend, parked outside the panels. At 25 runs the legend needs the
-    # width of a 5-inch figure; single column cannot hold it.
     fig, ax = plt.subplots(3, 1, figsize=(5.0, 8.0), sharex=True)
     for model in args.models:
         mr = [r for r in rows if r["model_id"] == model]
@@ -183,20 +168,18 @@ def main():
         ax[2].plot(ts, [r["grid_MPa"] for r in mr], **kw)
     for a in ax[:-1]:
         a.tick_params(axis="x", which="both", bottom=False, top=False, labelbottom=False)
-    ax[0].set_ylabel("Lateral Mean (MPa)", labelpad=8)
-    ax[1].set_ylabel("Lateral Std (MPa)", labelpad=8)
-    ax[2].set_ylabel("Grid Band (MPa)", labelpad=8)
+    ax[0].set_ylabel("Mean dynamic pressure (MPa)", labelpad=8)
+    ax[1].set_ylabel("Pressure standard deviation (MPa)", labelpad=8)
+    ax[2].set_ylabel("Short-wavelength oscillation (MPa)", labelpad=8)
     ax[2].set_xlabel("Output Step")
     handles, labels = ax[0].get_legend_handles_labels()
     fig.subplots_adjust(left=0.13, right=0.68, top=0.95, bottom=0.07, hspace=0.2)
     fig.legend(handles, labels, loc="center left", bbox_to_anchor=(0.69, 0.5), frameon=True, facecolor="white", framealpha=0.9)
-    out_fig = Path(args.fig_dir) / "lateral-oscillation-summary-sink.png"
-    out_fig.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_fig, dpi=args.dpi)
+    summary_fig.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(summary_fig, dpi=args.dpi)
     plt.close(fig)
-    log_artifact(out_fig)
+    log_artifact(summary_fig)
 
-    # Lateral pressure-distance profiles at the peak step: own figure.
     t_ma = next((r["time_ma"] for r in rows if r["timestep"] == int(peak_step)), None)
     datum = load_depth_datum(str(DATUM))
     true_km = float(model_to_true_km(args.nominal_m / 1e3, datum, "sink"))
@@ -211,10 +194,10 @@ def main():
     handles, labels = ax.get_legend_handles_labels()
     fig.subplots_adjust(right=0.74, left=0.09, top=0.88, bottom=0.14)
     fig.legend(handles, labels, loc="center left", bbox_to_anchor=(0.76, 0.5), frameon=True, facecolor="white", framealpha=0.9)
-    out_prof = Path(args.fig_dir) / "lateral-pressure-profile-sink.png"
-    fig.savefig(out_prof, dpi=args.dpi)
+    profile_fig.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(profile_fig, dpi=args.dpi)
     plt.close(fig)
-    log_artifact(out_prof)
+    log_artifact(profile_fig)
 
 
 if __name__ == "__main__":

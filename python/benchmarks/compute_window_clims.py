@@ -1,14 +1,4 @@
-"""Standardized depth-window color limits for the sink suite.
-
-Reads the same steps for every run with solutions and takes the per-field
-max over the union, so all depth-window figures share one
-scale. Writes JSON {suite: {set: {field: [lo, hi]}}}.
-
-Usage (repo root):
-  PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/benchmarks/compute_window_clims.py --models <uid ...> \\
-    --out simulation/results/depth-window-clims.json
-"""
+"""Fixed color limits shared by the sink depth-window figures."""
 
 import argparse
 import json
@@ -16,6 +6,7 @@ import os
 import sys
 from pathlib import Path
 
+from utils.artifacts import add_force_argument, outputs_exist
 from utils.logging import log_artifact, log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
@@ -33,19 +24,20 @@ def main():
     ap.add_argument("--block-bottom-m", type=float, default=725e03, help="Block bottom (m) (project.mk BLOCK_Y_BOT)")
     ap.add_argument("--gravity", type=float, default=9.81, help="Gravity (m/s^2) (project.mk GRAVITY)")
     ap.add_argument("--out", required=True, help="Output JSON path")
+    add_force_argument(ap)
     args = ap.parse_args()
 
-    nominal_m = {"sink": args.nominal_sink_m}
+    if outputs_exist(args.out, args.force):
+        return
 
+    nominal_m = {"sink": args.nominal_sink_m}
     half = WINDOW_HALF_M
     grouped = {"sink": []}
     for model in args.models:
-        suite = "sink"
         if not all((RESULTS / model / "solution" / f"solution-{s}.pvtu").exists() for s in args.steps):
-            log_warn(f"skip {model}: solutions missing")
+            log_warn(f"skip {model} (solutions missing)")
             continue
-        yc = 1e6 - nominal_m[suite]
-        grouped[suite].append([read_step(model, s, args.block_top_m, args.block_bottom_m, args.gravity) for s in args.steps])
+        grouped["sink"].append([read_step(model, s, args.block_top_m, args.block_bottom_m, args.gravity) for s in args.steps])
 
     out = {}
     for suite, runs in grouped.items():

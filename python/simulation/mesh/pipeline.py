@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pyvista as pv
 from config import MeshConfig
-from utils.logging import gutter_tqdm, log_error, log_info, log_warn
+from utils.logging import gutter_tqdm, log_error, log_warn
 from plotter import MeshPlotter
 from postprocess import MeshPostProcessor
 from preprocess import MeshPreProcessor
@@ -330,11 +330,10 @@ class PostProcessingPipeline(BasePipeline):
         out_dir.mkdir(parents=True, exist_ok=True)
 
         for model_id, timesteps in seismic_profile_cache.items():
-            # Final-state profiles: skip runs that never reached the last output.
             model_dir = self.pvtu_in_dirs.get(model_id) if self.pvtu_in_dirs else None
             if model_dir is not None and not (model_dir / "solution" / "solution-00020.pvtu").exists():
                 if self.verbosity >= 1:
-                    log_info(f"skip incomplete run (no final output): {model_id}")
+                    log_warn(f"skip {model_id} (no final output)")
                 continue
             for tstep, suffix_dict in timesteps.items():
                 for suffix, fields_dict in suffix_dict.items():

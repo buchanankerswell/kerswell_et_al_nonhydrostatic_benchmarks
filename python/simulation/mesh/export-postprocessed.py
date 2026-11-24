@@ -1,11 +1,4 @@
-"""Export the per-benchmark postprocessed table for the sink analysis.
-
-Reads the sink structure-summary and seismic-profile cache
-from the flattened simulation/results/ dir, interpolates the temperature
-anomaly at the measured 410 transition depth, and splits measured
-displacement into thermal offset (gamma*hat_T/(rho*g)) and kinetic
-contribution (measured minus thermal). One row per model (max timestep).
-"""
+"""Export the final-state sink table: 410 displacement split into thermal and kinetic parts."""
 
 import argparse
 import pickle
@@ -21,7 +14,7 @@ from simulation.params.transitions import (
     nominal_410_for_uid,
     read_dG_profile,
 )
-from utils.logging import log_artifact, log_info
+from utils.logging import log_artifact, log_warn
 
 RHO_DEFAULT = 4100.0  # kg/m^3, mirrors project.mk REF_DENSITY
 
@@ -72,7 +65,7 @@ def main():
     args = parse_arguments()
     out_path = Path(args.out_csv)
     if out_path.exists() and not args.force:
-        log_info(f"postprocessed exists (use --force to overwrite): {out_path}")
+        log_warn(f"skip {out_path} (exists; use --force)")
         return
 
     ref_headers, ref_data = read_dG_profile(args.profile_ol_wd)
@@ -102,11 +95,10 @@ def main():
         for mid, grp in models.groupby("model_id"):
             m = UID_RE.match(mid)
             if not m:
-                log_info(f"skip non-UID model: {mid}")
+                log_warn(f"skip {mid} (non-UID model)")
                 continue
-            # Final-state table: skip runs that never reached the last output.
             if not (data_dir / mid / "solution" / "solution-00020.pvtu").exists():
-                log_info(f"skip incomplete run (no final output): {mid}")
+                log_warn(f"skip {mid} (no final output)")
                 continue
             ts = int(grp["timestep"].max())
             r = grp[grp["timestep"] == ts].iloc[0]
@@ -143,7 +135,6 @@ def main():
     df = pd.DataFrame(rows)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_path, index=False)
-    log_info(f"Postprocessed table holds {len(df)} complete runs")
     log_artifact(out_path)
 
 

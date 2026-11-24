@@ -102,7 +102,7 @@ def load_point_series(run, point=0, field="pressure"):
     if not time_blocks or column_names is None or field not in column_names:
         return None
     if point >= len(time_blocks[0]):
-        log_warn(f"skip {run}: point {point} missing")
+        log_warn(f"skip {run} (point {point} missing)")
         return None
     field_index = column_names.index(field)
     times = np.array([b[0][0] for b in time_blocks]) / 1e6

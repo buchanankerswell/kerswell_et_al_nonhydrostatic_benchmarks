@@ -1,18 +1,4 @@
-"""Mesh and step sensitivity of the dynamic-pressure range.
-
-Reads the history summary plus the postprocessed boundary table and draws
-a combined figure: largest pressure range against mesh refinement and
-against the step size (shared y-axis), plus a 410-displacement-error figure
-(measured front position minus the no-feedback equilibrium at the same
-resolution, falling back to a fixed reference run when that resolution has
-no no-feedback twin) against the same two axes.
-
-Usage (repo root):
-  PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/benchmarks/plot_mesh_step_sensitivity.py --summary simulation/results/pressure-history-summary.csv \\
-    --postprocessed simulation/results/postprocessed.csv --out-dir figs/benchmarks \\
-    --z-mid 4.44e-04 --cfl-sink 0.5
-"""
+"""Mesh and time-step sensitivity of pressure range and 410 position error."""
 
 import argparse
 import csv
@@ -27,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from simulation.mesh.config import BENCH_WIDE_W, apply_bench_style, bench_color, bench_label
+from utils.artifacts import add_force_argument, outputs_exist
 from utils.logging import log_artifact, log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
@@ -34,7 +21,7 @@ RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
 
 def read_rows(path, want):
     if not os.path.exists(path):
-        log_warn("skip: missing " + path)
+        log_warn(f"skip {path} (missing)")
         return []
     with open(path) as f:
         rows = [r for r in csv.DictReader(f) if all(k in r for k in want)]
@@ -42,12 +29,7 @@ def read_rows(path, want):
 
 
 def boundary_offset(post, suite, z_mid, reference_run):
-    """Front-position error vs the no-feedback equilibrium.
-
-    Prefers a same-resolution no-feedback control. Runs at resolutions with no
-    such twin fall back to the fixed reference run, so the mesh-sweep panels
-    keep their Res5/Res7 points instead of going blank.
-    """
+    """410 position error vs no feedback; missing resolutions use the fixed reference."""
     err = {}
     controls = {}
     global_ref = None
@@ -73,6 +55,15 @@ def boundary_offset(post, suite, z_mid, reference_run):
     return out
 
 
+def shared_legend(fig, ax_left, ax_right):
+    handles, labels = ax_left.get_legend_handles_labels()
+    for h, lab in zip(*ax_right.get_legend_handles_labels()):
+        if lab not in labels:
+            handles.append(h)
+            labels.append(lab)
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.34), ncol=3, frameon=False)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--summary", default=str(RESULTS / "pressure-history-summary.csv"), help="Pressure-history summary CSV path")
@@ -80,9 +71,17 @@ def main():
     ap.add_argument("--out-dir", default="figs/benchmarks", help="Output figure directory")
     ap.add_argument("--z-mid", default="4.44e-04", help="Intermediate reaction rate (1/s/K) (project.mk Z_MID)")
     ap.add_argument("--cfl-sink", type=float, default=0.5, help="Sink suite default CFL number, dimensionless (project.mk CFL_SINK)")
-    ap.add_argument("--error-reference", default="NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6", help="Fallback no-feedback reference run (S2)")
+    ap.add_argument("--error-reference", default="NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6", help="Fallback no-feedback reference UID")
     ap.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI; draft 100, manuscript 330)")
+    add_force_argument(ap)
     args = ap.parse_args()
+
+    outdir = Path(args.out_dir)
+    range_fig = outdir / "range-sensitivity-sink.png"
+    error_fig = outdir / "displacement-error-sink.png"
+    if outputs_exist([range_fig, error_fig], args.force):
+        return
+
     apply_bench_style(args.dpi)
 
     base_cfl = {"sink": args.cfl_sink}
@@ -100,13 +99,10 @@ def main():
         for suite in ("sink",):
             offsets.update(boundary_offset(post, suite, args.z_mid, args.error_reference))
 
-    outdir = Path(args.out_dir)
     outdir.mkdir(parents=True, exist_ok=True)
     suite = "sink"
 
-    # One figure, two panels sharing the pressure-range axis: largest
-    # range against mesh refinement (left) and against step size (right).
-    fig, (axm, axs) = plt.subplots(1, 2, figsize=(BENCH_WIDE_W, 3.0), sharey=True)
+    fig, (axm, axs) = plt.subplots(1, 2, figsize=(BENCH_WIDE_W, 4.8), sharey=True)
     sel = [r for r in records if r["suite"] == suite and r["z"] == args.z_mid]
     by_damp = {}
     for r in sel:
@@ -126,8 +122,8 @@ def main():
         o = np.argsort(x[keep])
         run = runs[0]
         axm.plot(x[keep][o], y[keep][o], "o-", label=bench_label(run), color=bench_color(run))
-    axm.set_xlabel("Mesh Refinement Level")
-    axm.set_ylabel("Largest $\\hat{P}$ Range (MPa)")
+    axm.set_xlabel("Mesh level")
+    axm.set_ylabel(r"Largest $\hat{P}$ Range (MPa)")
     axm.set_xticks([5, 6, 7])
 
     sel = [r for r in records if r["suite"] == suite and r["z"] == args.z_mid and r["damp"] == "None"]
@@ -138,25 +134,17 @@ def main():
             continue
         if np.isfinite(cfl) and np.isfinite(rng):
             axs.plot(cfl, rng, "o", label=bench_label(r["run"]), color=bench_color(r["run"]))
-    axs.set_xlabel("Time Step (CFL Number)")
+    axs.set_xlabel("Time step (CFL)")
     axs.set_xticks([0.5, 1.0])
     axs.tick_params(axis="y", which="both", left=False, labelleft=False)
-    handles, labels = axm.get_legend_handles_labels()
-    for h, lab in zip(*axs.get_legend_handles_labels()):
-        if lab not in labels:
-            handles.append(h)
-            labels.append(lab)
-    fig.subplots_adjust(right=0.74, wspace=0.08, left=0.09, top=0.94, bottom=0.13)
-    fig.legend(handles, labels, loc="center left", bbox_to_anchor=(0.75, 0.5), frameon=True, facecolor="white", framealpha=0.9)
-    fig.savefig(outdir / "range-sensitivity-sink.png", dpi=args.dpi)
+    shared_legend(fig, axm, axs)
+    fig.subplots_adjust(left=0.16, right=0.97, wspace=0.22, top=0.92, bottom=0.42)
+    fig.savefig(range_fig, dpi=args.dpi)
     plt.close(fig)
-    log_artifact(outdir / "range-sensitivity-sink.png")
+    log_artifact(range_fig)
 
     if offsets:
-        # Front-position error: measured 410 displacement minus the
-        # equilibrium no-feedback displacement at the same resolution.
-        # Left panel varies mesh refinement, right panel varies step size.
-        fig, (axr, axc) = plt.subplots(1, 2, figsize=(BENCH_WIDE_W, 3.0), sharey=True)
+        fig, (axr, axc) = plt.subplots(1, 2, figsize=(BENCH_WIDE_W, 4.8), sharey=True)
         sel = [r for r in records if r["suite"] == suite and r["z"] == args.z_mid]
         by_damp = {}
         for r in sel:
@@ -175,8 +163,8 @@ def main():
             y = np.asarray(ys, dtype=float)
             o = np.argsort(x)
             axr.plot(x[o], y[o], "o-", label=bench_label(runs[0]), color=bench_color(runs[0]))
-        axr.set_xlabel("Mesh Refinement Level")
-        axr.set_ylabel("410 Position Error vs No-Feedback (km)")
+        axr.set_xlabel("Mesh level")
+        axr.set_ylabel("410 position error vs no feedback (km)")
         axr.set_xticks([5, 6, 7])
         for r in sel:
             off = offsets.get(r["run"], float("nan"))
@@ -186,19 +174,14 @@ def main():
                 continue
             if np.isfinite(off):
                 axc.plot(cfl, off, "o", label=bench_label(r["run"]), color=bench_color(r["run"]))
-        axc.set_xlabel("Time Step (CFL Number)")
+        axc.set_xlabel("Time step (CFL)")
         axc.set_xticks([0.5, 1.0])
         axc.tick_params(axis="y", which="both", left=False, labelleft=False)
-        handles, labels = axr.get_legend_handles_labels()
-        for h, lab in zip(*axc.get_legend_handles_labels()):
-            if lab not in labels:
-                handles.append(h)
-                labels.append(lab)
-        fig.subplots_adjust(left=0.16, right=0.76, top=0.92, bottom=0.15, wspace=0.1)
-        fig.legend(handles, labels, loc="center left", bbox_to_anchor=(0.77, 0.5), frameon=True, facecolor="white", framealpha=0.9)
-        fig.savefig(outdir / "displacement-error-sink.png", dpi=args.dpi)
+        shared_legend(fig, axr, axc)
+        fig.subplots_adjust(left=0.16, right=0.97, wspace=0.22, top=0.92, bottom=0.42)
+        fig.savefig(error_fig, dpi=args.dpi)
         plt.close(fig)
-        log_artifact(outdir / "displacement-error-sink.png")
+        log_artifact(error_fig)
 
 
 if __name__ == "__main__":

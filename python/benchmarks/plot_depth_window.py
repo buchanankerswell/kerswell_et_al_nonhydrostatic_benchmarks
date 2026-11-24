@@ -1,21 +1,4 @@
-"""Depth-window composition figure for one NH run.
-
-One figure, 4 rows (steps) x 3 columns (field panels) + 1 context column
-(block shape for the sink). Panels show a narrow
-depth window centered on the phase transition with a per-figure shared
-symmetric color scale computed from window data only, so the localized
-pressure signal sets the scale.
-
-For sinking-block runs the pressure/density panels show the TRUE ambient-
-referenced driver: the file values plus the static block load included in
-the 1D adiabatic reference (must match BLOCK_Y_TOP/BLOCK_Y_BOT and GRAVITY
-in project.mk).
-
-Usage (repo root):
-  PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python
-    python/benchmarks/plot_depth_window.py --model NH_Sink_..._Res6
-    --steps 00002 00006 00012 00020 --out figs/benchmarks/depth-window-S1.png
-"""
+"""Four-step depth-window composition for one sink run."""
 
 import argparse
 import os
@@ -34,11 +17,8 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 from simulation.mesh.config import S_PER_MA
 from simulation.params.transitions import load_depth_datum, model_to_true_km
+from utils.artifacts import add_force_argument, outputs_exist
 from utils.logging import log_artifact
-
-# Ambient-reference block-load correction: the 1D adiabatic reference
-# includes the initial block load, so add the static load back below
-# the block column.
 
 RESULTS = os.path.join(os.environ.get("PROJECT_ROOT", "."), "simulation/results")
 
@@ -186,7 +166,12 @@ def main():
     )
     ap.add_argument("--out", required=True, help="Output figure path")
     ap.add_argument("--dpi", type=int, default=100, help="Figure resolution (project.mk FIG_DPI; draft 100, manuscript 330)")
+    add_force_argument(ap)
     args = ap.parse_args()
+
+    if outputs_exist(args.out, args.force):
+        return
+
     fields = SETS[args.set]
 
     nominal_y = 1e6 - args.nominal_410_m
@@ -207,15 +192,10 @@ def main():
     else:
         clims = {f[0]: window_clim(steps_data, f[0], f[2], f[4], yc, half) for f in fields}
 
-    # Domain extent from the mesh itself, so the square sink
-    # setup frames correctly instead of assuming a fixed width.
     xs = steps_data[0]["points"][:, 0]
     x0, x1 = float(xs.min()), float(xs.max())
     cx, domain_w_m = (x0 + x1) / 2.0, max(x1 - x0, 1e3)
 
-    # Panel widths follow the data aspect so screenshots fill their axes
-    # with no stretching and no empty margins. The model-domain schematic
-    # rides as a small inset in each third-column panel.
     r = domain_w_m / (2 * half)
     fig_w = min(1.55 * (3 * r) + 1.0, 20.0)
     fig = plt.figure(figsize=(fig_w, 8.5))

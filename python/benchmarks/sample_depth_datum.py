@@ -1,18 +1,4 @@
-"""Sample the canonical model-depth to true-depth datum table.
-
-True depth maps model pressure through the BurnMan isentrope TSV, so the
-phase transition lands near 410 km instead of at model-domain depth. The
-sink adiabat carries the initial block load, which is subtracted first so
-the sink column shares the box column's ambient reference. Sampled once
-from finished runs; figures read the versioned table (no solutions needed).
-
-Usage (repo root):
-  PYTHONPATH=python conda run -n kerswell-et-al-nonhydrostatic-benchmarks python \\
-    python/benchmarks/sample_depth_datum.py --profile simulation/data/olivine-wadsleyite-profile-Mg100.tsv \\
-    --box-run simulation/results/NH_Box_DynpOn_DampNone_Z4.44e-04_Res5 \\
-    --sink-run simulation/results/NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res6 \\
-    --out simulation/data/depth-datum.tsv
-"""
+"""Sample the model-depth to true-depth datum table from finished runs."""
 
 import argparse
 from pathlib import Path
@@ -69,8 +55,6 @@ def main():
     for suite, run, excess in (("box", args.box_run, 0.0), ("sink", args.sink_run, args.sink_excess)):
         y, p = level_adiabat(run)
         p_amb = p - excess * args.gravity * block_overlap(y, excess, args.block_top_m, args.block_bottom_m)
-        # Depth-ascending order; binning noise at the block interface can
-        # break strict monotonicity by pascals against a GPa trend.
         depth = 1e6 - y[::-1]
         press = np.maximum.accumulate(p_amb[::-1])
         cols[suite] = np.interp(grid_m, depth, np.interp(press, prof_p, prof_z))
