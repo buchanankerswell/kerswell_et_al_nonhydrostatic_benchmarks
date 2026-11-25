@@ -24,7 +24,7 @@ POSTPROCESS_MODE      := full
 POSTPROCESS_VERBOSITY := 0
 SAVE_CSV              := true
 FORCE_REPROCESS       := false
-FORCE_REWRITE         := true
+FORCE_REWRITE         := false
 # Recursive (=): expands after local.mk registers UIDS_* below.
 RESULTS_SINK_SUITE = $(addprefix $(ASPECT_RESULTS)/,$(UIDS_SINK_SUITE))
 # Plot list (main Z_MID runs) selected from the registered UIDs.

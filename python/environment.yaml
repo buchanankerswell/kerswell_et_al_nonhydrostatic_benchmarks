@@ -2,15 +2,15 @@ name: kerswell-et-al-nonhydrostatic-benchmarks
 channels:
   - conda-forge
 dependencies:
-  - tqdm
-  - scipy
-  - pip
   - python=3.11
-  - pandas
+  - numpy<2
+  - pandas<2.2
+  - scipy
   - matplotlib
   - pillow
   - pyvista
   - ruff
+  - tqdm
+  - pip
   - pip:
       - burnman
-      - numba>=0.60 # 0.60+ imports on the NumPy 2.x that conda-forge pulls in; 0.59 breaks BurnMan
