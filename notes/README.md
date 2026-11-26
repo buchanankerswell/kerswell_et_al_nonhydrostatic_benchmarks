@@ -9,5 +9,6 @@ Old handoff files under `research/nonhydrostatic_benchmarks/` live only in git h
 - [Benchmark design](benchmark-design.md) — sweep expansion and ASPECT demos.
 - [Key figures](key-figures.md) — which figures answer which question.
 - [Session 2026-11-24](session-2026-11-24.md) — what changed and what comes next.
+- [Session 2026-11-26](session-2026-11-26.md) — formulation audit, rendering, and the next checks.
 
-`AGENTS.md` at the repo root covers the layout and commands.
+`AGENTS.md` at the repo root covers the layout and commands. `render-notes.sh` renders every note to `figs/*.html` with pandoc; pass `--force` to overwrite and `OUT_DIR` to change the destination.
