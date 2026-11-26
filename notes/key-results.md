@@ -20,7 +20,7 @@ Two new figures make the timescales and the trade-off visible. `timescales-sink.
 
 ## What is still missing
 
-1. Explain the -100 MPa relaxed mean. Write the relaxation field at each step and compare its mean with the Stokes pressure; decide whether it is a physical load or a field bias before calling relaxed pressure a physical fix.
+1. Explain the -100 MPa relaxed mean. Write the relaxation field at each step and compare its mean with the Stokes pressure; decide whether it is a physical load or a field bias before calling relaxed pressure a physical fix. The offset spans only 4 MPa across four orders of magnitude in tau, so it is not a filter lag; `feedback-formulation.md` lists two candidates to test.
 2. Decide the five crashed runs (Bexpl1e20, Bimpl1e19 CFL0.25, Bimpl1e19 Res7, undamped Res7, undamped CFL0.25). Resubmit or drop them from the suite so the figure set is complete.
 3. Add no-feedback reference runs at Res5, Res7, CFL0.25, and CFL1.0. Only Res6 has one today, so `displacement-error-sink.png` borrows the Res6 value for Res5 and Res7 points and relative error is undefined across the sweep.
 4. Repeat the Cap2e8 Res7 case. Its 37 /Ma final rate may be an unsettled front rather than a sharp one.

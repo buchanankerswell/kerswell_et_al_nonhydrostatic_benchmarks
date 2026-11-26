@@ -15,7 +15,7 @@ Keep the total near ten to fifteen new runs. Prioritize items 1-3; they make the
 
 ## ASPECT demos worth using
 
-The ASPECT source at `/Users/Shared/workspace/aspect` sits on branch `cookbook-mtz-kinetics`. The built install `/opt/aspect/v3.2.0-pre-bulk-viscosity-chain` is the pre-feature baseline binary. Global Stokes bulk viscosity (the zeta damping term) exists only on the `agent/bulk-viscosity` and `agent/bulk-viscosity-chain` branches.
+The ASPECT source at `/Users/Shared/workspace/aspect` sits on branch `agent/bulk-viscosity-chain`. The built install `/opt/aspect/v3.2.0-pre-bulk-viscosity-chain` is the pre-feature baseline binary. Global Stokes bulk viscosity (the zeta damping term) exists only on the `agent/bulk-viscosity` and `agent/bulk-viscosity-chain` branches.
 
 Reduced, analytic cases that isolate the mechanism:
 
