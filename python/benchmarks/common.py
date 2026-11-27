@@ -11,6 +11,8 @@ from simulation.mesh.config import DAMP_RE
 from utils.logging import log_warn
 
 RESULTS = Path(os.environ.get("PROJECT_ROOT", ".")) / "simulation/results"
+REFERENCE_ADIABAT_RUN = "NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6"
+_REF_ADIABAT_CACHE = {}
 
 
 def parse_uid_columns(run):
@@ -18,8 +20,13 @@ def parse_uid_columns(run):
     suite = "sink" if run.startswith("NH_Sink_") else ""
     damp_match = DAMP_RE.search(run)
     damp = (damp_match.group(1) + damp_match.group(2)) if damp_match else ""
-    dynp_match = re.search(r"_Dynp(On|Off)_", run)
-    dynp = 1 if dynp_match and dynp_match.group(1) == "On" else 0
+    dynp_match = re.search(r"_Dynp(On|Dens|Off)_", run)
+    if dynp_match and dynp_match.group(1) == "On":
+        dynp = 1
+    elif dynp_match and dynp_match.group(1) == "Dens":
+        dynp = 2
+    else:
+        dynp = 0
     res_match = re.search(r"_Res(\d+)", run)
     res = int(res_match.group(1)) if res_match else None
     z_match = re.search(r"_Z([\d.e+-]+)", run)
@@ -27,6 +34,52 @@ def parse_uid_columns(run):
     cfl_match = re.search(r"_CFL([\d.]+)", run)
     cfl = float(cfl_match.group(1)) if cfl_match else None
     return {"suite": suite, "damp": damp, "dynp": dynp, "res": res, "z": z, "cfl": cfl}
+
+
+def _load_reference_adiabat(results_dir=None):
+    """Load the uncorrupted 1D reference adiabat (y -> adiabatic_pressure, adiabatic_density)."""
+    base = Path(results_dir) if results_dir is not None else RESULTS
+    key = str(base.resolve())
+    if key in _REF_ADIABAT_CACHE:
+        return _REF_ADIABAT_CACHE[key]
+    ref_vtu = base / REFERENCE_ADIABAT_RUN / "solution" / "solution-00000.pvtu"
+    if not ref_vtu.exists():
+        _REF_ADIABAT_CACHE[key] = None
+        return None
+    import pyvista as pv
+
+    m = pv.read(str(ref_vtu))
+    y = np.asarray(m.points[:, 1], dtype=float)
+    p_ad = np.asarray(m["adiabatic_pressure"], dtype=float)
+    rho_ad = np.asarray(m["adiabatic_density"], dtype=float)
+    order = np.argsort(y)
+    y_sorted, idx = np.unique(y[order], return_index=True)
+    p_sorted = p_ad[order][idx]
+    rho_sorted = rho_ad[order][idx]
+    _REF_ADIABAT_CACHE[key] = (y_sorted, p_sorted, rho_sorted)
+    return _REF_ADIABAT_CACHE[key]
+
+
+def reference_adiabatic_pressure(y, fallback, step_num=1, results_dir=None):
+    """Return uncorrupted 1D reference adiabatic pressure at height y (m) for t > 0 steps."""
+    if int(step_num) == 0:
+        return np.asarray(fallback, dtype=float)
+    prof = _load_reference_adiabat(results_dir)
+    if prof is None:
+        return np.asarray(fallback, dtype=float)
+    y_sorted, p_sorted, _ = prof
+    return np.interp(np.asarray(y, dtype=float), y_sorted, p_sorted)
+
+
+def reference_adiabatic_density(y, fallback, step_num=1, results_dir=None):
+    """Return uncorrupted 1D reference adiabatic density at height y (m) for t > 0 steps."""
+    if int(step_num) == 0:
+        return np.asarray(fallback, dtype=float)
+    prof = _load_reference_adiabat(results_dir)
+    if prof is None:
+        return np.asarray(fallback, dtype=float)
+    y_sorted, _, rho_sorted = prof
+    return np.interp(np.asarray(y, dtype=float), y_sorted, rho_sorted)
 
 
 def load_vtu_series(run):

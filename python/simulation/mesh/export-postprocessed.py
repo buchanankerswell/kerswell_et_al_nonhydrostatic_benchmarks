@@ -19,8 +19,8 @@ from utils.logging import log_artifact, log_warn
 RHO_DEFAULT = 4100.0  # kg/m^3, mirrors project.mk REF_DENSITY
 
 UID_RE = re.compile(
-    r"^NH_(?P<suite>Sink)_Dynp(?P<dynp>On|Off)_Damp(?P<dampkind>[A-Za-z]+)(?P<dampval>[\d.e]*)"
-    r"(?:_Block(?P<block>\d+))?_Z(?P<z>[\d.e+-]+)_Res(?P<res>\d+)$"
+    r"^NH_(?P<suite>Sink)_Dynp(?P<dynp>On|Dens|Off)_Damp(?P<dampkind>[A-Za-z]+)(?P<dampval>[\d.e+-]*)"
+    r"(?:_Block(?P<block>\d+))?_Z(?P<z>[\d.e+-]+)_Res(?P<res>\d+)(?:_CFL(?P<cfl>[\d.]+))?$"
 )
 
 
@@ -119,7 +119,7 @@ def main():
                     "model_id": mid,
                     "timestep": ts,
                     "damp": f"{dampkind}{dampval}" if dampkind != "None" else "None",
-                    "dynp": 1 if m.group("dynp") == "On" else 0,
+                    "dynp": 1 if m.group("dynp") == "On" else (2 if m.group("dynp") == "Dens" else 0),
                     "res": int(m.group("res")),
                     "z": m.group("z"),
                     "disp410_km": disp410 / 1e3,

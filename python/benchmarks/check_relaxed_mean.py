@@ -72,6 +72,8 @@ def run_label(model):
     parts = [u["damp"] or "None"]
     if u["dynp"] == 0:
         parts.append("no feedback")
+    elif u["dynp"] == 2:
+        parts.append("density only")
     if u["res"] != 6:
         parts.append(f"R{u['res']}")
     if u["cfl"]:

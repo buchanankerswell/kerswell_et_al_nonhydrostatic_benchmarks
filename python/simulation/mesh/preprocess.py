@@ -3,6 +3,7 @@ from typing import Callable, ClassVar
 
 import numpy as np
 import pyvista as pv
+from benchmarks.common import reference_adiabatic_density, reference_adiabatic_pressure
 from utils.logging import log_warn
 
 
@@ -42,7 +43,19 @@ class MeshPreProcessor:
 
         required, compute = self._DERIVED_FIELDS[field]
         if all(r in mesh.point_data for r in required):
-            mesh[field] = compute(mesh)
+            step_num = 1
+            if "TIME" in mesh.field_data and float(mesh.field_data["TIME"][0]) == 0.0:
+                step_num = 0
+            if field == "nonadiabatic_pressure":
+                y = np.asarray(mesh.points[:, 1])
+                p_adiab = reference_adiabatic_pressure(y, mesh["adiabatic_pressure"], step_num=step_num)
+                mesh[field] = np.asarray(mesh["p"]) - p_adiab
+            elif field == "nonadiabatic_density":
+                y = np.asarray(mesh.points[:, 1])
+                rho_adiab = reference_adiabatic_density(y, mesh["adiabatic_density"], step_num=step_num)
+                mesh[field] = np.asarray(mesh["density"]) - rho_adiab
+            else:
+                mesh[field] = compute(mesh)
         elif self.verbosity >= 1:
             missing = [r for r in required if r not in mesh.point_data]
             log_warn(f"cannot derive '{field}', missing source fields: {missing}")

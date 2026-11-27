@@ -8,6 +8,7 @@ import sys
 
 import numpy as np
 
+from benchmarks.common import reference_adiabatic_pressure
 from utils.logging import log_warn
 
 
@@ -123,22 +124,34 @@ def main():
         log_warn(f"skip {args.run_dir} (no solution outputs)")
         return
     rows = []
+    results_root = os.path.dirname(os.path.abspath(args.run_dir))
     for f in pvtu:
         base = f[: -len(".pvtu")]
+        step_match = re.search(r"(\d+)$", base)
+        step_num = int(step_match.group(1)) if step_match else 1
         mesh = pv.read(os.path.join(sol_dir, f))
         t = mapping.get(base, float("nan"))
         row = {"output": base, "time_yr": t}
-        for name in ("nonadiabatic_pressure", "pressure"):
-            if name in mesh.array_names:
-                p = np.asarray(mesh[name]).ravel()
-                row[f"{name}_min"] = float(np.min(p))
-                row[f"{name}_max"] = float(np.max(p))
-        if "nonadiabatic_pressure" in mesh.array_names:
+        y = np.asarray(mesh.points)[:, 1]
+        nad = None
+        if "p" in mesh.array_names and "adiabatic_pressure" in mesh.array_names:
+            p_arr = np.asarray(mesh["p"]).ravel()
+            p_adiab = reference_adiabatic_pressure(y, np.asarray(mesh["adiabatic_pressure"]).ravel(), step_num=step_num, results_dir=results_root)
+            nad = p_arr - p_adiab
+            row["nonadiabatic_pressure_min"] = float(np.min(nad))
+            row["nonadiabatic_pressure_max"] = float(np.max(nad))
+        elif "nonadiabatic_pressure" in mesh.array_names:
+            nad = np.asarray(mesh["nonadiabatic_pressure"]).ravel()
+            row["nonadiabatic_pressure_min"] = float(np.min(nad))
+            row["nonadiabatic_pressure_max"] = float(np.max(nad))
+        if "pressure" in mesh.array_names:
+            p = np.asarray(mesh["pressure"]).ravel()
+            row["pressure_min"] = float(np.min(p))
+            row["pressure_max"] = float(np.max(p))
+        if nad is not None:
             bm = re.search(r"Block(\d+)", args.run_dir)
             excess = float(bm.group(1)) if bm else 0.0
             if excess:
-                nad = np.asarray(mesh["nonadiabatic_pressure"]).ravel()
-                y = np.asarray(mesh.points)[:, 1]
                 overlap = np.where(
                     y < args.block_bottom_m,
                     args.block_top_m - args.block_bottom_m,

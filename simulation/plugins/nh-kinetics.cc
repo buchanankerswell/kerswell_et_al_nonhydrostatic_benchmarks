@@ -142,6 +142,13 @@ namespace aspect
                                                 ? this->introspection().compositional_index_for_name("relaxed_pressure")
                                                 : numbers::invalid_unsigned_int;
 
+      const bool adiabatic_initialized = this->get_adiabatic_conditions().is_initialized();
+      const double bulk_viscosity_implicit = this->get_parameters().enable_bulk_viscosity
+                                             ? this->get_parameters().constant_bulk_viscosity
+                                             : 0.0;
+      const double active_bulk_viscosity = bulk_viscosity_implicit + bulk_viscosity_explicit;
+      std::vector<double> instantaneous_dynamic_pressures(in.n_evaluation_points(), 0.0);
+
       for (unsigned int q = 0; q < in.n_evaluation_points(); ++q)
         {
           const Point<dim> position = in.position[q];
@@ -169,29 +176,41 @@ namespace aspect
             }
           const Point<1> profile_pos(P_ref);
 
-          // Driving pressure: relaxed pressure when enabled, else Stokes
-          // pressure, minus the reference. Limited when requested.
-          double p_drive = P;
-          if (relaxed_pressure_idx != numbers::invalid_unsigned_int)
-            p_drive = in.composition[q][relaxed_pressure_idx];
-          double dynamic_pressure = p_drive - P_ref;
-          if (max_dynamic_pressure_correction > 0.0)
-            dynamic_pressure = std::clamp(dynamic_pressure,
-                                          -max_dynamic_pressure_correction,
-                                          max_dynamic_pressure_correction);
+          double div_u = 0.0;
+          if (q < in.strain_rate.size())
+            {
+              const double tr = trace(in.strain_rate[q]);
+              if (!std::isnan(tr))
+                div_u = tr;
+            }
 
-          // Explicit bulk-viscosity force opposing the divergence rate.
+          // Mechanical mean normal stress accounts for bulk-viscosity stress
+          // when implicit or explicit bulk viscosity is active.
+          const double P_mech = P - active_bulk_viscosity * div_u;
+          const double instantaneous_dynamic_pressure = adiabatic_initialized ? (P_mech - P_ref) : 0.0;
+          instantaneous_dynamic_pressures[q] = instantaneous_dynamic_pressure;
+
+          // Driving dynamic pressure: zero while ComputeProfile integrates the
+          // 1D reference adiabat; during runtime, relaxed dynamic pressure when
+          // enabled, else instantaneous mechanical dynamic pressure.
+          double dynamic_pressure = 0.0;
+          if (adiabatic_initialized)
+            {
+              dynamic_pressure = (relaxed_pressure_idx != numbers::invalid_unsigned_int)
+                                 ? in.composition[q][relaxed_pressure_idx]
+                                 : instantaneous_dynamic_pressure;
+              if (max_dynamic_pressure_correction > 0.0)
+                dynamic_pressure = std::clamp(dynamic_pressure,
+                                              -max_dynamic_pressure_correction,
+                                              max_dynamic_pressure_correction);
+            }
+
+          // Explicit bulk-viscosity isotropic stress in the momentum equation RHS,
+          // tested against div(v): -zeta * div(u_old).
           if (stokes_rhs_out != nullptr && bulk_viscosity_explicit > 0.0 && in.requests_property(MaterialProperties::additional_outputs))
             {
-              double div_u = 0.0;
-              if (q < in.strain_rate.size())
-                {
-                  const double tr = trace(in.strain_rate[q]);
-                  if (!std::isnan(tr))
-                    div_u = tr;
-                }
-              stokes_rhs_out->rhs_p[q] =
-                (bulk_viscosity_explicit / viscosity) * div_u;
+              stokes_rhs_out->rhs_div_u[q] = -bulk_viscosity_explicit * div_u;
+              stokes_rhs_out->rhs_p[q]     = 0.0;
             }
 
           // Initialize reaction rates to zero for all compositional fields
@@ -358,7 +377,7 @@ namespace aspect
                     nh_kinetics_out->corrected_gibbs[r][q] = gibbs_driving;
 
                   reaction_rate_out->reaction_rates[q][reaction_field_indices[r]] =
-                    reaction_chain.net_forward_reaction_rate(T, P, gibbs_driving, reaction_progress_clamped[r], r);
+                    reaction_chain.net_forward_reaction_rate(T, P_mech, gibbs_driving, reaction_progress_clamped[r], r);
                 }
             }
 
@@ -366,17 +385,11 @@ namespace aspect
             out.reaction_terms[q][c] = 0.0;
         }
 
-      // Carry the updated density into the projected-density field
-      // through the reaction terms.
-      if (projected_density_idx != numbers::invalid_unsigned_int)
-        for (unsigned int q = 0; q < in.n_evaluation_points(); ++q)
-          out.reaction_terms[q][projected_density_idx] = out.densities[q] - in.composition[q][projected_density_idx];
-
-      // Relax the pressure field toward Stokes pressure.
-      if (relaxed_pressure_idx != numbers::invalid_unsigned_int && reaction_rate_out != nullptr)
+      // Relax the dynamic-pressure field toward instantaneous mechanical dynamic pressure.
+      if (adiabatic_initialized && relaxed_pressure_idx != numbers::invalid_unsigned_int && reaction_rate_out != nullptr)
         for (unsigned int q = 0; q < in.n_evaluation_points(); ++q)
           reaction_rate_out->reaction_rates[q][relaxed_pressure_idx] =
-            (in.pressure[q] - in.composition[q][relaxed_pressure_idx]) / relaxation_time_dynamic_pressure;
+            (instantaneous_dynamic_pressures[q] - in.composition[q][relaxed_pressure_idx]) / relaxation_time_dynamic_pressure;
 
       // Projected density field carries the new densities forward.
       if (prescribed_field_out != nullptr && projected_density_idx != numbers::invalid_unsigned_int)
@@ -588,10 +601,10 @@ namespace aspect
             std::make_unique<MaterialModel::NHKineticsOutputs<dim>>(n_points, n_reactions + 1, n_reactions));
         }
 
-      // Explicit bulk-viscosity force needs the Stokes RHS outputs.
-      // The assembler also auto-creates these when 'Enable additional Stokes
-      // RHS' is set; creating them here keeps direct evaluate() calls working.
+      // Explicit bulk-viscosity force needs the Stokes RHS outputs when
+      // 'Enable additional Stokes RHS' is active.
       if (bulk_viscosity_explicit > 0.0 &&
+          this->get_parameters().enable_additional_stokes_rhs &&
           out.template get_additional_output_object<MaterialModel::AdditionalMaterialOutputsStokesRHS<dim>>() == nullptr)
         {
           const unsigned int n_points = out.n_evaluation_points();

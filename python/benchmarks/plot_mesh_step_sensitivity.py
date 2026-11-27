@@ -103,9 +103,9 @@ def main():
     suite = "sink"
 
     fig, (axm, axs) = plt.subplots(1, 2, figsize=(BENCH_WIDE_W, 4.8), sharey=True)
-    sel = [r for r in records if r["suite"] == suite and r["z"] == args.z_mid]
+    sel_mesh = [r for r in records if r["suite"] == suite and r["z"] == args.z_mid and float(r["cfl"]) == base_cfl[suite]]
     by_damp = {}
-    for r in sel:
+    for r in sel_mesh:
         by_damp.setdefault((r["damp"], r["dynp"]), ([], [], []))
         try:
             by_damp[(r["damp"], r["dynp"])][0].append(int(r["res"]))
@@ -126,16 +126,27 @@ def main():
     axm.set_ylabel(r"Largest $\hat{P}$ Range (MPa)")
     axm.set_xticks([5, 6, 7])
 
-    sel = [r for r in records if r["suite"] == suite and r["z"] == args.z_mid and r["damp"] == "None"]
-    for r in sel:
+    sel_cfl = [r for r in records if r["suite"] == suite and r["z"] == args.z_mid and int(r["res"]) == 6]
+    by_damp_cfl = {}
+    for r in sel_cfl:
+        by_damp_cfl.setdefault((r["damp"], r["dynp"]), ([], [], []))
         try:
-            cfl, rng = float(r["cfl"]), float(r["largest_range_MPa"])
+            by_damp_cfl[(r["damp"], r["dynp"])][0].append(float(r["cfl"]))
+            by_damp_cfl[(r["damp"], r["dynp"])][1].append(float(r["largest_range_MPa"]))
+            by_damp_cfl[(r["damp"], r["dynp"])][2].append(r["run"])
         except ValueError:
             continue
-        if np.isfinite(cfl) and np.isfinite(rng):
-            axs.plot(cfl, rng, "o", label=bench_label(r["run"]), color=bench_color(r["run"]))
+    for xs, ys, runs in zip([v[0] for v in by_damp_cfl.values()], [v[1] for v in by_damp_cfl.values()], [v[2] for v in by_damp_cfl.values()]):
+        x = np.asarray(xs, dtype=float)
+        y = np.asarray(ys, dtype=float)
+        keep = np.isfinite(x) & np.isfinite(y)
+        if keep.sum() == 0:
+            continue
+        o = np.argsort(x[keep])
+        base_run = next((rn for rn in runs if "_CFL" not in rn), runs[0])
+        axs.plot(x[keep][o], y[keep][o], "o-", label=bench_label(base_run), color=bench_color(base_run))
     axs.set_xlabel("Time step (CFL)")
-    axs.set_xticks([0.5, 1.0])
+    axs.set_xticks([0.25, 0.5, 1.0])
     axs.tick_params(axis="y", which="both", left=False, labelleft=False)
     shared_legend(fig, axm, axs)
     fig.subplots_adjust(left=0.16, right=0.97, wspace=0.22, top=0.92, bottom=0.42)
@@ -153,7 +164,7 @@ def main():
                 res, cfl, off = int(r["res"]), float(r.get("cfl") or base_cfl[suite]), float(off)
             except (ValueError, TypeError):
                 continue
-            if np.isfinite(off):
+            if np.isfinite(off) and cfl == base_cfl[suite]:
                 by_damp.setdefault((r["damp"], r["dynp"]), ([], [], []))
                 by_damp[(r["damp"], r["dynp"])][0].append(res)
                 by_damp[(r["damp"], r["dynp"])][1].append(off)
@@ -166,16 +177,26 @@ def main():
         axr.set_xlabel("Mesh level")
         axr.set_ylabel("410 position error vs no feedback (km)")
         axr.set_xticks([5, 6, 7])
+        by_damp_cfl = {}
         for r in sel:
             off = offsets.get(r["run"], float("nan"))
             try:
-                cfl, off = float(r.get("cfl") or base_cfl[suite]), float(off)
+                res, cfl, off = int(r["res"]), float(r.get("cfl") or base_cfl[suite]), float(off)
             except (ValueError, TypeError):
                 continue
-            if np.isfinite(off):
-                axc.plot(cfl, off, "o", label=bench_label(r["run"]), color=bench_color(r["run"]))
+            if np.isfinite(off) and res == 6:
+                by_damp_cfl.setdefault((r["damp"], r["dynp"]), ([], [], []))
+                by_damp_cfl[(r["damp"], r["dynp"])][0].append(cfl)
+                by_damp_cfl[(r["damp"], r["dynp"])][1].append(off)
+                by_damp_cfl[(r["damp"], r["dynp"])][2].append(r["run"])
+        for xs, ys, runs in zip([v[0] for v in by_damp_cfl.values()], [v[1] for v in by_damp_cfl.values()], [v[2] for v in by_damp_cfl.values()]):
+            x = np.asarray(xs, dtype=float)
+            y = np.asarray(ys, dtype=float)
+            o = np.argsort(x)
+            base_run = next((rn for rn in runs if "_CFL" not in rn), runs[0])
+            axc.plot(x[o], y[o], "o-", label=bench_label(base_run), color=bench_color(base_run))
         axc.set_xlabel("Time step (CFL)")
-        axc.set_xticks([0.5, 1.0])
+        axc.set_xticks([0.25, 0.5, 1.0])
         axc.tick_params(axis="y", which="both", left=False, labelleft=False)
         shared_legend(fig, axr, axc)
         fig.subplots_adjust(left=0.16, right=0.97, wspace=0.22, top=0.92, bottom=0.42)

@@ -27,26 +27,13 @@ GRID_KM = 20.0
 
 def lateral_slice(model, step, nominal_m, block_top_m, block_bottom_m, gravity):
     """Ambient-corrected pressure along nominal 410, margins excluded."""
-    import re
-
     d = read_step(model, step, block_top_m, block_bottom_m, gravity)
     y0 = 1e6 - nominal_m
     sl = d["mesh"].slice(normal="y", origin=(0, y0, 0))
-    if sl.n_points < 8 or "p" not in sl.point_data or "adiabatic_pressure" not in sl.point_data:
+    if sl.n_points < 8 or "nonadiabatic_pressure" not in sl.point_data:
         return None, None
     x = np.asarray(sl.points[:, 0])
-    vals = np.asarray(sl["p"]) - np.asarray(sl["adiabatic_pressure"])
-    # Ambient correction at the cut height (constant across the slice).
-    m = re.search(r"Block(\d+)", model)
-    excess = float(m.group(1)) if m else 0.0
-    if excess:
-        if y0 < block_bottom_m:
-            overlap = block_top_m - block_bottom_m
-        elif y0 < block_top_m:
-            overlap = block_top_m - y0
-        else:
-            overlap = 0.0
-        vals = vals + excess * gravity * overlap
+    vals = np.asarray(sl["nonadiabatic_pressure"])
     o = np.argsort(x)
     x, vals = x[o], vals[o]
     keep = (x > MARGIN_M) & (x < 1e6 - MARGIN_M)

@@ -109,6 +109,27 @@ ID_S22 := NH_Sink_DynpOn_DampBimpl1e19_Block400_Z4.44e-04_Res7
 ID_S23 := NH_Sink_DynpOn_DampNone_Block400_Z4.44e-04_Res5
 ID_S24 := NH_Sink_DynpOn_DampCap2e8_Block400_Z4.44e-04_Res5
 
+# Batch D: kinetic-coupling isolation (DynpDens: dynamic pressure in
+# density, reference pressure in Gibbs energy), no-feedback reference
+# twins across mesh and CFL sweeps, Rel ladder completion at Res5/CFL1.0,
+# intermediate tau threshold brackets (30 yr, 300 yr), and kinetic
+# prefactor Z sweep (Z_LO, Z_HI) for S1, S2, and S7.
+ID_S25 := NH_Sink_DynpDens_DampNone_Block400_Z4.44e-04_Res6
+ID_S26 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res5
+ID_S27 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res7
+ID_S28 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6_CFL0.25
+ID_S29 := NH_Sink_DynpOff_DampNone_Block400_Z4.44e-04_Res6_CFL1.0
+ID_S30 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res5
+ID_S31 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z4.44e-04_Res6_CFL1.0
+ID_S32 := NH_Sink_DynpOn_DampRel9.468e8_Block400_Z4.44e-04_Res6
+ID_S33 := NH_Sink_DynpOn_DampRel9.468e9_Block400_Z4.44e-04_Res6
+ID_S34 := NH_Sink_DynpOn_DampNone_Block400_Z9.51e-08_Res6
+ID_S35 := NH_Sink_DynpOff_DampNone_Block400_Z9.51e-08_Res6
+ID_S36 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z9.51e-08_Res6
+ID_S37 := NH_Sink_DynpOn_DampNone_Block400_Z1.4e+04_Res6
+ID_S38 := NH_Sink_DynpOff_DampNone_Block400_Z1.4e+04_Res6
+ID_S39 := NH_Sink_DynpOn_DampRel3.156e11_Block400_Z1.4e+04_Res6
+
 # Visualization scope (can edit)
 VIS_ALL            := false
 VIS_ALL_SINK_SUITE := $(VIS_ALL)
@@ -122,7 +143,9 @@ VIS_ON := true yes 1
 VIS_IDS_SINK_SUITE := $(ID_S1) $(ID_S2) $(ID_S3) $(ID_S4) $(ID_S5) $(ID_S6) $(ID_S7) $(ID_S8) $(ID_SCFL10) \
   $(ID_S9) $(ID_S10) $(ID_S11) $(ID_S12) $(ID_S13) $(ID_S14) \
   $(ID_S15) $(ID_S16) $(ID_S17) $(ID_S18) \
-  $(ID_S19) $(ID_S20) $(ID_S21) $(ID_S22) $(ID_S23) $(ID_S24)
+  $(ID_S19) $(ID_S20) $(ID_S21) $(ID_S22) $(ID_S23) $(ID_S24) \
+  $(ID_S25) $(ID_S26) $(ID_S27) $(ID_S28) $(ID_S29) $(ID_S30) $(ID_S31) $(ID_S32) $(ID_S33) \
+  $(ID_S34) $(ID_S35) $(ID_S36) $(ID_S37) $(ID_S38) $(ID_S39)
 
 # Recursive (=): expands after local.mk registers UIDS_*/Z_MID above.
 VIS_MODELS_SINK_SUITE = $(if $(filter $(VIS_ON),$(VIS_ALL_SINK_SUITE)),$(notdir $(RESULTS_SINK_SUITE)),$(VIS_IDS_SINK_SUITE))
@@ -250,11 +273,11 @@ CONDA_PYTHON := $(shell conda run -n $(CONDA_ENV) which python 2>/dev/null || ec
 # the run uses a timestep different from the suite default. End times and
 # default steps are suite constants, so they stay out of UIDs.
 define MAKE_UID_BOX
-  NH_Box_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Z$(4)_Res$(5)$(if $(6),_CFL$(6))
+  NH_Box_Dynp$(if $(filter 1,$(1)),On,$(if $(filter dens,$(1)),Dens,Off))_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Z$(4)_Res$(5)$(if $(6),_CFL$(6))
 endef
 
 define MAKE_UID_SINK
-  NH_Sink_Dynp$(if $(filter 1,$(1)),On,Off)_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Block$(4)_Z$(5)_Res$(6)$(if $(7),_CFL$(7))
+  NH_Sink_Dynp$(if $(filter 1,$(1)),On,$(if $(filter dens,$(1)),Dens,Off))_Damp$(if $(filter none,$(2)),None,$(2)$(3))_Block$(4)_Z$(5)_Res$(6)$(if $(7),_CFL$(7))
 endef
 
 define REGISTER_NH_BOX
@@ -303,7 +326,7 @@ define GENERATE_NH_PRM
 	  "mesh-x=$(if $(filter box,$(PARAM_suite_$(2))),$(MESH_X_BOX),$(MESH_X_SINK))" \
 	  "mesh-y=$(if $(filter box,$(PARAM_suite_$(2))),$(MESH_Y_BOX),$(MESH_Y_SINK))" \
 	  "mesh-refine-global=$(PARAM_res_$(2))" \
-	  "dynp-density=$(if $(filter 1,$(PARAM_dynp_$(2))),true,false)" \
+	  "dynp-density=$(if $(filter 1 dens,$(PARAM_dynp_$(2))),true,false)" \
 	  "dynp-gibbs=$(if $(filter 1,$(PARAM_dynp_$(2))),true,false)" \
 	  "bulk-enable=$(if $(filter Bimpl,$(PARAM_dampkind_$(2))),true,false)" \
 	  "bulk-zeta=$(if $(filter Bimpl,$(PARAM_dampkind_$(2))),$(PARAM_dampval_$(2)),0.0)" \

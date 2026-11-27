@@ -10,12 +10,17 @@ nominal_410_sink_km <- 422.6
 # in simulation/mesh/config.py hex-for-hex.
 damp_pal <- c(
   "None" = "#000000", "None_CFL1.0" = "#737373",
-  "None_Off" = "#08306B", "None_Res5" = "#969696", "None_Res7" = "#525252",
+  "None_Dens" = "#2171B5",
+  "None_Off" = "#08306B", "None_Off_Res5" = "#6BAED6", "None_Off_Res7" = "#08519C",
+  "None_CFL0.25_Off" = "#9ECAE1", "None_CFL1.0_Off" = "#4292C6",
+  "None_Res5" = "#969696", "None_Res7" = "#525252",
   "Bimpl1e19" = "#EF3B2C", "Bimpl1e19_CFL0.25" = "#FB6A4A", "Bimpl1e19_Res7" = "#FC9272",
   "Bimpl1e18" = "#E41A1C", "Bimpl1e20" = "#A50F15",
   "Bexpl1e19" = "#74ADD1", "Bexpl1e20" = "#377EB8",
-  "Rel3.156e8" = "#C7E9C0", "Rel3.156e9" = "#A1D99B",
-  "Rel3.156e11_CFL0.25" = "#ADDD8E", "Rel3.156e11_Res7" = "#4DAF4A",
+  "Rel3.156e8" = "#C7E9C0", "Rel9.468e8" = "#B2E2B2",
+  "Rel3.156e9" = "#A1D99B", "Rel9.468e9" = "#74C476",
+  "Rel3.156e11_CFL0.25" = "#ADDD8E", "Rel3.156e11_CFL1.0" = "#238B45",
+  "Rel3.156e11_Res5" = "#78C679", "Rel3.156e11_Res7" = "#4DAF4A",
   "Rel3.156e12" = "#00441B",
   "Rel3.156e10" = "#A6D96A", "Rel3.156e11" = "#1B7837",
   "Cap1e8" = "#984EA3", "Cap2e8" = "#C51B7D",
@@ -71,10 +76,10 @@ visualize_seismic_comparison <- function(data_dir_sink, out_path, nominal_sink_k
       damp = str_extract(model_id, "(?<=_Damp)[A-Za-z]+[\\d.e+-]*"),
       cfl = str_extract(model_id, "(?<=_CFL)[\\d.]+"),
       res = str_extract(model_id, "(?<=_Res)[0-9]+"),
-      dynp = factor(str_extract(model_id, "(?<=_Dynp)(On|Off)"), levels = c("On", "Off"))
+      dynp = factor(str_extract(model_id, "(?<=_Dynp)(On|Dens|Off)"), levels = c("On", "Dens", "Off"))
     ) |>
     mutate(damp = ifelse(!is.na(cfl), paste0(damp, "_CFL", cfl), damp)) |>
-    mutate(damp = ifelse(dynp == "Off", paste0(damp, "_Off"), damp)) |>
+    mutate(damp = ifelse(dynp == "Off", paste0(damp, "_Off"), ifelse(dynp == "Dens", paste0(damp, "_Dens"), damp))) |>
     mutate(damp = ifelse(!is.na(res) & res != "6", paste0(damp, "_Res", res), damp))
   df_init_sink <- read_init_profile(data_dir_sink)
 
@@ -91,7 +96,7 @@ visualize_seismic_comparison <- function(data_dir_sink, out_path, nominal_sink_k
       scale_y_reverse() +
       scale_x_continuous(limits = lim_vp, breaks = c(8, 9, 10, 11, 12)) +
       scale_color_manual(values = damp_pal, drop = TRUE, na.value = "grey50", name = "Damping") +
-      scale_linetype_manual(values = c("On" = "solid", "Off" = "dashed"), drop = FALSE, name = "Feedback") +
+      scale_linetype_manual(values = c("On" = "solid", "Dens" = "dotdash", "Off" = "dashed"), drop = TRUE, name = "Feedback") +
       labs(x = expression(V[p] ~ "(km/s)"), y = "Depth (km)") +
       theme_bw(base_size = 14) +
       theme_profile_comparison()

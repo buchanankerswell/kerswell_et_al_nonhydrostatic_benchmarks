@@ -15,6 +15,7 @@ import pyvista as pv
 from matplotlib import patches
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
+from benchmarks.common import reference_adiabatic_density, reference_adiabatic_pressure
 from simulation.mesh.config import S_PER_MA
 from simulation.params.transitions import load_depth_datum, model_to_true_km
 from utils.artifacts import add_force_argument, outputs_exist
@@ -47,14 +48,19 @@ def transform(values, mode):
 def read_step(model, step, block_top_m=875e3, block_bot_m=725e3, gravity=9.81):
     """Read one output step: mesh, points, and ambient-corrected pressure/density (Pa, kg/m^3)."""
     step = step.zfill(5)
+    step_num = int(step)
     path = os.path.join(RESULTS, model, "solution", "solution-" + step + ".pvtu")
     m = pv.read(path)
+    pts = np.asarray(m.points)
+    y = pts[:, 1]
     p = np.asarray(m["p"])
+    p_adiab = reference_adiabatic_pressure(y, m["adiabatic_pressure"], step_num=step_num, results_dir=RESULTS)
+    rho_adiab = reference_adiabatic_density(y, m["adiabatic_density"], step_num=step_num, results_dir=RESULTS)
     out = {
         "mesh": m,
-        "points": np.asarray(m.points),
-        "nonadiabatic_pressure": p - np.asarray(m["adiabatic_pressure"]),
-        "nonadiabatic_density": np.asarray(m["density"]) - np.asarray(m["adiabatic_density"]),
+        "points": pts,
+        "nonadiabatic_pressure": p - p_adiab,
+        "nonadiabatic_density": np.asarray(m["density"]) - rho_adiab,
         "velocity_vertical": np.asarray(m["velocity"])[:, 1],
     }
     if "block" in m.point_data:
@@ -62,7 +68,6 @@ def read_step(model, step, block_top_m=875e3, block_bot_m=725e3, gravity=9.81):
         bm = re.search(r"Block(\d+)", model)
         excess = float(bm.group(1)) if bm else 0.0
         if excess:
-            y = out["points"][:, 1]
             overlap = np.where(
                 y < block_bot_m,
                 block_top_m - block_bot_m,
@@ -72,6 +77,8 @@ def read_step(model, step, block_top_m=875e3, block_bot_m=725e3, gravity=9.81):
             depth = 1e6 - y
             in_window = (depth > 1e6 - block_top_m) & (depth < 1e6 - block_bot_m)
             out["nonadiabatic_density"] = out["nonadiabatic_density"] + excess * in_window
+    m.point_data["nonadiabatic_pressure"] = out["nonadiabatic_pressure"]
+    m.point_data["nonadiabatic_density"] = out["nonadiabatic_density"]
     for name in ("dG_driving_0", "reaction_rate_C0", "xi_ol_wd"):
         if name in m.point_data:
             out[name] = np.asarray(m[name])

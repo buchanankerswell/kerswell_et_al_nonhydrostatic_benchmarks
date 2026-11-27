@@ -188,7 +188,12 @@ def apply_bench_style(dpi: int = BENCH_DPI):
 DAMP_COLORS = {
     "None": "#000000",
     "None_CFL1.0": "#737373",
+    "None_Dens": "#2171B5",
     "None_Off": "#08306B",
+    "None_Off_Res5": "#6BAED6",
+    "None_Off_Res7": "#08519C",
+    "None_CFL0.25_Off": "#9ECAE1",
+    "None_CFL1.0_Off": "#4292C6",
     "None_Res5": "#969696",
     "None_Res7": "#525252",
     "Bimpl1e19": "#EF3B2C",
@@ -199,8 +204,12 @@ DAMP_COLORS = {
     "Bexpl1e19": "#74ADD1",
     "Bexpl1e20": "#377EB8",
     "Rel3.156e8": "#C7E9C0",
+    "Rel9.468e8": "#B2E2B2",
     "Rel3.156e9": "#A1D99B",
+    "Rel9.468e9": "#74C476",
     "Rel3.156e11_CFL0.25": "#ADDD8E",
+    "Rel3.156e11_CFL1.0": "#238B45",
+    "Rel3.156e11_Res5": "#78C679",
     "Rel3.156e11_Res7": "#4DAF4A",
     "Rel3.156e12": "#00441B",
     "Rel3.156e10": "#A6D96A",
@@ -220,8 +229,8 @@ UID_DAMP_RE = re.compile(r"_Damp[A-Za-z]+[\d.e+-]*")
 def damp_key(run):
     """Damping kind+value token from a UID (None, Bimpl1e21, ...).
 
-    Extended with _CFL<value> for timestep variants, _Off for the
-    no-feedback controls, and _Res<level> for off-default resolutions, so
+    Extended with _CFL<value> for timestep variants, _Off / _Dens for
+    feedback controls, and _Res<level> for off-default resolutions, so
     every benchmark run maps to a unique color.
     """
     m = DAMP_RE.search(run)
@@ -231,6 +240,8 @@ def damp_key(run):
         key += f"_CFL{mc.group(1)}"
     if "_DynpOff_" in run:
         key += "_Off"
+    elif "_DynpDens_" in run:
+        key += "_Dens"
     mr = re.search(r"_Res(\d+)", run)
     if mr and mr.group(1) != "6":
         key += f"_Res{mr.group(1)}"
@@ -243,11 +254,11 @@ def bench_color(run):
 
 
 def bench_label(run):
-    """Standard legend label for a run: damping + res + CFL/no-feedback tags."""
+    """Standard legend label for a run: damping + res + CFL/feedback tags."""
     key = damp_key(run)
     # The variant suffixes already surface as explicit tags below; the
     # color key stays the full variant so every run maps to a unique color.
-    shown = re.sub(r"_CFL[\d.]+", "", key).replace("_Off", "")
+    shown = re.sub(r"_CFL[\d.]+", "", key).replace("_Off", "").replace("_Dens", "")
     shown = re.sub(r"_Res\d+", "", shown)
     parts = [shown or key]
     mr = re.search(r"_Res(\d+)", run)
@@ -258,4 +269,6 @@ def bench_label(run):
         parts.append(f"CFL{mc.group(1)}")
     if "_DynpOff_" in run:
         parts.append("(no feedback)")
+    elif "_DynpDens_" in run:
+        parts.append("(density only)")
     return " ".join(parts)

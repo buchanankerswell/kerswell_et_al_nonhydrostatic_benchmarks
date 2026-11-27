@@ -3,6 +3,7 @@
 import argparse
 import csv
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -25,7 +26,7 @@ def undamped_control(run):
 
 
 def no_feedback_control(run):
-    return run.replace("_DynpOn_", "_DynpOff_", 1)
+    return re.sub(r"_Dynp(On|Dens)_", "_DynpOff_", run, count=1)
 
 
 def discover(prefix):

@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
+from benchmarks.common import reference_adiabatic_pressure
 from simulation.mesh.config import BENCH_WIDE_W, apply_bench_style, bench_color, bench_label
 from simulation.params.transitions import (
     find_surface_depth_offset,
@@ -103,7 +104,9 @@ def main():
         ax[1].plot(dg, model_to_true_km(zd, datum, suite), **kw)
         ax[2].plot(rate, tr, **kw)
         pmod = np.interp(zx, zp, p)
-        pad = np.interp(zx, za, pa) / 1e9
+        y_m = args.model_height - zx * 1e3
+        pad_fallback = np.interp(zx, za, pa)
+        pad = reference_adiabatic_pressure(y_m, pad_fallback, step_num=ts, results_dir=RESULTS) / 1e9
         ax[3].plot(pmod - pad, tx, **kw)
     for a in ax:
         a.axhline(nominal_true, color="grey", lw=1.5, ls="--")

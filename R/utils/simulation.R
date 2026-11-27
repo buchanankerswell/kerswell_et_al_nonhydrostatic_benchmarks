@@ -23,7 +23,7 @@ damp_value <- function(damp) {
 damp_display <- function(damp, dynp, res = "6") {
   parts <- damp
   parts <- ifelse(as.character(res) != "6", paste0(parts, " Res", res), parts)
-  ifelse(dynp == 0, paste0(parts, " (no feedback)"), parts)
+  ifelse(dynp == 0, paste0(parts, " (no feedback)"), ifelse(dynp == 2, paste0(parts, " (density only)"), parts))
 }
 
 read_benchmark_postprocessed <- function(postprocessed_csv) {
@@ -41,7 +41,7 @@ read_benchmark_postprocessed <- function(postprocessed_csv) {
       rate410_per_Ma = rate410_per_Ma,
       # Full color key matching python damp_key/DAMP_COLORS (res/CFL
       # variants and no-feedback controls each map to a unique color).
-      damp_key = ifelse(dynp == 0, paste0(damp, "_Off"), damp),
+      damp_key = ifelse(dynp == 0, paste0(damp, "_Off"), ifelse(dynp == 2, paste0(damp, "_Dens"), damp)),
       damp_key = ifelse(as.character(res) != "6", paste0(damp_key, "_Res", res), damp_key),
       suite = factor(case_when(
         suite == "sink" ~ suite_lab_sink,
