@@ -11,7 +11,7 @@ dependencies:
   - pyvista
   - ruff
   - tqdm
-  - numba
+  - numba>=0.59,<0.60
   - llvmlite
   - pip
   - pip:
