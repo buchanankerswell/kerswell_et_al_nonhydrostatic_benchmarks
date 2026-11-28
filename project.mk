@@ -59,7 +59,7 @@ POSTPROCESSED_MD   := $(ASPECT_RESULTS)/postprocessed.md
 PERPLEX_MODELS  := $(shell find $(PERPLEX) -type f -name '*.dat' -exec basename {} .dat \;)
 # Versioned thermodynamic inputs (tracked) live alongside generated outputs in
 # SIMULATION/data; deep-clean and .gitignore spare exactly these files.
-VERSIONED_DATA := olivine-wadsleyite-profile-Mg100.tsv wadsleyite-ringwoodite-profile-Mg100.tsv ringwoodite-postspinel-profile-Mg100.tsv depth-datum.tsv
+VERSIONED_DATA := olivine-wadsleyite-profile-Mg100.tsv wadsleyite-ringwoodite-profile-Mg100.tsv ringwoodite-postspinel-profile-Mg100.tsv depth-datum.tsv PYR-material-table.tab PYR-adiabatic-profile.tsv
 MESH_CSV_SINK_SUITE  := $(ASPECT_RESULTS)/structure-summary-sink.csv
 SEISMIC_SINK_SUITE  := $(ASPECT_RESULTS)/seismic_profiles_sink
 

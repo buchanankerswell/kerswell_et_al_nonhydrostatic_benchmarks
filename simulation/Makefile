@@ -6,10 +6,14 @@ include $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../project.mk)
 include local.mk
 
 ALL_RUNS  := $(PRMS_SINK:.prm=.run)
-CORE_SINK := $(PRMS_GLOBALS_SINK) $(PRMS_SOLVER_SINK) $(PRMS_GEOMETRY_SINK) $(PRMS_BOUNDARY_SINK) $(PRMS_COMPOSITION_SINK) $(PRMS_INITIAL_SINK) $(PRMS_PHYSICS_SINK) $(PRMS_MATERIAL_SINK) $(PRMS_POSTPROCESS_SINK)
 
 CLEAN      := $(ASPECT_PLUGIN) $(ASPECT_CONFIGS)
 DEEP_CLEAN := $(ASPECT_RESULTS)
+
+RUN_DATA := $(addprefix $(ASPECT_DATA)/,PYR-material-table.tab PYR-adiabatic-profile.tsv olivine-wadsleyite-profile-Mg100.tsv wadsleyite-ringwoodite-profile-Mg100.tsv ringwoodite-postspinel-profile-Mg100.tsv)
+
+$(RUN_DATA):
+	@$(MAKE) --no-print-directory -C $(PYTHON) adiabat
 
 .PHONY: all all-models models-sink-suite configs configs-sink-suite clean deep-clean help
 .PRECIOUS: $(ASPECT_CONFIGS)
@@ -20,9 +24,9 @@ models-sink-suite: $(ASPECT_EXE) $(DEALII_ENABLE) $(ASPECT_PLUGIN) $(PRMS_SINK:.
 configs: configs-sink-suite
 configs-sink-suite: $(PRMS_SINK)
 
-$(PRMS_SINK:.prm=.run): $(ASPECT_PLUGIN)
+$(PRMS_SINK:.prm=.run): $(ASPECT_PLUGIN) $(RUN_DATA)
 
-$(PRMS_SINK): $(CORE_SINK)
+$(PRMS_SINK): $(ASPECT_CONFIGS)/%.prm: $(ASPECT_CONFIGS)/%.globals.prm $(ASPECT_CONFIGS)/%.solver.prm $(ASPECT_CONFIGS)/%.geometry.prm $(ASPECT_CONFIGS)/%.boundary.prm $(ASPECT_CONFIGS)/%.composition.prm $(ASPECT_CONFIGS)/%.initial.prm $(ASPECT_CONFIGS)/%.physics.prm $(ASPECT_CONFIGS)/%.material.prm $(ASPECT_CONFIGS)/%.postprocess.prm
 
 $(ASPECT_CONFIGS):
 	@mkdir -p $@
