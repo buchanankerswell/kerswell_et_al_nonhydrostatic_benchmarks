@@ -11,6 +11,8 @@ dependencies:
   - pyvista
   - ruff
   - tqdm
+  - numba
+  - llvmlite
   - pip
   - pip:
       - burnman
